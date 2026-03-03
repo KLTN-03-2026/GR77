@@ -1,0 +1,1 @@
+// Campaign type definitions
