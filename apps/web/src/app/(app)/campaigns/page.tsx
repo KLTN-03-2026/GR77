@@ -31,7 +31,7 @@ export default function CampaignsPage() {
         </div>
 
         {/* Campaign Cards */}
-        <div className="bg-gradient-to-r from-pink-100 via-purple-50 to-blue-50 rounded-3xl p-8 border-2 border-pink-200">
+        <div className="bg-gradient-to-r from-pink-100 via-purple-50 to-blue-50 rounded-bl-3xl rounded-br-3xl rounded-tl-3xl p-8 border-t-4 border-l-2 border-r-2 border-pink-500 relative before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-4 before:bg-gradient-to-b before:from-pink-500/60 before:to-transparent before:rounded-tl-3xl before:pointer-events-none">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             {favoriteCampaigns.map((campaign) => (
               <Link key={campaign.id} href={`/campaigns/${campaign.id}`}>
