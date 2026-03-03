@@ -34,14 +34,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay for mobile */}
-      {isOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={onClose}
-        />
-      )}
-
       {/* Sidebar for desktop */}
       <aside className={`
         hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col
