@@ -10,7 +10,8 @@ import {
   DocumentTextIcon,
   WalletIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 const menuItems = [
@@ -23,19 +24,42 @@ const menuItems = [
   { name: 'Setting', href: '/settings', icon: Cog6ToothIcon },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={onClose}
+        />
+      )}
+
       {/* Sidebar for desktop */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+      <aside className={`
+        hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col
+        transition-transform duration-300 z-30
+        ${isOpen ? 'lg:translate-x-0' : 'lg:-translate-x-full'}
+      `}>
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
-          {/* Logo */}
-          <div className="flex items-center justify-center px-4 mb-8">
+          {/* Header with Logo and Close button */}
+          <div className="flex items-center justify-between px-4 mb-8">
             <div className="bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full px-8 py-3">
               <span className="text-white text-2xl font-bold tracking-wide">KINDLINK</span>
             </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
           </div>
 
           {/* Navigation */}

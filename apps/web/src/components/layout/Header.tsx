@@ -1,11 +1,15 @@
 'use client';
 
 import '@fontsource/allura';
-import { BellIcon } from '@heroicons/react/24/outline';
+import { BellIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-export default function Header() {
+interface HeaderProps {
+  onToggleSidebar: () => void;
+}
+
+export default function Header({ onToggleSidebar }: HeaderProps) {
   const pathname = usePathname();
   const [userName, setUserName] = useState<string>('User');
   
@@ -37,12 +41,22 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 lg:left-64">
+    <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 transition-all duration-300">
       <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        {/* Welcome message */}
-        <p className="text-gray-800 text-2xl sm:text-3xl" style={{ fontFamily: 'Allura, cursive' }}>
-          Welcome back, {userName}. Ready to create impact today?
-        </p>
+        <div className="flex items-center gap-3">
+          {/* Toggle sidebar button */}
+          <button 
+            onClick={onToggleSidebar}
+            className="hidden lg:block p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </button>
+
+          {/* Welcome message */}
+          <p className="text-gray-800 text-2xl sm:text-3xl" style={{ fontFamily: 'Allura, cursive' }}>
+            Welcome back, {userName}. Ready to create impact today?
+          </p>
+        </div>
 
         {/* Notification icon */}
         <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
