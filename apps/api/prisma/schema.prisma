@@ -14,7 +14,11 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  tokens    RefreshToken[]
+  
+  tokens                RefreshToken[]
+  createdCampaigns      Campaign[] @relation("CampaignCreator")
+  reviewedCampaigns     Campaign[] @relation("CampaignReviewer")
+  favorites             Favorite[]
 
   @@map("users")
 }
@@ -36,4 +40,67 @@ model RefreshToken {
 enum Role {
   USER
   ADMIN
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  REJECTED
+  PAUSED
+  COMPLETED
+}
+
+model Campaign {
+  id                       String          @id @default(uuid())
+  creatorUserId            String          @map("creator_user_id")
+
+  title                    String          @db.VarChar(255)
+  description              String          @db.Text
+
+  category                 String          @db.VarChar(100)
+  locationText             String          @db.VarChar(255) @map("location_text")
+  coverImageUrl            String?         @db.VarChar(500) @map("cover_image_url")
+
+  // numeric
+  fundingGoalAmount        Decimal         @db.Decimal(18, 2) @map("funding_goal_amount")
+  minimumDonationAmount    Decimal         @db.Decimal(18, 2) @map("minimum_donation_amount")
+
+  startAt                  DateTime        @map("start_at")
+  endAt                    DateTime        @map("end_at")
+  autoCloseWhenGoalReached Boolean         @default(true) @map("auto_close_when_goal_reached")
+
+  status                   CampaignStatus  @default(DRAFT)
+
+  reviewNote               String?         @db.Text @map("review_note")
+  reviewedByAdminId        String?         @map("reviewed_by_admin_id")
+  reviewedAt               DateTime?       @map("reviewed_at")
+
+  createdAt                DateTime        @default(now()) @map("created_at")
+  updatedAt                DateTime        @updatedAt @map("updated_at")
+
+  // relations
+  creatorUser              User            @relation("CampaignCreator", fields: [creatorUserId], references: [id], onDelete: Restrict)
+  reviewedByAdmin          User?           @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+  favorites                Favorite[]
+
+  @@index([status])
+  @@index([creatorUserId])
+  @@index([category])
+  @@map("campaigns")
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  campaignId String   @map("campaign_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([userId, createdAt])
+  @@index([campaignId])
+  @@map("favorites")
 }
