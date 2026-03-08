@@ -310,7 +310,7 @@ export default function Home() {
                     <div className="flex items-center gap-3">
                       <input type="checkbox" id="terms-check" className="w-6 h-6 accent-green-500 rounded border-none cursor-pointer" defaultChecked />
                       <label htmlFor="terms-check" className="text-xs lg:text-sm cursor-pointer opacity-95">
-                        I agree to the Terms of Service and Privacy Policy. <a href="/login" className="underline ml-2 hover:text-white/80 transition-colors">Sign in</a>
+                        I agree to the Terms of Service and Privacy Policy. <a href="/login" className="underline ml-2 hover:text-white/80 transition-colors">Login</a>
                       </label>
                     </div>
 
