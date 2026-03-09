@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import {
   HomeIcon,
   HeartIcon,
@@ -31,6 +32,33 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        await fetch('http://localhost:3001/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      router.push('/login');
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <>
@@ -68,10 +96,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
             {/* Logout button */}
             <button
-              className="w-full flex items-center px-4 py-3 text-base font-medium text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center px-4 py-3 text-base font-medium text-gray-700 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               <ArrowRightOnRectangleIcon className="mr-3 h-6 w-6" />
-              Log out
+              {isLoggingOut ? 'Logging out...' : 'Log out'}
             </button>
           </nav>
         </div>

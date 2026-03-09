@@ -30,6 +30,10 @@ services:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/kindlink?schema=public
     ports:
       - "3001:3000"
+    volumes:
+      - ./apps/api:/app
+      - /app/node_modules
+    command: pnpm run start:dev
     depends_on:
       postgres:
         condition: service_healthy
