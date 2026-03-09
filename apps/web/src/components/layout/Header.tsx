@@ -1,18 +1,20 @@
 'use client';
 
 import '@fontsource/allura';
-import { BellIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { BellIcon, Bars3Icon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
+  isOpen: boolean;
 }
 
-export default function Header({ onToggleSidebar }: HeaderProps) {
+export default function Header({ onToggleSidebar, isOpen }: HeaderProps) {
   const pathname = usePathname();
   const [userName, setUserName] = useState<string>('User');
-  
+
   // TODO: Fetch user data from API
   useEffect(() => {
     // Example: Fetch user data
@@ -27,35 +29,62 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
     // };
     // fetchUserData();
   }, []);
-  
-  // Get page title from pathname
-  const getPageTitle = () => {
-    if (pathname.includes('/campaigns')) return 'Home';
-    if (pathname.includes('/favorites')) return 'Favorite Campaigns';
-    if (pathname.includes('/activity')) return 'Activity History';
-    if (pathname.includes('/joined')) return 'Joined Campaigns';
-    if (pathname.includes('/creator')) return 'My Campaigns';
-    if (pathname.includes('/wallet')) return 'Wallet';
-    if (pathname.includes('/settings')) return 'Setting';
-    return 'Home';
+
+  // Render breadcrumbs based on pathname
+  const renderBreadcrumbs = () => {
+    if (pathname.includes('/creator/campaigns/new')) {
+      return (
+        <>
+          <Link href="/home" className="hover:text-blue-600">Home</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+          <Link href="/creator/campaigns" className="hover:text-blue-600">My Campaigns</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+          <span className="text-gray-900 font-medium">Add</span>
+        </>
+      );
+    }
+
+    // Default simple breadcrumbs for other pages
+    let title = 'Home';
+    if (pathname.includes('/home')) title = 'Home';
+    else if (pathname.includes('/favorites')) title = 'Favorite Campaigns';
+    else if (pathname.includes('/activity')) title = 'Activity History';
+    else if (pathname.includes('/joined')) title = 'Joined Campaigns';
+    else if (pathname.includes('/creator')) title = 'My Campaigns';
+    else if (pathname.includes('/wallet')) title = 'Wallet';
+    else if (pathname.includes('/settings')) title = 'Setting';
+
+    return (
+      <>
+        <span>{title}</span>
+        <ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} />
+      </>
+    );
   };
 
   return (
     <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 transition-all duration-300">
       <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* Toggle sidebar button */}
-          <button 
-            onClick={onToggleSidebar}
-            className="hidden lg:block p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
+        <div className="flex items-center gap-6">
+          {/* Logo */}
+          <div className="bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full px-6 py-2.5 sm:px-8 sm:py-3 shadow-sm flex items-center justify-center min-w-[140px] sm:min-w-[170px]">
+            <span className="text-white text-xl sm:text-2xl font-bold tracking-wide">KINDLINK</span>
+          </div>
 
-          {/* Welcome message */}
-          <p className="text-gray-800 text-2xl sm:text-3xl" style={{ fontFamily: 'Allura, cursive' }}>
-            Welcome back, {userName}. Ready to create impact today?
-          </p>
+          <div className="flex items-center gap-3">
+            {/* Toggle sidebar button */}
+            <button
+              onClick={onToggleSidebar}
+              className="hidden lg:block p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+
+            {/* Welcome message */}
+            <p className="text-gray-800 text-xl sm:text-2xl lg:text-3xl ml-2 whitespace-nowrap" style={{ fontFamily: 'Allura, cursive' }}>
+              Welcome back, {userName}. Ready to create impact today?
+            </p>
+          </div>
         </div>
 
         {/* Notification icon */}
@@ -64,12 +93,11 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           <span className="absolute top-1 right-1 h-2 w-2 bg-cyan-500 rounded-full"></span>
         </button>
       </div>
-      
+
       {/* Breadcrumb - full width */}
-      <div className="bg-blue-50 px-4 sm:px-6 lg:px-8 py-2">
-        <div className="flex items-center text-sm text-gray-700">
-          <span>{getPageTitle()}</span>
-          <span className="ml-2">{'>'}</span>
+      <div className={`bg-blue-50 px-4 sm:px-6 lg:px-8 py-2 transition-all duration-300 ${isOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+        <div className="flex items-center text-sm text-gray-700 font-medium">
+          {renderBreadcrumbs()}
         </div>
       </div>
     </header>

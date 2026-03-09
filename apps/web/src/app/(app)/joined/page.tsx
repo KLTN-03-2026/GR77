@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Heart, UserPlus, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, UserPlus, Calendar, ChevronLeft, ChevronRight ,Clock} from 'lucide-react';
 
 export default function KindlinkJoinedPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,6 +38,8 @@ export default function KindlinkJoinedPage() {
         title: title,
         raised: (Math.random() * 9000 + 500).toFixed(0),
         image: `${imgUrl}?q=80&w=600&auto=format&fit=crop`,
+        startDate: "01/01/2026", // Thêm ngày bắt đầu chiến dịc
+        joinedDate: "05/03/2026 14:30" // Giả lập thời gian tham gia
       };
     });
   };
@@ -76,22 +78,26 @@ export default function KindlinkJoinedPage() {
                   
                   <div className="relative max-w-xs mb-6 group/input">
                     <input 
-                      type="date" 
-                      defaultValue="2026-03-05"
+                      type="text"
+                      readOnly 
+                      value={`Start at: ${cp.startDate}`}
                       className="w-full p-3 pr-10 border border-gray-200 rounded-2xl text-sm bg-gray-50/30 outline-none focus:border-blue-400 cursor-pointer text-gray-500 font-medium transition-all"
                     />
                     <Calendar className="absolute right-4 top-3.5 w-4 h-4 text-gray-400 pointer-events-none group-hover/input:text-blue-500 transition-colors" />
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <button className="flex-1 md:flex-none px-10 py-3 bg-[#FF69B4] text-white font-bold rounded-full shadow-lg shadow-pink-100 active:scale-95 transition-all">Save</button>
-                  
-                  {/* Bọc Link quanh nút Join để chuyển hướng qua trang ID */}
-                  <Link href={`/joined/${cp.id}`} className="flex-1 md:flex-none">
-                    <button className="w-full px-10 py-3 bg-white border-2 border-[#FFD700] text-gray-800 font-bold rounded-full active:scale-95 transition-all hover:bg-yellow-50">
-                      Join
-                    </button>
+                <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-gray-400 transition-all">
+                  <Clock className="w-4 h-4 transition-all" />
+                  <span className="text-sm font-medium italic">
+                      Joined at: 
+                      <span className="text-gray-900 not-italic">{cp.joinedDate}</span>
+                  </span>
+              </div>
+                  <Link href={`/joined/${cp.id}`} className="text-blue-500 font-bold text-sm flex items-center gap-1 transition-all active:scale-95 hover:underline hover:text-blue-600">
+                    View Detail
+                    <ChevronRight className="w-4 h-4 transition-all" />
                   </Link>
                 </div>
               </div>

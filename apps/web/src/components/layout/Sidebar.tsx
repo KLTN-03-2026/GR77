@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  HomeIcon, 
-  HeartIcon, 
-  ClockIcon, 
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import {
+  HomeIcon,
+  HeartIcon,
+  ClockIcon,
   UserGroupIcon,
   DocumentTextIcon,
   WalletIcon,
@@ -15,7 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const menuItems = [
-  { name: 'Home', href: '/campaigns', icon: HomeIcon },
+  { name: 'Home', href: '/home', icon: HomeIcon },
   { name: 'Favorite Campaigns', href: '/favorites', icon: HeartIcon },
   { name: 'Activity History', href: '/activity', icon: ClockIcon },
   { name: 'Joined Campaigns', href: '/joined', icon: UserGroupIcon },
@@ -31,6 +32,33 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        await fetch('http://localhost:3001/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      router.push('/login');
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <>
@@ -41,21 +69,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         ${isOpen ? 'lg:translate-x-0' : 'lg:-translate-x-full'}
       `}>
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
-          {/* Header with Logo and Close button */}
-          <div className="flex items-center justify-between px-4 mb-8">
-            <div className="bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full px-8 py-3">
-              <span className="text-white text-2xl font-bold tracking-wide">KINDLINK</span>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
-          </div>
+          {/* Spacer to push menu items below the fixed Header */}
+          <div className="h-20 w-full flex-shrink-0"></div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 space-y-2">
+          <nav className="flex-1 px-4 space-y-2 mt-4">
             {menuItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
@@ -64,8 +82,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   href={item.href}
                   className={`
                     flex items-center px-4 py-3 text-base font-medium rounded-xl transition-colors
-                    ${isActive 
-                      ? 'bg-blue-50 text-blue-600' 
+                    ${isActive
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-700 hover:bg-gray-50'
                     }
                   `}
@@ -78,10 +96,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
             {/* Logout button */}
             <button
-              className="w-full flex items-center px-4 py-3 text-base font-medium text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center px-4 py-3 text-base font-medium text-gray-700 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               <ArrowRightOnRectangleIcon className="mr-3 h-6 w-6" />
-              Log out
+              {isLoggingOut ? 'Logging out...' : 'Log out'}
             </button>
           </nav>
         </div>
@@ -98,8 +118,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 href={item.href}
                 className={`
                   flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors
-                  ${isActive 
-                    ? 'text-blue-600' 
+                  ${isActive
+                    ? 'text-blue-600'
                     : 'text-gray-600'
                   }
                 `}
