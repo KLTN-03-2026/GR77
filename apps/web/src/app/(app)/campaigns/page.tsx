@@ -55,7 +55,7 @@ export default function CampaignsPage() {
                     <h3 className="font-bold text-gray-900 mb-2">
                       {campaign.title}
                     </h3>
-                    
+                    {/* Chỗ để giá đây đừng mù nữa Híu */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-sm text-gray-600">Amount Raised</span>
@@ -63,10 +63,18 @@ export default function CampaignsPage() {
                           ${campaign.amountRaised.toLocaleString()}
                         </span>
                       </div>
-                      
-                      <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
-                        <span>{formatDate(campaign.endDate || campaign.startDate)}</span>
-                        <CalendarIcon className="h-4 w-4" />
+                      {/* cái datetime picker  */}
+                      <div className="flex items-center justify-center">
+                        <div className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-200 active:scale-95 transition cursor-pointer hover:border-blue-500 hover:text-blue-500">
+                          
+                          <input
+                            type="datetime-local"
+                            className="bg-transparent outline-none text-sm cursor-pointer"
+                            defaultValue={campaign.endDate || campaign.startDate}
+                          />
+
+                          <CalendarIcon className="h-4 w-4" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -127,9 +135,14 @@ export default function CampaignsPage() {
                         </span>
                       </div>
                       
-                      <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
-                        <span>{formatDate(campaign.endDate || campaign.startDate)}</span>
-                        <CalendarIcon className="h-4 w-4" />
+                      <div className="flex items-center justify-center">
+                        <div className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-200 active:scale-95 transition cursor-pointer hover:border-blue-500 hover:text-blue-500">
+                          <input
+                            type="datetime-local"
+                            className="bg-transparent outline-none text-sm cursor-pointer"
+                            defaultValue={campaign.endDate || campaign.startDate}/>
+                          <CalendarIcon className="h-4 w-4" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -137,7 +150,6 @@ export default function CampaignsPage() {
               </Link>
             ))}
           </div>
-
           {/* View activity link */}
           <div className="text-right">
             <Link 
@@ -190,9 +202,14 @@ export default function CampaignsPage() {
                         </span>
                       </div>
                       
-                      <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
-                        <span>{formatDate(campaign.endDate || campaign.startDate)}</span>
-                        <CalendarIcon className="h-4 w-4" />
+                      <div className="flex items-center justify-center">
+                        <div className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-200 active:scale-95 transition cursor-pointer hover:border-blue-500 hover:text-blue-500">
+                          <input
+                            type="datetime-local"
+                            className="bg-transparent outline-none text-sm cursor-pointer"
+                            defaultValue={campaign.endDate || campaign.startDate}/>
+                          <CalendarIcon className="h-4 w-4" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -253,9 +270,14 @@ export default function CampaignsPage() {
                         </span>
                       </div>
                       
-                      <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
-                        <span>{formatDate(campaign.endDate || campaign.startDate)}</span>
-                        <CalendarIcon className="h-4 w-4" />
+                      <div className="flex items-center justify-center">
+                        <div className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-200 active:scale-95 transition cursor-pointer hover:border-blue-500 hover:text-blue-500">
+                          <input
+                            type="datetime-local"
+                            className="bg-transparent outline-none text-sm cursor-pointer"
+                            defaultValue={campaign.endDate || campaign.startDate}/>
+                          <CalendarIcon className="h-4 w-4" />
+                        </div>
                       </div>
                     </div>
                   </div>
