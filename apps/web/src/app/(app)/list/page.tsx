@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { mockCampaigns } from '@/lib/mock';
-import { CalendarIcon, MagnifyingGlassIcon, Bars3CenterLeftIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import { CalendarIcon, MagnifyingGlassIcon, Bars3CenterLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { HeartIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
 
@@ -29,7 +29,14 @@ function getPageNumbers(current: number, total: number) {
 
 const ITEMS_PER_PAGE = 4;
 
-const CATEGORIES = ['All', 'Education', 'Healthcare', 'Community', 'Environment', 'Animals'];
+const CATEGORIES = ['All', 'education', 'health', 'environment', 'social'];
+const CATEGORY_LABELS: Record<string, string> = {
+    'All': 'All Categories',
+    'education': 'Education',
+    'health': 'Health',
+    'environment': 'Environment',
+    'social': 'Social Welfare',
+};
 
 export default function ListCampaignsPage() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -37,7 +44,47 @@ export default function ListCampaignsPage() {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [startDateFilter, setStartDateFilter] = useState('');
     const [endDateFilter, setEndDateFilter] = useState('');
-    const [campaigns, setCampaigns] = useState(mockCampaigns);
+    const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [totalFromApi, setTotalFromApi] = useState(0);
+
+    // Fetch campaigns from API
+    useEffect(() => {
+        const fetchCampaigns = async () => {
+            setIsLoading(true);
+            setError('');
+            try {
+                const params = new URLSearchParams();
+                params.set('page', '1');
+                params.set('limit', '100'); // Fetch all for client-side filtering
+
+                if (selectedCategory !== 'All') {
+                    params.set('category', selectedCategory);
+                }
+                if (search) {
+                    params.set('q', search);
+                }
+
+                const res = await fetch(`http://localhost:3001/campaigns?${params.toString()}`);
+
+                if (!res.ok) {
+                    throw new Error('Failed to fetch campaigns');
+                }
+
+                const data = await res.json();
+                setCampaigns(data.items || []);
+                setTotalFromApi(data.meta?.total || 0);
+            } catch (err: any) {
+                console.error('Fetch error:', err);
+                setError(err.message || 'Something went wrong');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCampaigns();
+    }, [search, selectedCategory]);
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'No date';
@@ -45,33 +92,28 @@ export default function ListCampaignsPage() {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
+    const formatCurrency = (amount: number | string) => {
+        return Number(amount).toLocaleString('vi-VN');
+    };
+
+    // Client-side date filtering
     const filtered = useMemo(() => {
         return campaigns.filter((c) => {
-            const matchSearch = c.title.toLowerCase().includes(search.toLowerCase());
-
             const matchDate = (() => {
                 if (!startDateFilter && !endDateFilter) return true;
-                const campaignDate = c.startDate ? new Date(c.startDate).getTime() : 0;
+                const campaignDate = c.startAt ? new Date(c.startAt).getTime() : 0;
                 const start = startDateFilter ? new Date(startDateFilter).getTime() : 0;
                 const end = endDateFilter ? new Date(endDateFilter).getTime() + 86400000 : Infinity;
                 return campaignDate >= start && campaignDate <= end;
             })();
 
-            const matchCat = selectedCategory === 'All' || c.category === selectedCategory;
-
-            return matchSearch && matchDate && matchCat;
+            return matchDate;
         });
-    }, [campaigns, search, startDateFilter, endDateFilter, selectedCategory]);
+    }, [campaigns, startDateFilter, endDateFilter]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const paginated = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-    const handleToggleFavorite = (id: string) => {
-        setCampaigns((prev) =>
-            prev.map((c) => (c.id === id ? { ...c, isFavorite: !c.isFavorite } : c))
-        );
-    };
 
     const handlePageChange = (page: number) => {
         setCurrentPage(Math.max(1, Math.min(page, totalPages)));
@@ -83,7 +125,11 @@ export default function ListCampaignsPage() {
         setCurrentPage(1);
     };
 
-
+    // Progress bar calculation
+    const getProgress = (raised: number, goal: number) => {
+        if (!goal || goal === 0) return 0;
+        return Math.min((raised / goal) * 100, 100);
+    };
 
     return (
         <div className="p-4 md:p-8 bg-white min-h-screen">
@@ -93,8 +139,9 @@ export default function ListCampaignsPage() {
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <Bars3CenterLeftIcon className="w-7 h-7 text-cyan-500" />
-                        List campaigns
+                        List Campaigns
                     </h1>
+                    <p className="text-sm text-gray-400 mt-1 ml-9">Explore and support active campaigns</p>
                 </div>
 
                 {/* Search + filter bar */}
@@ -138,7 +185,7 @@ export default function ListCampaignsPage() {
                             style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right .5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
                         >
                             {CATEGORIES.map(cat => (
-                                <option key={cat} value={cat}>{cat === 'All' ? 'Category Setup' : cat}</option>
+                                <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>
                             ))}
                         </select>
                     </div>
@@ -150,27 +197,51 @@ export default function ListCampaignsPage() {
                     {search ? ` matching "${search}"` : ''}
                 </p>
 
-                {/* Campaign list */}
-                {paginated.length > 0 ? (
+                {/* Loading State */}
+                {isLoading ? (
+                    <div className="flex flex-col justify-center items-center py-24 mb-14 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 gap-4">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500"></div>
+                        <p className="text-gray-400 font-medium text-sm">Loading campaigns...</p>
+                    </div>
+                ) : error ? (
+                    <div className="flex justify-center items-center py-24 mb-14 text-red-500 font-medium text-lg border-2 border-dashed border-red-200 rounded-2xl bg-red-50">
+                        {error}
+                    </div>
+                ) : paginated.length > 0 ? (
                     <>
                         <div className="space-y-6 mb-8">
                             {paginated.map((campaign) => {
+                                const progress = getProgress(0, Number(campaign.fundingGoalAmount));
                                 return (
-                                    <div
+                                    <Link
                                         key={campaign.id}
-                                        className="flex flex-col md:flex-row bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:border-cyan-400 hover:ring-2 hover:ring-cyan-100 transition-all group"
+                                        href={`/home/${campaign.id}`}
+                                        className="flex flex-col md:flex-row bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:border-cyan-400 hover:ring-2 hover:ring-cyan-100 transition-all group block"
                                     >
                                         {/* Image */}
                                         <div className="w-full md:w-[35%] p-4 h-56 md:h-auto relative">
                                             <div className="relative h-full w-full overflow-hidden rounded-[2rem]">
-                                                <img
-                                                    src={campaign.image}
-                                                    alt={campaign.title}
-                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                />
+                                                {campaign.coverImageUrl ? (
+                                                    <img
+                                                        src={campaign.coverImageUrl}
+                                                        alt={campaign.title}
+                                                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
+                                                        <Bars3CenterLeftIcon className="w-16 h-16 text-cyan-300" />
+                                                    </div>
+                                                )}
                                                 {/* Category badge */}
-                                                <span className="absolute top-3 left-3 bg-white/90 text-cyan-600 text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
-                                                    {campaign.category}
+                                                <span className="absolute top-3 left-3 bg-white/90 text-cyan-600 text-xs font-semibold px-3 py-1 rounded-full shadow-sm capitalize">
+                                                    {CATEGORY_LABELS[campaign.category] || campaign.category}
+                                                </span>
+                                                {/* Status badge */}
+                                                <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${campaign.status === 'ACTIVE'
+                                                    ? 'bg-green-100/90 text-green-600'
+                                                    : 'bg-yellow-100/90 text-yellow-600'
+                                                    }`}>
+                                                    {campaign.status}
                                                 </span>
                                             </div>
                                         </div>
@@ -178,40 +249,60 @@ export default function ListCampaignsPage() {
                                         {/* Content */}
                                         <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
                                             <div>
-                                                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 leading-tight">
+                                                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-cyan-600 transition-colors">
                                                     {campaign.title}
                                                 </h2>
-                                                <p className="text-lg font-bold text-slate-700 mb-3 italic">
-                                                    Amount Raised{' '}
-                                                    <span className="text-pink-500 font-bold not-italic">
-                                                        ${campaign.amountRaised.toLocaleString()}
+
+                                                {/* Location */}
+                                                {campaign.locationText && (
+                                                    <div className="flex items-center gap-1.5 text-gray-400 text-sm mb-3">
+                                                        <MapPinIcon className="w-4 h-4" />
+                                                        <span>{campaign.locationText}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Funding goal */}
+                                                <p className="text-lg font-bold text-slate-700 mb-1">
+                                                    Funding Goal{' '}
+                                                    <span className="text-cyan-500 font-extrabold">
+                                                        {formatCurrency(campaign.fundingGoalAmount)} VND
                                                     </span>
                                                 </p>
-                                                {/* Date picker */}
-                                                <div className="relative max-w-xs mb-6 group/input">
-                                                    <input
-                                                        type="date"
-                                                        defaultValue={campaign.endDate || campaign.startDate}
-                                                        className="w-full p-3 pr-10 border border-gray-200 rounded-2xl text-sm bg-gray-50/30 outline-none focus:border-blue-400 cursor-pointer text-gray-500 font-medium transition-all"
-                                                    />
-                                                    <CalendarIcon className="absolute right-4 top-3.5 w-4 h-4 text-gray-400 pointer-events-none group-hover/input:text-blue-500 transition-colors" />
+
+                                                {/* Min donation */}
+                                                <p className="text-xs text-gray-400 mb-4">
+                                                    Min. Donation: <span className="font-bold text-gray-600">{formatCurrency(campaign.minimumDonationAmount)} VND</span>
+                                                </p>
+
+                                                {/* Timeline */}
+                                                <div className="flex flex-wrap items-center gap-4 mb-4">
+                                                    <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                                                        <CalendarIcon className="w-4 h-4 text-gray-400" />
+                                                        <span className="font-medium">{formatDate(campaign.startAt)}</span>
+                                                        <span className="text-gray-300 mx-1">→</span>
+                                                        <span className="font-medium">{formatDate(campaign.endAt)}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Favorites count */}
+                                                <div className="flex items-center gap-1.5 text-sm text-gray-400">
+                                                    <HeartIcon className="w-4 h-4 text-pink-400" />
+                                                    <span className="font-medium">{campaign.favoritesCount || 0} favorites</span>
                                                 </div>
                                             </div>
 
                                             {/* Action buttons */}
-                                            <div className="flex gap-4 items-center">
-                                                <button
-                                                    onClick={() => handleToggleFavorite(campaign.id)}
-                                                    className="flex-1 md:flex-none px-10 py-3 bg-[#FF69B4] text-white font-bold rounded-full shadow-lg shadow-pink-100 active:scale-95 transition-all"
-                                                >
+                                            <div className="flex gap-4 items-center mt-6">
+                                                <span className="flex-1 md:flex-none px-10 py-3 bg-gradient-to-r from-cyan-400 to-cyan-500 text-white font-bold rounded-full shadow-lg shadow-cyan-100 text-center text-sm group-hover:from-cyan-500 group-hover:to-cyan-600 transition-all">
+                                                    View Details
+                                                </span>
+                                                <span className="flex-1 md:flex-none px-8 py-3 bg-white border-2 border-pink-200 text-pink-500 font-bold rounded-full text-center text-sm hover:bg-pink-50 transition-all flex items-center justify-center gap-2">
+                                                    <HeartOutline className="w-4 h-4" />
                                                     Save
-                                                </button>
-                                                <button className="flex-1 md:flex-none px-8 py-3 bg-white border-2 border-[#FFD700] text-gray-800 font-bold rounded-full active:scale-95 transition-all hover:bg-yellow-50">
-                                                    Join
-                                                </button>
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 );
                             })}
                         </div>

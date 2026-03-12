@@ -51,7 +51,7 @@ export default function Header({ onToggleSidebar, isOpen }: HeaderProps) {
     else if (pathname.includes('/activity')) title = 'Activity History';
     else if (pathname.includes('/joined')) title = 'Joined Campaigns';
     else if (pathname.includes('/creator')) title = 'My Campaigns';
-    else if (pathname.includes('/list')) title = 'List campaigns';
+    else if (pathname.includes('/list')) title = 'All Campaigns';
     else if (pathname.includes('/wallet')) title = 'Wallet';
     else if (pathname.includes('/settings')) title = 'Setting';
 

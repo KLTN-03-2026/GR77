@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { UpdateCampaignDto } from './dto/update-campaign.dto';
 /**
  * CampaignsService
  * 
@@ -27,8 +28,13 @@ export class CampaignsService {
 
     const where: any = {};
 
-    // Default: chỉ show ACTIVE campaigns (public view)
-    where.status = query.status ?? 'ACTIVE';
+    // Nếu truyền status cụ thể thì lọc theo status đó, 
+    // nếu không thì hiện tất cả trừ DRAFT
+    if (query.status) {
+      where.status = query.status;
+    } else {
+      where.status = { not: 'DRAFT' };
+    }
 
     if (query.category) {
       where.category = { equals: query.category, mode: 'insensitive' };
@@ -171,5 +177,26 @@ export class CampaignsService {
       },
     });
     return campaign;
+  }
+
+  /**
+   * update()
+   * 
+   */
+  async update(userId: string, id: string, dto: UpdateCampaignDto) {
+    const campaign = await (this.prisma as any).campaign.findUnique({
+      where: { id },
+    });
+
+    if (!campaign) throw new NotFoundException('Campaign not found');
+
+    if (campaign.creatorUserId !== userId) {
+      throw new ForbiddenException('You do not have permission to update this campaign');
+    }
+
+    return (this.prisma as any).campaign.update({
+      where: { id },
+      data: dto,
+    });
   }
 }

@@ -91,6 +91,8 @@ docker-compose down
    # Tạo Prisma Client
    pnpm --filter api exec prisma generate
    
+   pnpm --filter api exec prisma migrate deploy
+   
    # Chạy dev mode
    pnpm dev:api
    ```
