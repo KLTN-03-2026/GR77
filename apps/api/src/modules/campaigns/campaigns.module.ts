@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { CampaignsController } from './campaigns.controller';
 import { CampaignsService } from './campaigns.service';
+import { AuthModule } from '../auth/auth.module';
 
 /**
  * CampaignsModule
@@ -20,8 +21,8 @@ import { CampaignsService } from './campaigns.service';
  * - PrismaModule: database access
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuthModule],
   controllers: [CampaignsController],
   providers: [CampaignsService],
 })
-export class CampaignsModule {}
+export class CampaignsModule { }

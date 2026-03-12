@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
     MagnifyingGlassIcon,
     ArrowDownTrayIcon,
@@ -53,8 +54,50 @@ const AreaTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function CreatorCampaignsPage() {
-    // This is currently empty, simulating no campaigns. Change this array to test the table.
-    const campaigns: any[] = [];
+    const router = useRouter();
+    const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchCampaigns = async () => {
+            setIsLoading(true);
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    router.push('/login');
+                    return;
+                }
+
+                const res = await fetch('http://localhost:3001/campaigns/me/list', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        localStorage.removeItem('accessToken');
+                        router.push('/login');
+                        return;
+                    }
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Failed to fetch campaigns');
+                }
+
+                const data = await res.json();
+                setCampaigns(data);
+            } catch (err: any) {
+                console.error(err);
+                setError(err.message || 'Something went wrong');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCampaigns();
+    }, [router]);
+
 
     return (
         <div className="w-full max-w-5xl mx-auto pb-10">
@@ -82,44 +125,57 @@ export default function CreatorCampaignsPage() {
             </div>
 
             {/* Table or Empty State */}
-            {campaigns.length > 0 ? (
+            {isLoading ? (
+                <div className="flex justify-center items-center py-24 mb-14 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+            ) : error ? (
+                <div className="flex justify-center items-center py-24 mb-14 text-red-500 font-medium text-lg border-2 border-dashed border-red-200 rounded-2xl bg-red-50">
+                    {error}
+                </div>
+            ) : campaigns.length > 0 ? (
                 <>
-                    <div className="overflow-x-auto rounded-t-xl rounded-b-xl shadow-sm border border-gray-100 mb-8 bg-white">
-                        <table className="w-full text-center text-sm font-medium">
+                    <div className="overflow-x-auto rounded-t-xl rounded-b-xl shadow-sm border border-gray-100 mb-8 bg-white text-gray-800">
+                        <table className="w-full text-center text-[13px] font-medium border-collapse">
                             <thead className="bg-[#7fa8e8] text-white">
                                 <tr>
                                     <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[5%]">ID</th>
                                     <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[20%]">Name</th>
                                     <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Created at</th>
-                                    <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Progress</th>
+                                    <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Goal (VND)</th>
                                     <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Address</th>
                                     <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Approval Status</th>
                                     <th className="py-3.5 px-4 font-bold w-[15%]">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {[...Array(5)].map((_, index) => (
-                                    <tr key={index} className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem]">
-                                        <td className="border-r border-white"></td>
-                                        <td className="border-r border-white"></td>
-                                        <td className="border-r border-white"></td>
-                                        <td className="border-r border-white"></td>
-                                        <td className="border-r border-white"></td>
-                                        <td className="border-r border-white"></td>
-                                        <td></td>
+                                {campaigns.map((camp, index) => (
+                                    <tr key={camp.id} className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors">
+                                        <td className="border-r border-white font-bold">#{index + 1}</td>
+                                        <td className="border-r border-white px-4">
+                                            <div className="font-bold truncate text-left">{camp.title}</div>
+                                            <div className="text-[10px] text-gray-400 text-left">{camp.category}</div>
+                                        </td>
+                                        <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
+                                        <td className="border-r border-white font-bold">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
+                                        <td className="border-r border-white px-4 truncate">{camp.locationText}</td>
+                                        <td className="border-r border-white px-4">
+                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${camp.status === 'ACTIVE' ? 'bg-green-100 text-green-600' :
+                                                camp.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
+                                                    'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                {camp.status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button className="text-gray-400 hover:text-gray-600">
+                                                <EllipsisVerticalIcon className="h-5 w-5" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-
-                    {/* Pagination */}
-                    <div className="flex justify-center items-center gap-2.5 mb-14">
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#3bc8ed] shadow-[0_2px_8px_-2px_rgba(59,200,237,0.5)] text-white font-bold text-xs">1</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#bae9f7] bg-white text-[#3bc8ed] font-bold text-xs hover:bg-gray-50 transition-colors">2</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#bae9f7] bg-white text-[#3bc8ed] font-bold text-xs hover:bg-gray-50 transition-colors">3</button>
-                        <span className="text-[#3bc8ed] tracking-[0.2em] font-bold text-sm px-1.5 pt-1">...</span>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#bae9f7] bg-white text-[#3bc8ed] font-bold text-xs hover:bg-gray-50 transition-colors">n</button>
                     </div>
                 </>
             ) : (

@@ -1,10 +1,66 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export default function NewCampaignPage() {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+
+        const formData = new FormData(e.currentTarget);
+        const data = {
+            title: formData.get('title') as string,
+            description: formData.get('description') as string,
+            category: formData.get('category') as string,
+            locationText: formData.get('locationText') as string,
+            fundingGoalAmount: Number(formData.get('fundingGoalAmount')),
+            minimumDonationAmount: Number(formData.get('minimumDonationAmount')),
+            startAt: new Date(formData.get('startAt') as string).toISOString(),
+            endAt: new Date(formData.get('endAt') as string).toISOString(),
+            autoCloseWhenGoalReached: formData.get('autoCloseWhenGoalReached') === 'on',
+        };
+
+        try {
+            // Note: you may need to update the URL and handle the auth token properly based on your auth implementation
+            const token = localStorage.getItem('accessToken');
+
+            const response = await fetch('http://localhost:3001/campaigns', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem('accessToken');
+                    router.push('/login');
+                    return;
+                }
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.message || 'Failed to create campaign');
+            }
+
+            // Redirect to campaigns list on success
+            router.push('/creator/campaigns');
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'An error occurred. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="w-full max-w-5xl mx-auto pb-20">
 
@@ -15,7 +71,12 @@ export default function NewCampaignPage() {
 
             {/* Form Container */}
             <div className="max-w-4xl bg-white">
-                <form className="space-y-6">
+                {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                        {error}
+                    </div>
+                )}
+                <form className="space-y-6" onSubmit={handleSubmit}>
 
                     {/* Campaign Title */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
@@ -158,10 +219,11 @@ export default function NewCampaignPage() {
                     {/* Submit Button */}
                     <div className="pt-12 pb-6 flex justify-center">
                         <button
-                            type="button"
-                            className="bg-gradient-to-r from-[#4fb3fc] to-[#45a8f7] hover:opacity-90 text-white font-black text-sm px-16 py-3.5 rounded-[12px] shadow-[0_4px_14px_0_rgba(79,179,252,0.39)] transition-all uppercase tracking-wide"
+                            type="submit"
+                            disabled={isLoading}
+                            className="bg-gradient-to-r from-[#4fb3fc] to-[#45a8f7] hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed text-white font-black text-sm px-16 py-3.5 rounded-[12px] shadow-[0_4px_14px_0_rgba(79,179,252,0.39)] transition-all uppercase tracking-wide"
                         >
-                            Save
+                            {isLoading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
 
