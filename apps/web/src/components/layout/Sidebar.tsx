@@ -12,11 +12,17 @@ import {
   WalletIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  XMarkIcon,
-  Bars3BottomLeftIcon
+  Bars3BottomLeftIcon,
 } from '@heroicons/react/24/outline';
+export interface MenuItem {
+  name: string;
+  href: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: React.FC<any>;
+}
 
-const menuItems = [
+/** Default navigation for regular users */
+export const userMenuItems: MenuItem[] = [
   { name: 'Home', href: '/home', icon: HomeIcon },
   { name: 'Favorite Campaigns', href: '/favorites', icon: HeartIcon },
   { name: 'Activity History', href: '/activity', icon: ClockIcon },
@@ -30,12 +36,21 @@ const menuItems = [
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Override the default user menu with a custom list (e.g. admin menu) */
+  menuItems?: MenuItem[];
+  /** Optional role label shown at the top of the sidebar (e.g. 'ADMIN') */
+  roleLabel?: string;
+  /** Optional class to override the top spacer height (defaults to h-[104px]) */
+  topSpacerClass?: string;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpacerClass = 'h-[104px]' }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Use provided menuItems or fall back to default user menu
+  const items = menuItems ?? userMenuItems;
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -70,13 +85,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         transition-transform duration-300 z-30
         ${isOpen ? 'lg:translate-x-0' : 'lg:-translate-x-full'}
       `}>
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
-          {/* Spacer to push menu items below the fixed Header */}
-          <div className="h-20 w-full flex-shrink-0"></div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 space-y-2 mt-6">
-            {menuItems.map((item) => {
+        <div className={`${topSpacerClass} w-full flex-shrink-0 bg-white border-r border-gray-200 flex items-end justify-center pb-2`}>
+          {roleLabel && (
+            <span className="text-base font-black tracking-[0.3em] text-gray-700 uppercase">
+              {roleLabel}
+            </span>
+          )}
+        </div>
+        <div className="flex-1 min-h-0 bg-white border-r border-gray-200 overflow-y-auto pb-4">
+          <nav className="flex-1 px-4 space-y-2 mt-2">
+            {items.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
                 <Link
@@ -100,14 +118,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             })}
 
             {/* Logout button */}
-            <button
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="w-full flex items-center px-4 py-3 text-base font-medium text-gray-700 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              <ArrowRightOnRectangleIcon className="mr-3 h-6 w-6" />
-              {isLoggingOut ? 'Logging out...' : 'Log out'}
-            </button>
+            <div className="mt-4 pb-4">
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className={`
+                  w-full flex items-center px-4 py-3 text-base rounded-xl transition-all border
+                  text-gray-900 font-medium border-transparent 
+                  hover:border-red-400 hover:ring-2 hover:ring-red-100 hover:bg-white hover:text-red-600 hover:shadow-sm
+                  disabled:opacity-50
+                `}
+              >
+                <ArrowRightOnRectangleIcon className="mr-4 h-6 w-6 stroke-2" />
+                {isLoggingOut ? 'Logging out...' : 'Log out'}
+              </button>
+            </div>
           </nav>
         </div>
       </aside>
@@ -115,7 +140,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Mobile bottom navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
         <div className="grid grid-cols-5 gap-1 px-2 py-2">
-          {menuItems.slice(0, 5).map((item) => {
+          {items.slice(0, 5).map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link
