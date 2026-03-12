@@ -12,7 +12,8 @@ import {
   WalletIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  XMarkIcon
+  XMarkIcon,
+  Bars3BottomLeftIcon
 } from '@heroicons/react/24/outline';
 
 const menuItems = [
@@ -21,6 +22,7 @@ const menuItems = [
   { name: 'Activity History', href: '/activity', icon: ClockIcon },
   { name: 'Joined Campaigns', href: '/joined', icon: UserGroupIcon },
   { name: 'My Campaigns', href: '/creator/campaigns', icon: DocumentTextIcon },
+  { name: 'List campaigns', href: '/list', icon: Bars3BottomLeftIcon },
   { name: 'Wallet', href: '/wallet', icon: WalletIcon },
   { name: 'Setting', href: '/settings', icon: Cog6ToothIcon },
 ];
@@ -73,7 +75,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="h-20 w-full flex-shrink-0"></div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 space-y-2 mt-4">
+          <nav className="flex-1 px-4 space-y-2 mt-6">
             {menuItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
@@ -81,14 +83,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   key={item.name}
                   href={item.href}
                   className={`
-                    flex items-center px-4 py-3 text-base font-medium rounded-xl transition-colors
+                    relative flex items-center px-4 py-3 text-base rounded-xl transition-all border
                     ${isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-[#47c9e5]/10 text-[#47c9e5] font-medium border-transparent'
+                      : 'text-gray-900 font-medium border-transparent hover:border-cyan-400 hover:ring-2 hover:ring-cyan-100 hover:bg-white hover:text-cyan-600 hover:shadow-sm'
                     }
                   `}
                 >
-                  <item.icon className="mr-3 h-6 w-6" />
+                  {isActive && (
+                    <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#47c9e5] rounded-r-full" />
+                  )}
+                  <item.icon className={`mr-4 h-6 w-6 ${isActive ? 'stroke-2' : ''}`} />
                   {item.name}
                 </Link>
               );

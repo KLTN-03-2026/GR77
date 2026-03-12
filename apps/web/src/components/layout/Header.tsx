@@ -51,6 +51,7 @@ export default function Header({ onToggleSidebar, isOpen }: HeaderProps) {
     else if (pathname.includes('/activity')) title = 'Activity History';
     else if (pathname.includes('/joined')) title = 'Joined Campaigns';
     else if (pathname.includes('/creator')) title = 'My Campaigns';
+    else if (pathname.includes('/list')) title = 'List campaigns';
     else if (pathname.includes('/wallet')) title = 'Wallet';
     else if (pathname.includes('/settings')) title = 'Setting';
 
@@ -65,21 +66,33 @@ export default function Header({ onToggleSidebar, isOpen }: HeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 transition-all duration-300">
       <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 lg:gap-2">
+          {/* Toggle sidebar button */}
+          <button
+            onClick={onToggleSidebar}
+            className="hidden lg:block -ml-2 p-2 text-gray-900 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <Bars3Icon className="h-6 w-6 stroke-2" />
+          </button>
+
           {/* Logo */}
-          <div className="bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full px-6 py-2.5 sm:px-8 sm:py-3 shadow-sm flex items-center justify-center min-w-[140px] sm:min-w-[170px]">
-            <span className="text-white text-xl sm:text-2xl font-bold tracking-wide">KINDLINK</span>
+          <div className="bg-[#47c9e5] rounded-full px-3 py-1 sm:px-4 sm:py-1.5 shadow-md flex items-center justify-center min-w-max">
+            <span className="text-white text-xl sm:text-2xl font-black tracking-wide flex items-center">
+              K
+              <span className="relative -top-[-0.04em] mx-[4px] w-[0.2em] h-[0.72em]">
+                {/* Custom dot (water drop) */}
+                <span
+                  className="absolute -top-[0.4em] left-[0.2em] w-[0.22em] h-[0.25em] bg-white transition-all"
+                  style={{ borderRadius: '50% 80% 50% 0.5px' }}
+                ></span>
+                {/* Custom stem */}
+                <span className="absolute bottom-0 left-0 w-full h-full bg-white rounded-full"></span>
+              </span>
+              NDLINK
+            </span>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Toggle sidebar button */}
-            <button
-              onClick={onToggleSidebar}
-              className="hidden lg:block p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-
             {/* Welcome message */}
             <p className="text-gray-800 text-xl sm:text-2xl lg:text-3xl ml-2 whitespace-nowrap" style={{ fontFamily: 'Allura, cursive' }}>
               Welcome back, {userName}. Ready to create impact today?
