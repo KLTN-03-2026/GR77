@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Island_Moments } from "next/font/google";
 import Footer from "@/components/layout/Footer";
@@ -11,6 +13,54 @@ const islandMoments = Island_Moments({
 });
 
 export default function Home() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3001/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        let errorMsg = "Registration failed.";
+        try {
+          const data = await res.json();
+          errorMsg = data.message || errorMsg;
+        } catch (e) { }
+        throw new Error(errorMsg);
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const partnerLogos = [
     { src: "/images/or1.jpg", name: "Partner 1" },
     { src: "/images/or2.jpg", name: "Partner 2" },
@@ -260,19 +310,17 @@ export default function Home() {
             </div>
 
             <div className="relative z-10 w-full p-8 lg:p-16 lg:pl-24 text-white">
-              <form className="space-y-8 max-w-5xl">
-                {/* Row 1: Aligned with 'Username' label */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center">
-                  <div className="lg:col-span-3">
-                    <label className="text-xl font-bold">Username</label>
+              <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl">
+                {error && (
+                  <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-white text-sm">
+                    {error}
                   </div>
-                  <div className="lg:col-span-9">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-12">
-                      <input type="text" placeholder="First name" className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm text-center focus:ring-2 focus:ring-blue-300 transition-all" />
-                      <input type="text" placeholder="Last name" className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm text-center focus:ring-2 focus:ring-blue-300 transition-all" />
-                    </div>
+                )}
+                {success && (
+                  <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-xl text-white text-sm">
+                    Registration successful! Redirecting to login...
                   </div>
-                </div>
+                )}
 
                 {/* Row 2: Email */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center">
@@ -280,7 +328,14 @@ export default function Home() {
                     <label className="text-xl font-bold">Email</label>
                   </div>
                   <div className="lg:col-span-9">
-                    <input type="email" placeholder="Email" className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all" />
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all"
+                    />
                   </div>
                 </div>
 
@@ -290,7 +345,14 @@ export default function Home() {
                     <label className="text-xl font-bold">Password</label>
                   </div>
                   <div className="lg:col-span-9">
-                    <input type="password" placeholder="Password" className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all" />
+                    <input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all"
+                    />
                   </div>
                 </div>
 
@@ -300,7 +362,14 @@ export default function Home() {
                     <label className="text-xl font-bold leading-tight">Confirm Password</label>
                   </div>
                   <div className="lg:col-span-9">
-                    <input type="password" placeholder="Confirm Password" className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all" />
+                    <input
+                      type="password"
+                      placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all"
+                    />
                   </div>
                 </div>
 
@@ -315,8 +384,12 @@ export default function Home() {
                     </div>
 
                     <div className="flex justify-center w-full">
-                      <button className="px-24 py-4 bg-white text-blue-900 font-bold text-xl rounded-full shadow-2xl hover:bg-gray-100 hover:scale-105 transition-all border border-gray-100 italic active:scale-95">
-                        Sign up
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="px-24 py-4 bg-white text-blue-900 font-bold text-xl rounded-full shadow-2xl hover:bg-gray-100 hover:scale-105 transition-all border border-gray-100 italic active:scale-95 disabled:opacity-50"
+                      >
+                        {isLoading ? "Signing up..." : "Sign up"}
                       </button>
                     </div>
                   </div>
