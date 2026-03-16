@@ -1,38 +1,131 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { HeartIcon } from '@heroicons/react/24/solid';
+import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
 
 interface FavoriteButtonProps {
     campaignId: string;
     initialFavorited?: boolean;
+    /** Optional callback after toggle succeeds */
+    onToggle?: (campaignId: string, favorited: boolean) => void;
 }
 
+/**
+ * FavoriteButton – Save / Saved toggle
+ *
+ * UX:
+ * - Chưa yêu thích: nền trắng, viền hồng, text "Save" màu hồng
+ * - Đã yêu thích:   nền hồng, viền hồng, text "Saved" màu trắng
+ *
+ * Gọi API:
+ * - POST   /favorites           { campaignId }   → yêu thích
+ * - DELETE /favorites/:campaignId                → bỏ yêu thích
+ */
 export default function FavoriteButton({
     campaignId,
     initialFavorited = false,
+    onToggle,
 }: FavoriteButtonProps) {
     const [favorited, setFavorited] = useState(initialFavorited);
+    const [loading, setLoading] = useState(false);
 
-    const toggle = () => {
-        setFavorited((prev) => !prev);
-        // TODO: Call API to update favorite status
-    };
+    const toggle = useCallback(
+        async (e: React.MouseEvent) => {
+            // Prevent Link navigation when clicking inside a card link
+            e.preventDefault();
+            e.stopPropagation();
+
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Vui lòng đăng nhập để lưu chiến dịch!');
+                return;
+            }
+
+            if (loading) return;
+            setLoading(true);
+
+            // Optimistic update
+            const prev = favorited;
+            setFavorited(!prev);
+
+            try {
+                if (prev) {
+                    // Currently favorited → unfavorite
+                    const res = await fetch(
+                        `http://localhost:3001/favorites/${campaignId}`,
+                        {
+                            method: 'DELETE',
+                            headers: { Authorization: `Bearer ${token}` },
+                        },
+                    );
+                    if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({}));
+                        console.error('Unfavorite Error:', res.status, errorData);
+                        throw new Error('Failed to unfavorite');
+                    }
+                } else {
+                    // Not favorited → favorite
+                    const res = await fetch('http://localhost:3001/favorites', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ campaignId }),
+                    });
+
+                    if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({}));
+                        console.error('Favorite Error:', res.status, errorData);
+                        if (res.status === 401) {
+                            alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+                        } else {
+                            alert('Đã xảy ra lỗi khi yêu thích chiến dịch. Vui lòng thử lại.');
+                        }
+                        // Trả lại trạng thái cũ
+                        setFavorited(prev);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
+                onToggle?.(campaignId, !prev);
+            } catch (err) {
+                console.error('Favorite toggle exception:', err);
+                alert('Không thể kết nối tới máy chủ. Vui lòng thử lại.');
+                // Rollback on failure
+                setFavorited(prev);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [campaignId, favorited, loading, onToggle],
+    );
 
     return (
         <button
             onClick={toggle}
+            disabled={loading}
             aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className={`
+                inline-flex items-center justify-center gap-2
+                px-8 py-3 rounded-full text-sm font-bold
+                border-2 border-pink-400
+                transition-all duration-200 select-none
+                ${loading ? 'opacity-60 cursor-wait' : 'cursor-pointer'}
+                ${favorited
+                    ? 'bg-pink-500 text-white hover:bg-pink-600'
+                    : 'bg-white text-pink-500 hover:bg-pink-50'
+                }
+            `}
         >
             {favorited ? (
-                <svg className="h-5 w-5 text-red-500 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
+                <HeartIcon className="w-4 h-4" />
             ) : (
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                <HeartOutline className="w-4 h-4" />
             )}
+            {favorited ? 'Saved' : 'Save'}
         </button>
     );
 }
