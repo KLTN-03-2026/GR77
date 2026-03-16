@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { CalendarIcon, MagnifyingGlassIcon, Bars3CenterLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { HeartIcon } from '@heroicons/react/24/solid';
-import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
+import FavoriteButton from '@/components/campaign/FavoriteButton';
 
 // Pagination helper
 function getPageNumbers(current: number, total: number) {
@@ -48,6 +48,48 @@ export default function ListCampaignsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [totalFromApi, setTotalFromApi] = useState(0);
+    const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+
+    // Fetch user's favorited campaign IDs on mount
+    useEffect(() => {
+        const fetchFavorites = async () => {
+            const token = localStorage.getItem('accessToken');
+            if (!token) return;
+            try {
+                const res = await fetch('http://localhost:3001/favorites?limit=1000', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const ids = new Set<string>((data.items || []).map((c: any) => c.id));
+                setFavoriteIds(ids);
+            } catch {
+                // silently ignore – user may not be logged in
+            }
+        };
+        fetchFavorites();
+    }, []);
+
+    // Callback when a favorite is toggled
+    const handleFavoriteToggle = useCallback((campaignId: string, nowFavorited: boolean) => {
+        setFavoriteIds(prev => {
+            const next = new Set(prev);
+            if (nowFavorited) {
+                next.add(campaignId);
+            } else {
+                next.delete(campaignId);
+            }
+            return next;
+        });
+        // Update favoritesCount on the campaign
+        setCampaigns(prev =>
+            prev.map(c =>
+                c.id === campaignId
+                    ? { ...c, favoritesCount: (c.favoritesCount || 0) + (nowFavorited ? 1 : -1) }
+                    : c,
+            ),
+        );
+    }, []);
 
     // Fetch campaigns from API
     useEffect(() => {
@@ -296,10 +338,11 @@ export default function ListCampaignsPage() {
                                                 <span className="flex-1 md:flex-none px-10 py-3 bg-gradient-to-r from-cyan-400 to-cyan-500 text-white font-bold rounded-full shadow-lg shadow-cyan-100 text-center text-sm group-hover:from-cyan-500 group-hover:to-cyan-600 transition-all">
                                                     View Details
                                                 </span>
-                                                <span className="flex-1 md:flex-none px-8 py-3 bg-white border-2 border-pink-200 text-pink-500 font-bold rounded-full text-center text-sm hover:bg-pink-50 transition-all flex items-center justify-center gap-2">
-                                                    <HeartOutline className="w-4 h-4" />
-                                                    Save
-                                                </span>
+                                                <FavoriteButton
+                                                    campaignId={campaign.id}
+                                                    initialFavorited={favoriteIds.has(campaign.id)}
+                                                    onToggle={handleFavoriteToggle}
+                                                />
                                             </div>
                                         </div>
                                     </Link>
