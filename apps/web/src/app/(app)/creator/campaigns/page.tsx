@@ -157,8 +157,21 @@ export default function CreatorCampaignsPage() {
                                     >
                                         <td className="border-r border-white font-bold">#{index + 1}</td>
                                         <td className="border-r border-white px-4 text-left">
-                                            <div className="font-bold truncate">{camp.title}</div>
-                                            <div className="text-[10px] text-gray-400">{camp.category}</div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
+                                                    {camp.coverImageUrl ? (
+                                                        <img src={camp.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold bg-gray-100">
+                                                            No Pic
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col truncate">
+                                                    <div className="font-bold truncate">{camp.title}</div>
+                                                    <div className="text-[10px] text-gray-400">{camp.category}</div>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
                                         <td className="border-r border-white font-bold">{Number(camp.fundingGoalAmount).toLocaleString()}</td>

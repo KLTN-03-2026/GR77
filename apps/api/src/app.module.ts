@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { CampaignsModule } from './modules/campaigns/campaigns.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 
 @Module({
@@ -19,6 +20,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
     AuthModule,
     CampaignsModule,
     FavoritesModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

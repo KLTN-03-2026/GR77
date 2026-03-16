@@ -1,14 +1,41 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function NewCampaignPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                setError('Image size must be less than 5MB');
+                return;
+            }
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setImageFile(null);
+        setImagePreview('');
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -16,11 +43,43 @@ export default function NewCampaignPage() {
         setError('');
 
         const formData = new FormData(e.currentTarget);
+
+        let coverImageUrl = '';
+        const token = localStorage.getItem('accessToken');
+
+        // 1. Upload image if exists
+        if (imageFile) {
+            try {
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', imageFile);
+
+                const uploadResponse = await fetch('http://localhost:3001/upload', {
+                    method: 'POST',
+                    headers: {
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: uploadFormData,
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error('Failed to upload image');
+                }
+
+                const uploadData = await uploadResponse.json();
+                coverImageUrl = uploadData.url;
+            } catch (err: any) {
+                setError('Failed to upload image: ' + err.message);
+                setIsLoading(false);
+                return;
+            }
+        }
+
         const data = {
             title: formData.get('title') as string,
             description: formData.get('description') as string,
             category: formData.get('category') as string,
             locationText: formData.get('locationText') as string,
+            coverImageUrl: coverImageUrl,
             fundingGoalAmount: Number(formData.get('fundingGoalAmount')),
             minimumDonationAmount: Number(formData.get('minimumDonationAmount')),
             startAt: new Date(formData.get('startAt') as string).toISOString(),
@@ -143,14 +202,45 @@ export default function NewCampaignPage() {
                     </div>
 
                     {/* Cover Image */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2">
                             Cover Image
                         </label>
                         <div className="sm:w-3/4">
-                            <button type="button" className="w-48 bg-[#c2e2f6] border border-transparent rounded-lg px-4 py-2.5 text-sm text-transparent overflow-hidden h-10">
-                                Upload (Placeholder)
-                            </button>
+                            <div className="flex flex-col gap-4">
+                                {imagePreview ? (
+                                    <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden group border border-gray-100 shadow-sm">
+                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={removeImage}
+                                            className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-gray-900 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                            <XMarkIcon className="h-4 w-4 stroke-[3]" />
+                                        </button>
+                                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-all pointer-events-none" />
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full max-w-md aspect-video bg-[#f4f4f4] hover:bg-[#e8e8e8] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-3 transition-all text-gray-500 hover:text-gray-700 hover:border-blue-300 group"
+                                    >
+                                        <div className="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                                            <PhotoIcon className="h-6 w-6 text-blue-500" />
+                                        </div>
+                                        <span className="text-[13px] font-bold">Click to upload cover image</span>
+                                        <span className="text-[11px] font-medium opacity-60">PNG, JPG up to 5MB</span>
+                                    </button>
+                                )}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleImageChange}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
+                            </div>
                         </div>
                     </div>
 
