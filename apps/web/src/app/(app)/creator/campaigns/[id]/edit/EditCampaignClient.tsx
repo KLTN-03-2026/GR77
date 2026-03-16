@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronRightIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, ArrowPathIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function EditCampaignClient({ id }: { id: string }) {
     const router = useRouter();
@@ -11,6 +11,39 @@ export default function EditCampaignClient({ id }: { id: string }) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
     const [campaign, setCampaign] = useState<any>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                setError('Image size must be less than 5MB');
+                return;
+            }
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setImageFile(null);
+        setImagePreview('');
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    useEffect(() => {
+        if (campaign?.coverImageUrl) {
+            setImagePreview(campaign.coverImageUrl);
+        }
+    }, [campaign]);
 
     useEffect(() => {
         const fetchCampaign = async () => {
@@ -60,6 +93,39 @@ export default function EditCampaignClient({ id }: { id: string }) {
 
         const formData = new FormData(e.currentTarget);
 
+        const token = localStorage.getItem('accessToken');
+        let coverImageUrl = campaign?.coverImageUrl || '';
+
+        // 1. Upload new image if exists
+        if (imageFile) {
+            try {
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', imageFile);
+
+                const uploadResponse = await fetch('http://localhost:3001/upload', {
+                    method: 'POST',
+                    headers: {
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: uploadFormData,
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error('Failed to upload image');
+                }
+
+                const uploadData = await uploadResponse.json();
+                coverImageUrl = uploadData.url;
+            } catch (err: any) {
+                setError('Failed to upload image: ' + err.message);
+                setIsSaving(false);
+                return;
+            }
+        } else if (!imagePreview) {
+            // Image was removed
+            coverImageUrl = '';
+        }
+
         // Validation basic
         const title = formData.get('title') as string;
         const description = formData.get('description') as string;
@@ -74,6 +140,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
             description,
             category: formData.get('category') as string,
             locationText: formData.get('locationText') as string,
+            coverImageUrl: coverImageUrl,
             fundingGoalAmount: Number(formData.get('fundingGoalAmount')),
             minimumDonationAmount: Number(formData.get('minimumDonationAmount')),
             startAt: new Date(formData.get('startAt') as string).toISOString(),
@@ -191,6 +258,51 @@ export default function EditCampaignClient({ id }: { id: string }) {
                                 required
                                 className="w-full bg-[#f4f4f4] border border-transparent rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all resize-none shadow-sm"
                             ></textarea>
+                        </div>
+                    </div>
+
+                    {/* Cover Image */}
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2">
+                            Cover Image
+                        </label>
+                        <div className="sm:w-3/4">
+                            <div className="flex flex-col gap-4">
+                                {imagePreview ? (
+                                    <div className="relative w-full max-w-md aspect-video rounded-2xl overflow-hidden group border border-gray-100 shadow-sm">
+                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={removeImage}
+                                            className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white text-gray-900 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 active:scale-90"
+                                        >
+                                            <XMarkIcon className="h-5 w-5 stroke-[3]" />
+                                        </button>
+                                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-all pointer-events-none" />
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full max-w-md aspect-video bg-[#f4f4f4] hover:bg-[#efefef] border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all text-gray-400 hover:text-blue-500 hover:border-blue-200 group"
+                                    >
+                                        <div className="p-4 bg-white rounded-2xl shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all">
+                                            <PhotoIcon className="h-7 w-7 text-blue-500" />
+                                        </div>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[13px] font-bold text-gray-700">Change cover image</span>
+                                            <span className="text-[11px] font-medium opacity-60">Optimized for 16:9 ratio</span>
+                                        </div>
+                                    </button>
+                                )}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleImageChange}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
+                            </div>
                         </div>
                     </div>
 
