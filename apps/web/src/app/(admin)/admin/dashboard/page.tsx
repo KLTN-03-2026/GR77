@@ -45,10 +45,10 @@ const donationData: DonationData[] = [
 ];
 
 const fundDistribution: FundDistributionData[] = [
-  { name: 'Education', value: 35, color: '#3b82f6' },
-  { name: 'Health', value: 25, color: '#ef4444' },
-  { name: 'Environment', value: 20, color: '#22c55e' },
-  { name: 'Community', value: 20, color: '#eab308' },
+  { name: 'Education', value: 35, color: '#F76C6C' },
+  { name: 'Health', value: 25, color: '#7BC712' },
+  { name: 'Environment', value: 20, color: '#5DA2D5' },
+  { name: 'Community', value: 20, color: '#FAED26' },
 ];
 
 const activityLog: ActivityLogItem[] = [
@@ -70,11 +70,11 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-4 bg-[#e8f4fb] rounded-xl px-5 py-4 flex-1 min-w-0">
-      <div className="text-gray-500 flex-shrink-0 text-4xl">{icon}</div>
-      <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
-        <p className="text-3xl font-extrabold text-gray-800 leading-tight">{value}</p>
+    <div className="flex items-center gap-4 bg-[#7598C1] rounded-xl px-5 py-4 min-w-0 shadow-sm border border-[#7598C1] w-full">
+      <div className="text-gray-900 flex-shrink-0 text-3xl sm:text-4xl">{icon}</div>
+      <div className="min-w-0">
+        <p className="text-[10px] sm:text-xs font-semibold text-gray-800 uppercase tracking-wide truncate">{label}</p>
+        <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight truncate">{value}</p>
       </div>
     </div>
   );
@@ -85,7 +85,7 @@ function StatusBadge({ status }: { status: string }) {
   const isApproved = status === 'Approved';
   return (
     <span
-      className={`px-3 py-1 rounded-full text-xs font-bold text-white ${isApproved ? 'bg-green-500' : 'bg-orange-400'
+      className={`px-3 py-1 rounded-full text-xs font-bold text-black ${isApproved ? 'bg-[#7BC712]' : 'bg-[#FAED26]'
         }`}
     >
       {status}
@@ -130,7 +130,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-5">
 
       {/* ── STAT CARDS ── */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           label="Total Users"
           value="5,240"
@@ -161,10 +161,10 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ── CHARTS ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {/* Donation Growth – Area Chart */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-start justify-between mb-1">
             <div>
               <h2 className="text-lg font-bold text-gray-800">Donation growth</h2>
@@ -240,7 +240,7 @@ export default function AdminDashboardPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Table header button */}
         <div className="px-5 pt-4 pb-2">
-          <button className="px-4 py-1.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors">
+          <button className="px-4 py-1.5 rounded-lg border border-transparent text-sm font-semibold text-black bg-[#7598C1] hover:bg-[#5DA2D5] transition-colors shadow-sm">
             Recent Activity Log
           </button>
         </div>

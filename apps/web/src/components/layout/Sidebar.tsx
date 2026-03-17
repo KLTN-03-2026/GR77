@@ -51,6 +51,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
 
   // Use provided menuItems or fall back to default user menu
   const items = menuItems ?? userMenuItems;
+  const isAdmin = roleLabel === 'ADMIN';
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -72,8 +73,12 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      router.push('/login');
       setIsLoggingOut(false);
+      if (pathname.startsWith('/admin') || roleLabel === 'ADMIN') {
+        router.push('/admin/login');
+      } else {
+        router.push('/login');
+      }
     }
   };
 
@@ -103,13 +108,17 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
                   className={`
                     relative flex items-center px-4 py-3 text-base rounded-xl transition-all border
                     ${isActive
-                      ? 'bg-[#47c9e5]/10 text-[#47c9e5] font-medium border-transparent'
-                      : 'text-gray-900 font-medium border-transparent hover:border-cyan-400 hover:ring-2 hover:ring-cyan-100 hover:bg-white hover:text-cyan-600 hover:shadow-sm'
+                      ? (isAdmin
+                        ? 'bg-[#7598C1] text-gray-900 border-transparent shadow-sm'
+                        : 'bg-[#47c9e5]/10 text-[#47c9e5] font-medium border-transparent')
+                      : (isAdmin
+                        ? 'bg-white text-gray-700 border-transparent hover:text-gray-900 hover:border-[#7598C1] hover:shadow-[inset_0_0_12px_rgba(117,152,193,0.3),0_0_15px_rgba(117,152,193,0.4)]'
+                        : 'bg-white text-gray-900 font-medium border-transparent hover:text-[#47c9e5] hover:border-[#47c9e5] hover:shadow-[inset_0_0_12px_rgba(71,201,229,0.3),0_0_15px_rgba(71,201,229,0.4)]')
                     }
                   `}
                 >
                   {isActive && (
-                    <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#47c9e5] rounded-r-full" />
+                    <div className={`absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-8 ${isAdmin ? 'bg-[#1d2951]' : 'bg-[#47c9e5]'} rounded-r-full`} />
                   )}
                   <item.icon className={`mr-4 h-6 w-6 ${isActive ? 'stroke-2' : ''}`} />
                   {item.name}
@@ -139,26 +148,30 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
 
       {/* Mobile bottom navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="grid grid-cols-5 gap-1 px-2 py-2">
-          {items.slice(0, 5).map((item) => {
+        <div className="flex overflow-x-auto no-scrollbar items-center px-2 py-2 gap-2">
+          {items.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`
-                  flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors
-                  ${isActive
-                    ? 'text-blue-600'
-                    : 'text-gray-600'
-                  }
-                `}
+            flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors flex-shrink-0 min-w-[70px]
+            ${isActive ? 'text-blue-600' : 'text-gray-600'}
+          `}
               >
                 <item.icon className="h-6 w-6 mb-1" />
                 <span className="text-xs truncate w-full text-center">{item.name.split(' ')[0]}</span>
               </Link>
             );
           })}
+          <button
+            onClick={handleLogout}
+            className="flex flex-col items-center justify-center py-2 px-1 text-red-500 flex-shrink-0 min-w-[70px]"
+          >
+            <ArrowRightOnRectangleIcon className="h-6 w-6 mb-1" />
+            <span className="text-xs">Logout</span>
+          </button>
         </div>
       </nav>
     </>

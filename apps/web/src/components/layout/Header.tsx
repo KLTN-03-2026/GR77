@@ -9,7 +9,6 @@ import Link from 'next/link';
 interface HeaderProps {
   onToggleSidebar: () => void;
   isOpen: boolean;
-  /** Nhãn role hiển thị ngay dưới logo. Không truyền → không hiển thị */
   roleLabel?: string;
 }
 
@@ -22,6 +21,8 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     const stored = localStorage.getItem('userName');
     if (stored) setUserName(stored);
   }, []);
+
+  const isAdmin = roleLabel === 'ADMIN';
 
   // Render breadcrumbs based on pathname
   const renderBreadcrumbs = () => {
@@ -80,15 +81,14 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
           </button>
 
           {/* Logo + optional ADMIN label */}
-          {/* Dùng min-h để GIỮ NGUYÊN chiều cao header */}
           <div className="flex flex-col items-center justify-center relative min-h-[36px] sm:min-h-[46px]">
-            <div className={`bg-[#47c9e5] rounded-full shadow-md flex items-center justify-center min-w-max transition-all ${roleLabel ? 'px-2.5 py-0.5 sm:px-3.5 sm:py-1 -mt-1 sm:-mt-2' : 'px-3 py-1 sm:px-4 sm:py-1.5'}`}>
+            <div className={`${isAdmin ? 'bg-[linear-gradient(90deg,#89A7CA_0%,#3D5169_97%)]' : 'bg-[#47c9e5]'} rounded-full shadow-md flex items-center justify-center min-w-max transition-all ${roleLabel ? 'px-2.5 py-0.5 sm:px-3.5 sm:py-1 -mt-1 sm:-mt-2' : 'px-3 py-1 sm:px-4 sm:py-1.5'}`}>
               <span className={`text-white font-black tracking-wide flex items-center ${roleLabel ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'}`}>
                 K
                 <span className="relative -top-[-0.04em] mx-[4px] w-[0.2em] h-[0.72em]">
                   {/* Custom dot (water drop) */}
                   <span
-                    className="absolute -top-[0.4em] left-[0.2em] w-[0.22em] h-[0.25em] bg-white transition-all"
+                    className="absolute -top-[0.4em] left-[0.2em] w-[0.25em] h-[0.25em] bg-white transition-all"
                     style={{ borderRadius: '50% 80% 50% 0.5px' }}
                   ></span>
                   {/* Custom stem */}
@@ -98,7 +98,6 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
               </span>
             </div>
 
-            {/* Role label sử dụng absolute được kéo sát lên logo*/}
             {roleLabel && (
               <span className="absolute -bottom-[8px] sm:-bottom-[10px] text-[13px] sm:text-[14px] font-black tracking-[0.25em] text-gray-800 uppercase leading-none">
                 {roleLabel}
@@ -106,18 +105,24 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
             )}
           </div>
 
-          <div className={`flex items-center gap-3 ${roleLabel ? 'lg:ml-6' : ''}`}>
+          <div className={`hidden md:flex items-center gap-3 ${roleLabel ? 'lg:ml-6' : ''}`}>
             {/* Welcome message */}
-            <p className="text-gray-800 text-xl sm:text-2xl lg:text-3xl ml-2 whitespace-nowrap" style={{ fontFamily: 'Allura, cursive' }}>
+            <p className="text-gray-800 text-xl sm:text-2xl lg:text-3xl ml-2 truncate" style={{ fontFamily: 'Allura, cursive' }}>
               Welcome back, {userName}. Ready to create impact today?
             </p>
           </div>
         </div>
 
         {/* Notification icon */}
-        <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-          <BellIcon className="h-6 w-6 text-cyan-500" />
-          <span className="absolute top-1 right-1 h-2 w-2 bg-cyan-500 rounded-full"></span>
+        <button className={`relative p-2 rounded-2xl transition-colors ${isAdmin ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>
+          <BellIcon className={`h-6 w-6 ${!isAdmin && 'text-cyan-500'}`} strokeWidth={2} />
+          {isAdmin ? (
+            <span className="absolute -top-2 -right-2 flex h-[24px] min-w-[24px] items-center justify-center rounded-full border-[3px] border-white bg-[#2ba6e1] px-1 text-[11px] font-bold text-white leading-none">
+              21
+            </span>
+          ) : (
+            <span className="absolute top-1 right-1 h-2 w-2 bg-cyan-500 rounded-full"></span>
+          )}
         </button>
       </div>
 

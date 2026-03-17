@@ -75,23 +75,23 @@ export default function AdminUsersPage() {
       {/* ── STAT CARDS ── */}
       <div className="flex flex-col sm:flex-row gap-6">
         {/* Card 1: Total Users */}
-        <div className="flex items-center gap-5 p-6 rounded-2xl flex-1 border border-gray-200 shadow-sm bg-gradient-to-b from-[#bde2fd] to-white">
+        <div className="flex items-center gap-5 p-6 rounded-2xl flex-1 border border-[#7598C1] shadow-sm bg-[#7598C1]">
           <div className="flex-shrink-0">
-            <UserGroupIcon className="w-14 h-14 text-black" />
+            <UserGroupIcon className="w-14 h-14 text-gray-900" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800 uppercase tracking-wide">Total Users</p>
-            <p className="text-4xl font-extrabold text-black leading-tight">5,240</p>
+            <p className="text-4xl font-extrabold text-gray-900 leading-tight">5,240</p>
           </div>
         </div>
 
         {/* Card 2: Verified Organizers */}
-        <div className="flex items-center gap-5 p-6 rounded-2xl flex-1 border border-gray-200 shadow-sm bg-gradient-to-b from-[#bde2fd] to-white">
+        <div className="flex items-center gap-5 p-6 rounded-2xl flex-1 border border-[#7598C1] shadow-sm bg-[#7598C1]">
           <div className="flex-shrink-0 relative">
-            <UserIcon className="w-14 h-14 text-black" />
+            <UserIcon className="w-14 h-14 text-gray-900" />
             {/* Small checkmark badge overlay */}
-            <div className="absolute bottom-0 right-[-4px] bg-white rounded-full p-0.5 border-2 border-white">
-              <div className="bg-black rounded-full p-1" style={{ width: 22, height: 22 }}>
+            <div className="absolute bottom-0 right-[-4px] bg-[#7598C1] rounded-full p-0.5 border-2 border-[#7598C1]">
+              <div className="bg-gray-900 rounded-full p-1" style={{ width: 22, height: 22 }}>
                 <svg className="w-full h-full text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
@@ -100,7 +100,7 @@ export default function AdminUsersPage() {
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800 uppercase tracking-wide">Verified Organizers</p>
-            <p className="text-4xl font-extrabold text-black leading-tight">124</p>
+            <p className="text-4xl font-extrabold text-gray-900 leading-tight">124</p>
           </div>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
           </select>
 
           {/* Add Button */}
-          <button className="ml-auto bg-[#3182ce] hover:bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-sm">
+          <button className="ml-auto bg-[#7598C1] hover:bg-[#5DA2D5] text-black px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-sm">
             Add New User
           </button>
         </div>
