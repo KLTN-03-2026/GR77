@@ -7,7 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { CampaignsModule } from './modules/campaigns/campaigns.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { UploadModule } from './modules/upload/upload.module';
-
+import { ParticipantsModule } from './modules/participants/participants.module';
 
 @Module({
   imports: [
@@ -21,6 +21,7 @@ import { UploadModule } from './modules/upload/upload.module';
     CampaignsModule,
     FavoritesModule,
     UploadModule,
+    ParticipantsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

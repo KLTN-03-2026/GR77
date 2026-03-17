@@ -14,20 +14,21 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  tokens                RefreshToken[]
-  createdCampaigns      Campaign[] @relation("CampaignCreator")
-  reviewedCampaigns     Campaign[] @relation("CampaignReviewer")
-  favorites             Favorite[]
+
+  tokens            RefreshToken[]
+  createdCampaigns  Campaign[]            @relation("CampaignCreator")
+  reviewedCampaigns Campaign[]            @relation("CampaignReviewer")
+  favorites         Favorite[]
+  participations    CampaignParticipant[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   tokenHash String
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -52,37 +53,38 @@ enum CampaignStatus {
 }
 
 model Campaign {
-  id                       String          @id @default(uuid())
-  creatorUserId            String          @map("creator_user_id")
+  id            String @id @default(uuid())
+  creatorUserId String @map("creator_user_id")
 
-  title                    String          @db.VarChar(255)
-  description              String          @db.Text
+  title       String @db.VarChar(255)
+  description String @db.Text
 
-  category                 String          @db.VarChar(100)
-  locationText             String          @db.VarChar(255) @map("location_text")
-  coverImageUrl            String?         @db.VarChar(500) @map("cover_image_url")
+  category      String  @db.VarChar(100)
+  locationText  String  @map("location_text") @db.VarChar(255)
+  coverImageUrl String? @map("cover_image_url") @db.VarChar(500)
 
   // numeric
-  fundingGoalAmount        Decimal         @db.Decimal(18, 2) @map("funding_goal_amount")
-  minimumDonationAmount    Decimal         @db.Decimal(18, 2) @map("minimum_donation_amount")
+  fundingGoalAmount     Decimal @map("funding_goal_amount") @db.Decimal(18, 2)
+  minimumDonationAmount Decimal @map("minimum_donation_amount") @db.Decimal(18, 2)
 
-  startAt                  DateTime        @map("start_at")
-  endAt                    DateTime        @map("end_at")
-  autoCloseWhenGoalReached Boolean         @default(true) @map("auto_close_when_goal_reached")
+  startAt                  DateTime @map("start_at")
+  endAt                    DateTime @map("end_at")
+  autoCloseWhenGoalReached Boolean  @default(true) @map("auto_close_when_goal_reached")
 
-  status                   CampaignStatus  @default(DRAFT)
+  status CampaignStatus @default(DRAFT)
 
-  reviewNote               String?         @db.Text @map("review_note")
-  reviewedByAdminId        String?         @map("reviewed_by_admin_id")
-  reviewedAt               DateTime?       @map("reviewed_at")
+  reviewNote        String?   @map("review_note") @db.Text
+  reviewedByAdminId String?   @map("reviewed_by_admin_id")
+  reviewedAt        DateTime? @map("reviewed_at")
 
-  createdAt                DateTime        @default(now()) @map("created_at")
-  updatedAt                DateTime        @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // relations
-  creatorUser              User            @relation("CampaignCreator", fields: [creatorUserId], references: [id], onDelete: Restrict)
-  reviewedByAdmin          User?           @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
-  favorites                Favorite[]
+  creatorUser     User                  @relation("CampaignCreator", fields: [creatorUserId], references: [id], onDelete: Restrict)
+  reviewedByAdmin User?                 @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+  favorites       Favorite[]
+  participants    CampaignParticipant[]
 
   @@index([status])
   @@index([creatorUserId])
@@ -96,11 +98,39 @@ model Favorite {
   campaignId String   @map("campaign_id")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@unique([userId, campaignId])
   @@index([userId, createdAt])
   @@index([campaignId])
   @@map("favorites")
+}
+
+enum ParticipationStatus {
+  JOINED
+  LEFT
+}
+
+model CampaignParticipant {
+  id         String @id @default(uuid())
+  userId     String @map("user_id")
+  campaignId String @map("campaign_id")
+
+  status   ParticipationStatus @default(JOINED)
+  joinedAt DateTime            @default(now()) @map("joined_at")
+  leftAt   DateTime?           @map("left_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([userId])
+  @@index([campaignId])
+  @@index([userId, status])
+  @@index([campaignId, status])
+  @@map("campaign_participants")
 }
