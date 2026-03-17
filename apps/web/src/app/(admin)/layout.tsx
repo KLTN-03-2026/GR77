@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Sidebar, { type MenuItem } from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -28,7 +28,7 @@ function decodeJwt(token: string): { role?: string; exp?: number } | null {
   }
 }
 
-/** Navigation dành riêng cho Admin */
+// Navigation Admin 
 const adminMenuItems: MenuItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: ChartBarIcon },
   { name: 'User Management', href: '/admin/users', icon: UsersIcon },
@@ -50,7 +50,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem('accessToken');
 
     if (!token) {
-      router.replace('/login');
+      router.replace('/admin/login');
       return;
     }
 
@@ -60,7 +60,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
     if (decoded?.exp && decoded.exp * 1000 < Date.now()) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      router.replace('/login');
+      router.replace('/admin/login');
       return;
     }
 
@@ -76,7 +76,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (authorized === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#D0E3F9]/80">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-4 border-[#47c9e5]/30 border-t-[#47c9e5] animate-spin" />
           <p className="text-sm text-gray-500 font-medium">Verifying access…</p>
@@ -91,33 +91,41 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 /** Layout cho toàn bộ route group (admin) */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const pathname = usePathname();
+
+
+  const currentMenu = adminMenuItems.find(item => pathname.startsWith(item.href)) || { name: 'Admin Panel' };
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        {/* Tái sử dụng Sidebar của user, truyền menu admin */}
+      <div className="min-h-screen bg-[#D0E3F9]/100 flex flex-col">
+        {/* Tái sử dụng Sidebar, truyền menu admin */}
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           menuItems={adminMenuItems}
+          roleLabel="ADMIN"
         />
 
         <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
-          {/* Tái sử dụng Header của user, thêm roleLabel */}
+          {/* Tái sử dụng Header, thêm roleLabel */}
           <Header
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             isOpen={sidebarOpen}
             roleLabel="ADMIN"
           />
 
-          <main className="pt-[104px] pb-4 flex-1">
-            <div className="px-4 sm:px-6 lg:px-8 py-6">
+          <main className="pt-[104px] pb-24 lg:pb-4 flex-1">
+            <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-900">{currentMenu.name}</h1>
+              </div>
               {children}
             </div>
           </main>
 
-          {/* Tái sử dụng Footer của user */}
-          <Footer />
+          {/* Tái sử dụng Footer*/}
+          <Footer isAdmin={true} />
         </div>
       </div>
     </AdminGuard>

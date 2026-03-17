@@ -59,7 +59,7 @@ export default function LoginPage() {
             localStorage.setItem("userName", displayName);
 
             if (role === "ADMIN") {
-                setError("Please use the Admin Portal (/loginadmin) to log in.");
+                setError("Please use the Admin Portal (/admin/login) to log in.");
                 setIsLoading(false);
                 return;
             }
