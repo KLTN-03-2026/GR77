@@ -45,7 +45,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [roleLabel]);
+  }, []);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
