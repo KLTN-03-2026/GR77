@@ -1,6 +1,9 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Body, UseGuards, Request, Patch } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { CampaignsService } from './campaigns.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
+import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { UpdateCampaignDto } from './dto/update-campaign.dto';
 
 /**
  * CampaignsController
@@ -14,7 +17,7 @@ import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
  */
 @Controller('campaigns')
 export class CampaignsController {
-  constructor(private readonly campaignsService: CampaignsService) {}
+  constructor(private readonly campaignsService: CampaignsService) { }
 
   /**
    * GET /campaigns
@@ -40,6 +43,18 @@ export class CampaignsController {
   }
 
   /**
+   * GET /campaigns/me
+   * 
+   * Lấy danh sách chiến dịch của tôi
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/list')
+  listMine(@Request() req: any) {
+    const userId = req.user.userId || req.user.sub;
+    return this.campaignsService.listMine(userId);
+  }
+
+  /**
    * GET /campaigns/:id
    * 
    * Lấy chi tiết 1 chiến dịch
@@ -55,5 +70,35 @@ export class CampaignsController {
   @Get(':id')
   detail(@Param('id') id: string) {
     return this.campaignsService.detail(id);
+  }
+
+  /**
+   * POST /campaigns
+   * 
+   * Tạo chiến dịch mới
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Post()
+  create(@Request() req: any, @Body() createCampaignDto: CreateCampaignDto) {
+    const userId = req.user.userId || req.user.sub;
+    return this.campaignsService.create(userId, createCampaignDto);
+  }
+
+  /**
+   * PATCH /campaigns/:id
+   * 
+   * Cập nhật chiến dịch
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id')
+  update(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() updateCampaignDto: UpdateCampaignDto,
+  ) {
+    console.log('Update Request received for ID:', id);
+    console.log('User from request:', req.user);
+    const userId = req.user.userId || req.user.sub;
+    return this.campaignsService.update(userId, id, updateCampaignDto);
   }
 }

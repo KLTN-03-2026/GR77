@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
-
+import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { UpdateCampaignDto } from './dto/update-campaign.dto';
 /**
  * CampaignsService
  * 
@@ -14,19 +15,11 @@ import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
  */
 @Injectable()
 export class CampaignsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /**
-   * list()
+   * list campaigns
    * 
-   * Lấy danh sách chiến dịch với phân trang, tìm kiếm, lọc
-   * 
-   * Parameters: query: GetCampaignsQueryDto
-   * - page: trang hiện tại (default: 1)
-   * - limit: số item/trang (default: 20, max: 100)
-   * - status: lọc theo trạng thái (default: ACTIVE)
-   * - category: lọc theo danh mục (optional)
-   * - q: tìm kiếm trong title/description/location (optional)
    */
   async list(query: GetCampaignsQueryDto) {
     const page = query.page ?? 1;
@@ -35,8 +28,13 @@ export class CampaignsService {
 
     const where: any = {};
 
-    // Default: chỉ show ACTIVE campaigns (public view)
-    where.status = query.status ?? 'ACTIVE';
+    // Nếu truyền status cụ thể thì lọc theo status đó, 
+    // nếu không thì hiện tất cả trừ DRAFT
+    if (query.status) {
+      where.status = query.status;
+    } else {
+      where.status = { not: 'DRAFT' };
+    }
 
     if (query.category) {
       where.category = { equals: query.category, mode: 'insensitive' };
@@ -94,12 +92,42 @@ export class CampaignsService {
   }
 
   /**
+   * my campaigns
+   * 
+   */
+  async listMine(userId: string) {
+    const items = await (this.prisma as any).campaign.findMany({
+      where: { creatorUserId: userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        locationText: true,
+        coverImageUrl: true,
+        fundingGoalAmount: true,
+        minimumDonationAmount: true,
+        startAt: true,
+        endAt: true,
+        autoCloseWhenGoalReached: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { favorites: true } },
+      },
+    });
+
+    return items.map((c: any) => ({
+      ...c,
+      favoritesCount: c._count.favorites,
+      _count: undefined,
+    }));
+  }
+
+
+  /**
    * detail()
-   * 
-   * Lấy chi tiết 1 chiến dịch theo ID
-   * Trả về toàn bộ thông tin (bao gồm admin review fields)
-   * 
-   * Throws: NotFoundException (404) nếu campaign không tồn tại
+   * campaign/{id}
    */
   async detail(id: string) {
     const campaign = await (this.prisma as any).campaign.findUnique({
@@ -134,5 +162,41 @@ export class CampaignsService {
       favoritesCount: campaign._count.favorites,
       _count: undefined,
     };
+  }
+
+  /**
+   * create()
+   * 
+   */
+  async create(userId: string, dto: CreateCampaignDto) {
+    const campaign = await (this.prisma as any).campaign.create({
+      data: {
+        ...dto,
+        creatorUserId: userId,
+        status: 'PENDING',
+      },
+    });
+    return campaign;
+  }
+
+  /**
+   * update()
+   * 
+   */
+  async update(userId: string, id: string, dto: UpdateCampaignDto) {
+    const campaign = await (this.prisma as any).campaign.findUnique({
+      where: { id },
+    });
+
+    if (!campaign) throw new NotFoundException('Campaign not found');
+
+    if (campaign.creatorUserId !== userId) {
+      throw new ForbiddenException('You do not have permission to update this campaign');
+    }
+
+    return (this.prisma as any).campaign.update({
+      where: { id },
+      data: dto,
+    });
   }
 }

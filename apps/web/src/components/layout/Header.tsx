@@ -1,0 +1,266 @@
+'use client';
+
+import '@fontsource/allura';
+import { BellIcon, Bars3Icon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import Logo from '@/components/common/logo';
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
+import {
+  UserCircleIcon,
+  GlobeAltIcon,
+  MoonIcon,
+  Cog6ToothIcon as CogIcon,
+  ArrowRightOnRectangleIcon as LogoutIcon,
+  ShieldCheckIcon,
+  UserIcon
+} from '@heroicons/react/24/outline';
+
+interface HeaderProps {
+  onToggleSidebar: () => void;
+  isOpen: boolean;
+  roleLabel?: string;
+}
+
+export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [userName, setUserName] = useState<string>('User');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Đọc tên user đã lưu vào localStorage khi login (admin dùng key riêng)
+    const stored = roleLabel === 'ADMIN'
+      ? localStorage.getItem('adminUserName')
+      : localStorage.getItem('userName');
+    if (stored) setUserName(stored);
+
+    // Close dropdown on click outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [roleLabel]);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    const isAdminLogout = pathname.startsWith('/admin') || roleLabel === 'ADMIN';
+
+    try {
+      const refreshToken = localStorage.getItem(isAdminLogout ? 'adminRefreshToken' : 'refreshToken');
+      if (refreshToken) {
+        await fetch('http://localhost:3001/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      if (isAdminLogout) {
+        localStorage.removeItem('adminAccessToken');
+        localStorage.removeItem('adminRefreshToken');
+        localStorage.removeItem('adminUserName');
+      } else {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userName');
+      }
+      setIsLoggingOut(false);
+      setIsProfileOpen(false);
+      if (isAdminLogout) {
+        router.push('/admin/login');
+      } else {
+        router.push('/login');
+      }
+    }
+  };
+
+  const isAdmin = roleLabel === 'ADMIN';
+
+  // Render breadcrumbs based on pathname
+  const renderBreadcrumbs = () => {
+    if (pathname.includes('/creator/campaigns/new')) {
+      return (
+        <>
+          <Link href="/home" className="hover:text-blue-600">Home</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+          <Link href="/creator/campaigns" className="hover:text-blue-600">My Campaigns</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+          <span className="text-gray-900 font-medium">Add</span>
+        </>
+      );
+    }
+
+    // Admin breadcrumbs
+    if (pathname.includes('/admin/dashboard')) return <><span>Dashboard</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/users')) return <><span>User Management</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/campaigns')) return <><span>Campaign</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/transactions')) return <><span>Transaction</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/withdrawals')) return <><span>Withdrawal</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/revenue')) return <><span>Fee & Revenue</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/moderation')) return <><span>Content Moderation</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/kyc')) return <><span>KYC Verification</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/settings')) return <><span>Settings</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+
+    // Default user breadcrumbs
+    let title = 'Home';
+    if (pathname.includes('/home')) title = 'Home';
+    else if (pathname.includes('/favorites')) title = 'Favorite Campaigns';
+    else if (pathname.includes('/activity')) title = 'Activity History';
+    else if (pathname.includes('/joined')) title = 'Joined Campaigns';
+    else if (pathname.includes('/creator')) title = 'My Campaigns';
+    else if (pathname.includes('/list')) title = 'All Campaigns';
+    else if (pathname.includes('/wallet')) title = 'Wallet';
+    else if (pathname.includes('/settings')) title = 'Setting';
+
+    return (
+      <>
+        <span>{title}</span>
+        <ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} />
+      </>
+    );
+  };
+
+  return (
+    <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 transition-all duration-300">
+      <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 lg:gap-2">
+          {/* Toggle sidebar button */}
+          <button
+            onClick={onToggleSidebar}
+            className="hidden lg:block -ml-2 p-2 text-gray-900 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <Bars3Icon className="h-6 w-6 stroke-2" />
+          </button>
+
+          {/* Logo */}
+          <Link href={isAdmin ? "/admin/dashboard" : "/home"} className="transition-transform hover:scale-102">
+            <Logo
+              variant={isAdmin ? 'admin' : 'default'}
+              height={isAdmin ? 56 : 56}
+              className={isAdmin ? 'sm:h-16' : 'sm:h-16'}
+            />
+          </Link>
+
+          <div className={`hidden md:flex items-center gap-3 ${roleLabel ? 'lg:ml-6' : ''}`}>
+            {/* Welcome message */}
+            <p className="text-gray-800 text-xl sm:text-2xl lg:text-3xl ml-2 truncate" style={{ fontFamily: 'Allura, cursive' }}>
+              Welcome back,{' '}
+              <span
+                style={{
+                  color: roleLabel === 'ADMIN' ? '#24305E' : '#F6349B',
+                  fontWeight: 'bold'
+                }}
+              >
+                {userName}
+              </span>
+              . Ready to create impact today?
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Notification icon */}
+          <button className={`relative p-2 rounded-2xl transition-colors ${isAdmin ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1]' : 'bg-[#E0F0FA] text-[#2ba6e1] hover:bg-[#d4ebfc]'}`}>
+            <BellIcon className="h-6 w-6" strokeWidth={2} />
+            <span className="absolute -top-2 -right-2 flex h-[24px] min-w-[24px] items-center justify-center rounded-full border-[3px] border-white bg-[#2ba6e1] px-1 text-[11px] font-bold text-white leading-none">
+              14
+            </span>
+          </button>
+
+          {/* Profile Dropdown - Only show for regular users */}
+          {!isAdmin && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center justify-center p-0.5 rounded-full border-2 border-[#47c9e5] hover:shadow-md transition-all overflow-hidden"
+              >
+                <div className="bg-gray-100 p-1.5 sm:p-2">
+                  <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
+                </div>
+              </button>
+
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Header: User Info - Compact */}
+                  <div className="px-5 py-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <UserIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-base font-bold text-[#1d2951] truncate leading-tight">{userName}</p>
+                      <p className="text-xs font-medium text-[#8ea1c1] truncate mt-0.5">Pro Account</p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-50"></div>
+
+                  {/* Body: Application Settings - Compact */}
+                  <div className="py-2">
+                    <p className="px-5 py-2 text-[10px] font-black text-[#8ea1c1] uppercase tracking-[0.1em]">Application</p>
+
+                    <div className="px-2">
+                      <Link
+                        href="/profile"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-2xl hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="p-1.5 rounded-xl bg-gray-50 group-hover:bg-white transition-colors">
+                          <UserCircleIcon className="h-5 w-5 text-[#8ea1c1]" />
+                        </div>
+                        <span className="flex-1 text-left text-sm font-bold text-[#1d2951]">My Profile</span>
+                        <ChevronRightIcon className="h-3.5 w-3.5 text-[#8ea1c1]" strokeWidth={3} />
+                      </Link>
+
+                      <Link
+                        href="/security"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-2xl hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="p-1.5 rounded-xl bg-gray-50 group-hover:bg-white transition-colors">
+                          <ShieldCheckIcon className="h-5 w-5 text-[#8ea1c1]" />
+                        </div>
+                        <span className="flex-1 text-left text-sm font-bold text-[#2068fd]">Security</span>
+                        <ChevronRightIcon className="h-3.5 w-3.5 text-[#8ea1c1]" strokeWidth={3} />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Footer: Logout - Styled but Compact */}
+                  <div className="mt-1">
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex w-full items-center gap-3 px-5 py-3 bg-[#fff5f5] text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      <LogoutIcon className="h-5 w-5 stroke-2" />
+                      <span className="text-base font-bold">{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Breadcrumb - full width */}
+      <div className={`bg-blue-50 px-4 sm:px-6 lg:px-8 py-2 transition-all duration-300 ${isOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+        <div className="flex items-center text-sm text-gray-700 font-medium">
+          {renderBreadcrumbs()}
+        </div>
+      </div>
+    </header>
+  );
+}

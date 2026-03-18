@@ -1,0 +1,70 @@
+{
+  "campaigns": [
+    {
+      "id": "1",
+      "title": "Education for All",
+      "image": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop",
+      "amountRaised": 15000,
+      "goal": 50000,
+      "category": "Education",
+      "isFavorite": true,
+      "startDate": "2026-01-15",
+      "endDate": "2026-12-31"
+    },
+    {
+      "id": "2",
+      "title": "Healthcare Support",
+      "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=400&h=300&fit=crop",
+      "amountRaised": 28000,
+      "goal": 40000,
+      "category": "Healthcare",
+      "isFavorite": true,
+      "startDate": "2026-02-01",
+      "endDate": "2026-11-30"
+    },
+    {
+      "id": "3",
+      "title": "Tet Charity Program",
+      "image": "https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=400&h=300&fit=crop",
+      "amountRaised": 35000,
+      "goal": 60000,
+      "category": "Community",
+      "isFavorite": true,
+      "startDate": "2026-01-20",
+      "endDate": "2026-02-28"
+    },
+    {
+      "id": "4",
+      "title": "Clean Water Initiative",
+      "image": "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
+      "amountRaised": 12000,
+      "goal": 30000,
+      "category": "Environment",
+      "isFavorite": false,
+      "startDate": "2026-03-10",
+      "endDate": "2026-09-30"
+    },
+    {
+      "id": "5",
+      "title": "Food for Homeless",
+      "image": "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&h=300&fit=crop",
+      "amountRaised": 8500,
+      "goal": 20000,
+      "category": "Community",
+      "isFavorite": false,
+      "startDate": "2026-04-05",
+      "endDate": "2026-10-15"
+    },
+    {
+      "id": "6",
+      "title": "Animal Shelter Support",
+      "image": "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&h=300&fit=crop",
+      "amountRaised": 18000,
+      "goal": 25000,
+      "category": "Animals",
+      "isFavorite": false,
+      "startDate": "2026-05-12",
+      "endDate": "2026-12-20"
+    }
+  ]
+}

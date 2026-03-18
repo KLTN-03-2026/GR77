@@ -24,3 +24,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*cái ni Híu ghi thêm vì ở mấy cái datetime picker ( có 1 cái datetime-local , 1 cái icon calendar)
+nên là giữ cái icon calendar để có thể bấm vào đó để chọn ngày giờ á
+viết mã css ở dưới để xóa cái datetime-local đi á
+tức là có 2 icon lịch thì xóa bớt 1 cái bằng css vì nó mặc định*/
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+}

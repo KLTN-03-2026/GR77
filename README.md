@@ -91,6 +91,8 @@ docker-compose down
    # Tạo Prisma Client
    pnpm --filter api exec prisma generate
    
+   pnpm --filter api exec prisma migrate deploy
+   
    # Chạy dev mode
    pnpm dev:api
    ```
@@ -120,5 +122,5 @@ Khi làm việc với Database, bạn cần sử dụng các lệnh sau (chạy 
 ## 🤝 Đóng góp dự án
 Nếu bạn gặp vấn đề hoặc muốn đề xuất tính năng mới, vui lòng tạo Issue hoặc gửi Pull Request. Cảm ơn bạn đã tham gia phát triển **Kindlink**!
 
-## Cổng Backend : http://localhost:3001
-## Cổng Frontend : http://localhost:3002
+## Cổng Backend : http://localhost:3001 : cd apps/api run pnpm start:dev
+## Cổng Frontend : http://localhost:3000 : run pnpm dev:web
