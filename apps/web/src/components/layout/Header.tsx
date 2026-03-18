@@ -31,8 +31,10 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Đọc tên user đã lưu vào localStorage khi login
-    const stored = localStorage.getItem('userName');
+    // Đọc tên user đã lưu vào localStorage khi login (admin dùng key riêng)
+    const stored = roleLabel === 'ADMIN'
+      ? localStorage.getItem('adminUserName')
+      : localStorage.getItem('userName');
     if (stored) setUserName(stored);
 
     // Close dropdown on click outside
@@ -43,14 +45,16 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [roleLabel]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
 
+    const isAdminLogout = pathname.startsWith('/admin') || roleLabel === 'ADMIN';
+
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem(isAdminLogout ? 'adminRefreshToken' : 'refreshToken');
       if (refreshToken) {
         await fetch('http://localhost:3001/auth/logout', {
           method: 'POST',
@@ -63,11 +67,18 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      if (isAdminLogout) {
+        localStorage.removeItem('adminAccessToken');
+        localStorage.removeItem('adminRefreshToken');
+        localStorage.removeItem('adminUserName');
+      } else {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userName');
+      }
       setIsLoggingOut(false);
       setIsProfileOpen(false);
-      if (pathname.startsWith('/admin') || roleLabel === 'ADMIN') {
+      if (isAdminLogout) {
         router.push('/admin/login');
       } else {
         router.push('/login');

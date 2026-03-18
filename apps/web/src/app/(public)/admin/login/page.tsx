@@ -58,15 +58,15 @@ export default function AdminLoginPage() {
             }
 
             if (data.accessToken) {
-                localStorage.setItem("accessToken", data.accessToken);
+                localStorage.setItem("adminAccessToken", data.accessToken);
             }
             if (data.refreshToken) {
-                localStorage.setItem("refreshToken", data.refreshToken);
+                localStorage.setItem("adminRefreshToken", data.refreshToken);
             }
 
             // Lưu tên hiển thị (dùng phần trước @ của email)
             const displayName = email.split("@")[0];
-            localStorage.setItem("userName", displayName);
+            localStorage.setItem("adminUserName", displayName);
 
             router.push("/admin/dashboard");
         } catch (err: any) {

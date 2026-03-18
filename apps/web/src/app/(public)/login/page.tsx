@@ -37,12 +37,6 @@ export default function LoginPage() {
             }
 
             const data = await res.json();
-            if (data.accessToken) {
-                localStorage.setItem("accessToken", data.accessToken);
-            }
-            if (data.refreshToken) {
-                localStorage.setItem("refreshToken", data.refreshToken);
-            }
 
             let role: string | undefined;
             try {
@@ -55,14 +49,22 @@ export default function LoginPage() {
             } catch {
             }
 
-            const displayName = email.split("@")[0];
-            localStorage.setItem("userName", displayName);
-
             if (role === "ADMIN") {
                 setError("Please use the Admin Portal (/admin/login) to log in.");
                 setIsLoading(false);
                 return;
             }
+
+            if (data.accessToken) {
+                localStorage.setItem("accessToken", data.accessToken);
+            }
+            if (data.refreshToken) {
+                localStorage.setItem("refreshToken", data.refreshToken);
+            }
+
+            const displayName = email.split("@")[0];
+            localStorage.setItem("userName", displayName);
+
             router.push("/creator/campaigns");
         } catch (err: any) {
             setError(err.message || "An error occurred. Please try again.");
