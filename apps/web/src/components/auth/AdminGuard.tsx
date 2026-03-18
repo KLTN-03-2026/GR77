@@ -26,7 +26,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('adminAccessToken');
 
     if (!token) {
       router.replace('/login');
@@ -37,8 +37,8 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
 
     // Token hết hạn
     if (decoded?.exp && decoded.exp * 1000 < Date.now()) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('adminAccessToken');
+      localStorage.removeItem('adminRefreshToken');
       router.replace('/login');
       return;
     }
