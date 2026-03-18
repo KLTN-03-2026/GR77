@@ -2,9 +2,19 @@
 
 import '@fontsource/allura';
 import { BellIcon, Bars3Icon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import Logo from '@/components/common/logo';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
+import {
+  UserCircleIcon,
+  GlobeAltIcon,
+  MoonIcon,
+  Cog6ToothIcon as CogIcon,
+  ArrowRightOnRectangleIcon as LogoutIcon,
+  ShieldCheckIcon,
+  UserIcon
+} from '@heroicons/react/24/outline';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -14,13 +24,56 @@ interface HeaderProps {
 
 export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [userName, setUserName] = useState<string>('User');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Đọc tên user đã lưu vào localStorage khi login
     const stored = localStorage.getItem('userName');
     if (stored) setUserName(stored);
+
+    // Close dropdown on click outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        await fetch('http://localhost:3001/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setIsLoggingOut(false);
+      setIsProfileOpen(false);
+      if (pathname.startsWith('/admin') || roleLabel === 'ADMIN') {
+        router.push('/admin/login');
+      } else {
+        router.push('/login');
+      }
+    }
+  };
 
   const isAdmin = roleLabel === 'ADMIN';
 
@@ -80,50 +133,115 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
             <Bars3Icon className="h-6 w-6 stroke-2" />
           </button>
 
-          {/* Logo + optional ADMIN label */}
-          <div className="flex flex-col items-center justify-center relative min-h-[36px] sm:min-h-[46px]">
-            <div className={`${isAdmin ? 'bg-[linear-gradient(90deg,#89A7CA_0%,#3D5169_97%)]' : 'bg-[#47c9e5]'} rounded-full shadow-md flex items-center justify-center min-w-max transition-all ${roleLabel ? 'px-2.5 py-0.5 sm:px-3.5 sm:py-1 -mt-1 sm:-mt-2' : 'px-3 py-1 sm:px-4 sm:py-1.5'}`}>
-              <span className={`text-white font-black tracking-wide flex items-center ${roleLabel ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'}`}>
-                K
-                <span className="relative -top-[-0.04em] mx-[4px] w-[0.2em] h-[0.72em]">
-                  {/* Custom dot (water drop) */}
-                  <span
-                    className="absolute -top-[0.4em] left-[0.2em] w-[0.25em] h-[0.25em] bg-white transition-all"
-                    style={{ borderRadius: '50% 80% 50% 0.5px' }}
-                  ></span>
-                  {/* Custom stem */}
-                  <span className="absolute bottom-0 left-0 w-full h-full bg-white rounded-full"></span>
-                </span>
-                NDLINK
-              </span>
-            </div>
-
-            {roleLabel && (
-              <span className="absolute -bottom-[8px] sm:-bottom-[10px] text-[13px] sm:text-[14px] font-black tracking-[0.25em] text-gray-800 uppercase leading-none">
-                {roleLabel}
-              </span>
-            )}
-          </div>
+          {/* Logo */}
+          <Link href={isAdmin ? "/admin/dashboard" : "/home"} className="transition-transform hover:scale-102">
+            <Logo
+              variant={isAdmin ? 'admin' : 'default'}
+              height={isAdmin ? 56 : 56}
+              className={isAdmin ? 'sm:h-16' : 'sm:h-16'}
+            />
+          </Link>
 
           <div className={`hidden md:flex items-center gap-3 ${roleLabel ? 'lg:ml-6' : ''}`}>
             {/* Welcome message */}
             <p className="text-gray-800 text-xl sm:text-2xl lg:text-3xl ml-2 truncate" style={{ fontFamily: 'Allura, cursive' }}>
-              Welcome back, {userName}. Ready to create impact today?
+              Welcome back,{' '}
+              <span
+                style={{
+                  color: roleLabel === 'ADMIN' ? '#24305E' : '#F6349B',
+                  fontWeight: 'bold'
+                }}
+              >
+                {userName}
+              </span>
+              . Ready to create impact today?
             </p>
           </div>
         </div>
 
-        {/* Notification icon */}
-        <button className={`relative p-2 rounded-2xl transition-colors ${isAdmin ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>
-          <BellIcon className={`h-6 w-6 ${!isAdmin && 'text-cyan-500'}`} strokeWidth={2} />
-          {isAdmin ? (
+        <div className="flex items-center gap-3">
+          {/* Notification icon */}
+          <button className={`relative p-2 rounded-2xl transition-colors ${isAdmin ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1]' : 'bg-[#E0F0FA] text-[#2ba6e1] hover:bg-[#d4ebfc]'}`}>
+            <BellIcon className="h-6 w-6" strokeWidth={2} />
             <span className="absolute -top-2 -right-2 flex h-[24px] min-w-[24px] items-center justify-center rounded-full border-[3px] border-white bg-[#2ba6e1] px-1 text-[11px] font-bold text-white leading-none">
-              21
+              14
             </span>
-          ) : (
-            <span className="absolute top-1 right-1 h-2 w-2 bg-cyan-500 rounded-full"></span>
+          </button>
+
+          {/* Profile Dropdown - Only show for regular users */}
+          {!isAdmin && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center justify-center p-0.5 rounded-full border-2 border-[#47c9e5] hover:shadow-md transition-all overflow-hidden"
+              >
+                <div className="bg-gray-100 p-1.5 sm:p-2">
+                  <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
+                </div>
+              </button>
+
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Header: User Info - Compact */}
+                  <div className="px-5 py-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <UserIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-base font-bold text-[#1d2951] truncate leading-tight">{userName}</p>
+                      <p className="text-xs font-medium text-[#8ea1c1] truncate mt-0.5">Pro Account</p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-50"></div>
+
+                  {/* Body: Application Settings - Compact */}
+                  <div className="py-2">
+                    <p className="px-5 py-2 text-[10px] font-black text-[#8ea1c1] uppercase tracking-[0.1em]">Application</p>
+
+                    <div className="px-2">
+                      <Link
+                        href="/profile"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-2xl hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="p-1.5 rounded-xl bg-gray-50 group-hover:bg-white transition-colors">
+                          <UserCircleIcon className="h-5 w-5 text-[#8ea1c1]" />
+                        </div>
+                        <span className="flex-1 text-left text-sm font-bold text-[#1d2951]">My Profile</span>
+                        <ChevronRightIcon className="h-3.5 w-3.5 text-[#8ea1c1]" strokeWidth={3} />
+                      </Link>
+
+                      <Link
+                        href="/security"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-2xl hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="p-1.5 rounded-xl bg-gray-50 group-hover:bg-white transition-colors">
+                          <ShieldCheckIcon className="h-5 w-5 text-[#8ea1c1]" />
+                        </div>
+                        <span className="flex-1 text-left text-sm font-bold text-[#2068fd]">Security</span>
+                        <ChevronRightIcon className="h-3.5 w-3.5 text-[#8ea1c1]" strokeWidth={3} />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Footer: Logout - Styled but Compact */}
+                  <div className="mt-1">
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex w-full items-center gap-3 px-5 py-3 bg-[#fff5f5] text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      <LogoutIcon className="h-5 w-5 stroke-2" />
+                      <span className="text-base font-bold">{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Breadcrumb - full width */}

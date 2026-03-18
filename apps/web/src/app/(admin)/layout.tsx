@@ -32,7 +32,7 @@ function decodeJwt(token: string): { role?: string; exp?: number } | null {
 const adminMenuItems: MenuItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: ChartBarIcon },
   { name: 'User Management', href: '/admin/users', icon: UsersIcon },
-  { name: 'Campaign', href: '/admin/campaigns', icon: FlagIcon },
+  { name: 'Campaigns', href: '/admin/campaigns', icon: FlagIcon },
   { name: 'Transaction', href: '/admin/transactions', icon: ArrowsRightLeftIcon },
   { name: 'Withdrawal', href: '/admin/withdrawals', icon: ArrowDownTrayIcon },
   { name: 'Fee & Revenue', href: '/admin/revenue', icon: CurrencyDollarIcon },
@@ -105,6 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           onClose={() => setSidebarOpen(false)}
           menuItems={adminMenuItems}
           roleLabel="ADMIN"
+          topSpacerClass="h-[128px]"
         />
 
         <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
@@ -114,16 +115,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             isOpen={sidebarOpen}
             roleLabel="ADMIN"
           />
-
-          <main className="pt-[104px] pb-24 lg:pb-4 flex-1">
+          <main className="pt-[128px] pb-24 lg:pb-4 flex-1">
             <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">{currentMenu.name}</h1>
+              <div className="mb-8">
+                <h1 className="text-3xl font-black text-[#24305E] uppercase tracking-wider">{currentMenu.name}</h1>
               </div>
               {children}
             </div>
           </main>
-
           {/* Tái sử dụng Footer*/}
           <Footer isAdmin={true} />
         </div>

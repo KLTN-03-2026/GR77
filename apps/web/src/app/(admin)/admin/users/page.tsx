@@ -75,32 +75,29 @@ export default function AdminUsersPage() {
       {/* ── STAT CARDS ── */}
       <div className="flex flex-col sm:flex-row gap-6">
         {/* Card 1: Total Users */}
-        <div className="flex items-center gap-5 p-6 rounded-2xl flex-1 border border-[#7598C1] shadow-sm bg-[#7598C1]">
-          <div className="flex-shrink-0">
-            <UserGroupIcon className="w-14 h-14 text-gray-900" />
+        <div className="flex items-center gap-6 px-6 py-4.5 rounded-3xl flex-1 border border-[#7598C1] shadow-xl bg-[#7598C1] hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="flex-shrink-0 bg-white/15 p-2.5 rounded-2xl">
+            <UserGroupIcon className="w-9 h-9 text-gray-900" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800 uppercase tracking-wide">Total Users</p>
-            <p className="text-4xl font-extrabold text-gray-900 leading-tight">5,240</p>
+            <p className="text-lg font-bold text-gray-800 uppercase tracking-wide opacity-100">Total Users</p>
+            <h2 className="text-4xl font-black text-gray-900 mt-1 tabular-nums">5,240</h2>
           </div>
         </div>
 
         {/* Card 2: Verified Organizers */}
-        <div className="flex items-center gap-5 p-6 rounded-2xl flex-1 border border-[#7598C1] shadow-sm bg-[#7598C1]">
-          <div className="flex-shrink-0 relative">
-            <UserIcon className="w-14 h-14 text-gray-900" />
-            {/* Small checkmark badge overlay */}
-            <div className="absolute bottom-0 right-[-4px] bg-[#7598C1] rounded-full p-0.5 border-2 border-[#7598C1]">
-              <div className="bg-gray-900 rounded-full p-1" style={{ width: 22, height: 22 }}>
-                <svg className="w-full h-full text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
+        <div className="flex items-center gap-6 px-6 py-4.5 rounded-3xl flex-1 border border-[#7598C1] shadow-xl bg-[#7598C1] hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="flex-shrink-0 relative bg-white/15 p-2.5 rounded-2xl">
+            <UserIcon className="w-9 h-9 text-gray-900" />
+            <div className="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-0.5 border-2 border-[#7598C1]" style={{ width: 16, height: 16 }}>
+              <svg className="w-full h-full text-[#7598C1]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
             </div>
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800 uppercase tracking-wide">Verified Organizers</p>
-            <p className="text-4xl font-extrabold text-gray-900 leading-tight">124</p>
+            <p className="text-lg font-bold text-gray-800 uppercase tracking-wide opacity-100">Verified Organizers</p>
+            <h2 className="text-4xl font-black text-gray-900 mt-1 tabular-nums">124</h2>
           </div>
         </div>
       </div>

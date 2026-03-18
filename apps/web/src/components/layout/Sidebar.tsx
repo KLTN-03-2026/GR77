@@ -126,22 +126,24 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
               );
             })}
 
-            {/* Logout button */}
-            <div className="mt-4 pb-4">
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className={`
-                  w-full flex items-center px-4 py-3 text-base rounded-xl transition-all border
-                  text-gray-900 font-medium border-transparent 
-                  hover:border-red-400 hover:ring-2 hover:ring-red-100 hover:bg-white hover:text-red-600 hover:shadow-sm
-                  disabled:opacity-50
-                `}
-              >
-                <ArrowRightOnRectangleIcon className="mr-4 h-6 w-6 stroke-2" />
-                {isLoggingOut ? 'Logging out...' : 'Log out'}
-              </button>
-            </div>
+            {/* Logout button - Only show for Admin if needed, or hide if moved to header */}
+            {isAdmin && (
+              <div className="mt-4 pb-4">
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className={`
+                    w-full flex items-center px-4 py-3 text-base rounded-xl transition-all border
+                    text-gray-900 font-medium border-transparent 
+                    hover:border-red-400 hover:ring-2 hover:ring-red-100 hover:bg-white hover:text-red-600 hover:shadow-sm
+                    disabled:opacity-50
+                  `}
+                >
+                  <ArrowRightOnRectangleIcon className="mr-4 h-6 w-6 stroke-2" />
+                  {isLoggingOut ? 'Logging out...' : 'Log out'}
+                </button>
+              </div>
+            )}
           </nav>
         </div>
       </aside>
@@ -165,13 +167,15 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
               </Link>
             );
           })}
-          <button
-            onClick={handleLogout}
-            className="flex flex-col items-center justify-center py-2 px-1 text-red-500 flex-shrink-0 min-w-[70px]"
-          >
-            <ArrowRightOnRectangleIcon className="h-6 w-6 mb-1" />
-            <span className="text-xs">Logout</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={handleLogout}
+              className="flex flex-col items-center justify-center py-2 px-1 text-red-500 flex-shrink-0 min-w-[70px]"
+            >
+              <ArrowRightOnRectangleIcon className="h-6 w-6 mb-1" />
+              <span className="text-xs">Logout</span>
+            </button>
+          )}
         </div>
       </nav>
     </>
