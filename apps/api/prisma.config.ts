@@ -10,6 +10,6 @@ export default defineConfig({
     seed: "npx ts-node prisma/seed.ts"
   },
   datasource: {
-    url: process.env.DATABASE_URL || "postgresql://postgres:dtnt135712@localhost:5433/kindlink",
+    url: process.env.DATABASE_URL || "postgresql://postgres:123456@localhost:5433/kindlink",
   },
 });
