@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Island_Moments } from "next/font/google";
 import Footer from "@/components/layout/Footer";
+import Logo from "@/components/common/logo";
 
 const islandMoments = Island_Moments({
   weight: "400",
@@ -157,9 +158,7 @@ export default function Home() {
           <div className="flex justify-end">
             <div className="w-full lg:w-1/2 flex flex-col space-y-3 lg:space-y-5 text-center lg:text-left bg-white/40 backdrop-blur-md lg:bg-transparent p-6 rounded-[30px] lg:p-0">
               <div className="flex justify-center lg:justify-start">
-                <div className="bg-[#00AEEF] text-white px-6 py-2 rounded-full font-black text-xl tracking-wider shadow-lg">
-                  KINDLINK
-                </div>
+                <Logo height={58} />
               </div>
               <p className="text-gray-500 uppercase tracking-[0.2em] text-[10px] lg:text-xs font-semibold">Connecting your heart with transparency</p>
               <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-[#111] leading-[1.1] italic">
@@ -203,18 +202,18 @@ export default function Home() {
 
       {/* 4 & 5. World Map Section & Stats */}
       <section className="relative w-full py-12 lg:py-24 overflow-hidden bg-white">
-        {/* Background Map - Cleaner version */}
-        <div className="absolute inset-0 opacity-[0.08] flex items-center justify-center -z-10 px-4">
+        {/* Background Map */}
+        <div className="absolute inset-0 flex items-center justify-center z-0 px-4">
           <Image
-            src="/images/Group 2.png"
+            src="/images/worldmap.svg"
             alt="World Map Background"
             width={1200}
             height={600}
-            className="w-full max-w-[1240px] object-contain"
+            className="w-full max-w-[1240px] object-contain opacity-80"
           />
         </div>
 
-        <div className="max-w-[1240px] mx-auto px-4 relative">
+        <div className="max-w-[1240px] mx-auto px-4 relative z-10">
 
           {/* Stats Overlay Content */}
           <div className="relative min-h-[400px] lg:min-h-[600px] flex flex-col justify-center gap-10 lg:gap-16 lg:pl-10 pb-20 lg:pb-0">
@@ -416,9 +415,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-24">
             <div className="space-y-6 text-center lg:text-left">
               <div className="flex justify-center lg:justify-start">
-                <div className="bg-[#00AEEF] text-white px-4 py-1 rounded font-bold text-xl tracking-wider">
-                  KINDLINK
-                </div>
+                <Logo height={40} />
               </div>
               <h3 className="text-lg font-bold text-gray-800">Building Trust Through Blockchain</h3>
               <p className="text-gray-600 leading-relaxed text-xs lg:text-sm">

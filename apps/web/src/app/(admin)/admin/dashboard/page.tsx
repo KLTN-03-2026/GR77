@@ -70,11 +70,11 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-4 bg-[#7598C1] rounded-xl px-5 py-4 min-w-0 shadow-sm border border-[#7598C1] w-full">
-      <div className="text-gray-900 flex-shrink-0 text-3xl sm:text-4xl">{icon}</div>
+    <div className="flex items-center gap-6 bg-[#7598C1] rounded-3xl px-6 py-4.5 min-w-0 shadow-xl border border-[#7598C1] w-full hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+      <div className="text-gray-900 bg-white/15 p-2.5 rounded-2xl flex-shrink-0 text-3xl sm:text-4xl">{icon}</div>
       <div className="min-w-0">
-        <p className="text-[10px] sm:text-xs font-semibold text-gray-800 uppercase tracking-wide truncate">{label}</p>
-        <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight truncate">{value}</p>
+        <p className="text-lg font-bold text-gray-800 uppercase tracking-wide opacity-100 truncate">{label}</p>
+        <p className="text-4xl font-black text-gray-900 leading-tight truncate mt-1">{value}</p>
       </div>
     </div>
   );
