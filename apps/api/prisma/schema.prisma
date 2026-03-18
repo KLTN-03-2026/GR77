@@ -20,6 +20,7 @@ model User {
   reviewedCampaigns Campaign[]            @relation("CampaignReviewer")
   favorites         Favorite[]
   participations    CampaignParticipant[]
+  donations         Donation[]
 
   @@map("users")
 }
@@ -67,6 +68,9 @@ model Campaign {
   fundingGoalAmount     Decimal @map("funding_goal_amount") @db.Decimal(18, 2)
   minimumDonationAmount Decimal @map("minimum_donation_amount") @db.Decimal(18, 2)
 
+  currentRaisedAmount Decimal @default(0) @map("current_raised_amount") @db.Decimal(18, 2)
+  donationCount       Int     @default(0) @map("donation_count")
+
   startAt                  DateTime @map("start_at")
   endAt                    DateTime @map("end_at")
   autoCloseWhenGoalReached Boolean  @default(true) @map("auto_close_when_goal_reached")
@@ -85,6 +89,8 @@ model Campaign {
   reviewedByAdmin User?                 @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
   favorites       Favorite[]
   participants    CampaignParticipant[]
+  donations       Donation[]
+  fundLedger      CampaignFundLedger[]
 
   @@index([status])
   @@index([creatorUserId])
@@ -133,4 +139,133 @@ model CampaignParticipant {
   @@index([userId, status])
   @@index([campaignId, status])
   @@map("campaign_participants")
+}
+
+enum PaymentMethod {
+  MOMO
+  VNPAY
+  BANK_TRANSFER
+  WALLET
+  CRYPTO
+}
+
+enum DonationStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  MOMO
+  VNPAY
+  INTERNAL
+  BLOCKCHAIN
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum LedgerEntryType {
+  DONATION_IN
+  REFUND_OUT
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+}
+
+model Donation {
+  id         String  @id @default(uuid())
+  userId     String? @map("user_id")
+  campaignId String  @map("campaign_id")
+
+  amount      Decimal @db.Decimal(18, 2)
+  message     String? @db.VarChar(500)
+  isAnonymous Boolean @default(false) @map("is_anonymous")
+
+  paymentMethod PaymentMethod
+  status        DonationStatus @default(PENDING)
+
+  donatedAt DateTime? @map("donated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user                User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  campaign            Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  paymentTransactions PaymentTransaction[]
+  ledgerEntries       CampaignFundLedger[]
+
+  @@index([userId])
+  @@index([campaignId])
+  @@index([status])
+  @@index([campaignId, status])
+  @@map("donations")
+}
+
+model PaymentTransaction {
+  id         String @id @default(uuid())
+  donationId String @map("donation_id")
+
+  provider PaymentProvider
+  status   PaymentTransactionStatus @default(PENDING)
+
+  orderId   String @unique @map("order_id") @db.VarChar(100)
+  requestId String @unique @map("request_id") @db.VarChar(100)
+
+  partnerCode String? @map("partner_code") @db.VarChar(100)
+  transId     String? @map("trans_id") @db.VarChar(100)
+  requestType String? @map("request_type") @db.VarChar(50)
+
+  amount Decimal @db.Decimal(18, 2)
+
+  payUrl    String? @map("pay_url") @db.VarChar(1000)
+  deeplink  String? @db.VarChar(1000)
+  qrCodeUrl String? @map("qr_code_url") @db.VarChar(1000)
+
+  resultCode   Int?      @map("result_code")
+  responseTime DateTime? @map("response_time")
+
+  rawCreateResponse Json? @map("raw_create_response")
+  rawIpnPayload     Json? @map("raw_ipn_payload")
+
+  paidAt DateTime? @map("paid_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  donation Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+
+  @@index([donationId])
+  @@index([provider])
+  @@index([status])
+  @@index([orderId])
+  @@map("payment_transactions")
+}
+
+model CampaignFundLedger {
+  id         String  @id @default(uuid())
+  campaignId String  @map("campaign_id")
+  donationId String? @map("donation_id")
+
+  type   LedgerEntryType
+  amount Decimal         @db.Decimal(18, 2)
+
+  note String? @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  campaign Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  donation Donation? @relation(fields: [donationId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([donationId])
+  @@index([campaignId, type])
+  @@map("campaign_fund_ledger")
 }
