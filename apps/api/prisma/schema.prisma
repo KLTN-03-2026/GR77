@@ -14,6 +14,12 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  tokens                RefreshToken[]
+  createdCampaigns      Campaign[] @relation("CampaignCreator")
+  reviewedCampaigns     Campaign[] @relation("CampaignReviewer")
+  favorites             Favorite[]
+  viewHistories         CampaignViewHistory[]
 
   tokens            RefreshToken[]
   createdCampaigns  Campaign[]            @relation("CampaignCreator")
@@ -81,6 +87,10 @@ model Campaign {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // relations
+  creatorUser              User            @relation("CampaignCreator", fields: [creatorUserId], references: [id], onDelete: Restrict)
+  reviewedByAdmin          User?           @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+  favorites                Favorite[]
+  viewHistories            CampaignViewHistory[]
   creatorUser     User                  @relation("CampaignCreator", fields: [creatorUserId], references: [id], onDelete: Restrict)
   reviewedByAdmin User?                 @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
   favorites       Favorite[]
@@ -107,6 +117,19 @@ model Favorite {
   @@map("favorites")
 }
 
+model CampaignViewHistory {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  campaignId String   @map("campaign_id")
+  viewedAt   DateTime @default(now()) @map("viewed_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([userId, viewedAt])
+  @@index([campaignId])
+  @@map("campaign_view_histories")
 enum ParticipationStatus {
   JOINED
   LEFT
