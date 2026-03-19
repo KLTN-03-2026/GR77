@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronRightIcon, ArrowPathIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, ArrowPathIcon, PhotoIcon, XMarkIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 export default function EditCampaignClient({ id }: { id: string }) {
     const router = useRouter();
@@ -211,14 +211,16 @@ export default function EditCampaignClient({ id }: { id: string }) {
 
     return (
         <div className="w-full max-w-5xl mx-auto pb-20">
-            {/* Header / Breadcrumb */}
-            <h1 className="text-xl font-extrabold text-[#1a1a1a] mb-10 tracking-tight flex items-center gap-3 px-4 sm:px-0">
-                <Link href="/creator/campaigns" className="hover:text-blue-500 transition-colors">My Campaigns</Link>
-                <ChevronRightIcon className="h-5 w-5 stroke-[3] text-gray-300" />
-                <span className="text-gray-400">Edit</span>
-            </h1>
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <PencilSquareIcon className="w-7 h-7 text-cyan-500" />
+                    Edit Campaign
+                </h1>
+                <p className="text-sm text-gray-400 mt-1 ml-9">Update your campaign details below.</p>
+            </div>
 
-            <div className="max-w-4xl bg-white mx-4 sm:mx-0">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8">
                 {error && (
                     <div className="mb-8 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium flex items-center gap-3 shadow-sm anim-up-0">
                         <div className="h-2 w-2 rounded-full bg-red-500 shrink-0"></div>
@@ -239,7 +241,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
                                 name="title"
                                 defaultValue={campaign.title}
                                 required
-                                className="w-full bg-[#f4f4f4] border border-transparent rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                             />
                         </div>
                     </div>
@@ -256,7 +258,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
                                 rows={6}
                                 defaultValue={campaign.description}
                                 required
-                                className="w-full bg-[#f4f4f4] border border-transparent rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all resize-none shadow-sm"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all resize-none shadow-sm"
                             ></textarea>
                         </div>
                     </div>
@@ -313,7 +315,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
                             <select
                                 name="category"
                                 defaultValue={campaign.category}
-                                className="w-full bg-[#f4f4f4] border border-transparent rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
                                 style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236b7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 1rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em 1.2em' }}
                             >
                                 <option value="education">Education</option>
@@ -332,7 +334,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
                                 name="locationText"
                                 defaultValue={campaign.locationText}
                                 required
-                                className="w-full bg-[#f4f4f4] border border-transparent rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                             />
                         </div>
                     </div>
@@ -350,7 +352,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
                                     name="fundingGoalAmount"
                                     defaultValue={campaign.fundingGoalAmount}
                                     required
-                                    className="w-full bg-[#f4f4f4] border border-transparent rounded-xl pl-5 pr-14 py-3 text-sm text-[#000000] font-bold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-5 pr-14 py-3 text-sm text-[#000000] font-bold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                                 />
                                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">VND</span>
                             </div>
@@ -366,7 +368,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
                                     name="minimumDonationAmount"
                                     defaultValue={campaign.minimumDonationAmount}
                                     required
-                                    className="w-full bg-[#f4f4f4] border border-transparent rounded-xl pl-5 pr-14 py-3 text-sm text-[#000000] font-bold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-5 pr-14 py-3 text-sm text-[#000000] font-bold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                                 />
                                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">VND</span>
                             </div>

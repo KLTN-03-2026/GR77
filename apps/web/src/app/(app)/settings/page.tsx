@@ -16,19 +16,16 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 bg-[#f9fafb] min-h-screen text-slate-900 font-sans">
-      <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700 pb-12">
+    <div className="max-w-5xl mx-auto space-y-8 pb-12 text-slate-900 font-sans">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Cog6ToothIcon className="w-8 h-8 text-cyan-500" />
-              Settings
-            </h1>
-            <p className="text-sm text-gray-400 ml-10">
-              DEMO
-            </p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Cog6ToothIcon className="w-7 h-7 text-cyan-500" />
+            Settings
+          </h1>
+          <p className="text-sm text-gray-400 mt-1 ml-9">
+            Customize your application preferences.
+          </p>
         </div>
 
         <div className="space-y-6">
@@ -205,6 +202,5 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

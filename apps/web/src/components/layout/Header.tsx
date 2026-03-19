@@ -186,17 +186,15 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center justify-center p-0.5 rounded-full border-2 border-[#47c9e5] hover:shadow-md transition-all overflow-hidden"
               >
-                <div className="bg-gray-100 p-1.5 sm:p-2">
-                  <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
-                </div>
+                <img src="/avata.svg" alt="Avatar" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover bg-white" />
               </button>
 
               {isProfileOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   {/* Header: User Info - Compact */}
                   <div className="px-5 py-4 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <UserIcon className="h-5 w-5 text-gray-400" />
+                    <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
+                      <img src="/avata.svg" alt="Avatar" className="h-full w-full object-cover bg-white" />
                     </div>
                     <div className="overflow-hidden">
                       <p className="text-base font-bold text-[#1d2951] truncate leading-tight">{userName}</p>

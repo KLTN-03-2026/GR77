@@ -174,11 +174,10 @@ export default function ListCampaignsPage() {
     };
 
     return (
-        <div className="p-4 md:p-8 bg-white min-h-screen">
-            <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto">
 
                 {/* Page header */}
-                <div className="mb-6">
+                <div className="mb-8">
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <Bars3CenterLeftIcon className="w-7 h-7 text-cyan-500" />
                         List Campaigns
@@ -383,6 +382,5 @@ export default function ListCampaignsPage() {
                     </div>
                 )}
             </div>
-        </div>
     );
 }

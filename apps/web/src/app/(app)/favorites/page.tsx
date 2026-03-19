@@ -105,14 +105,13 @@ export default function FavoritesPage() {
     };
 
     return (
-        <div className="p-4 md:p-8 bg-white min-h-screen">
-            <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <HeartIcon className="w-8 h-8 text-pink-500" />
+                        <HeartIcon className="w-7 h-7 text-pink-500" />
                         Favorite Campaigns
                     </h1>
-                    <p className="text-sm text-gray-400 mt-1 ml-10">
+                    <p className="text-sm text-gray-400 mt-1 ml-9">
                         Chiến dịch bạn đã lưu
                     </p>
                 </div>
@@ -255,6 +254,5 @@ export default function FavoritesPage() {
                     </div>
                 )}
             </div>
-        </div>
     );
 }

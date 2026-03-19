@@ -21,11 +21,14 @@ export default function MyProfilePage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700 pb-12">
+    <div className="max-w-5xl mx-auto space-y-8 pb-12">
       {/* Header Section */}
-      <div>
-        <h1 className="text-3xl font-black text-[#1d2951] tracking-tight">My Profile</h1>
-        <p className="text-[#8ea1c1] font-medium mt-1">Manage your personal information and preferences.</p>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <UserIcon className="w-7 h-7 text-cyan-500" />
+          My Profile
+        </h1>
+        <p className="text-sm text-gray-400 mt-1 ml-9">Manage your personal information and preferences.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -41,9 +44,11 @@ export default function MyProfilePage() {
 
             {/* Avatar */}
             <div className="relative -mt-14 flex justify-center">
-              <div className="w-28 h-28 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center relative shadow-md">
-                <UserIcon className="w-12 h-12 text-gray-400" />
-                <button className="absolute bottom-0 right-0 p-1.5 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all text-gray-600 hover:text-[#47c9e5]">
+              <div className="relative">
+                <div className="w-28 h-28 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
+                  <img src="/avata.svg" alt="Avatar" className="w-full h-full object-cover" />
+                </div>
+                <button className="absolute bottom-1 right-1 p-1.5 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all text-gray-600 hover:text-[#47c9e5] z-10">
                   <CameraIcon className="w-4 h-4" />
                 </button>
               </div>
