@@ -73,6 +73,17 @@ export default function CampaignDetailPage({
         fetchCampaign();
     }, [id]);
 
+    // Track view history when campaign loads successfully
+    useEffect(() => {
+        if (!campaign) return;
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+        fetch(`http://localhost:3001/view-histories/${id}`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => {});
+    }, [campaign, id]);
+
     /* ── Image carousel ── */
     const fallbackImages = [
         "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200",
