@@ -69,13 +69,13 @@ export default function KindlinkJoinedPage() {
   const fallbackImage = "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=600&auto=format&fit=crop";
 
   return (
-    <div className="p-4 md:p-8 bg-white min-h-screen">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-blue-50 rounded-lg">
-            <UserPlus className="w-6 h-6 text-blue-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Joined Campaigns</h1>
+    <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <UserPlus className="w-7 h-7 text-cyan-500" />
+            Joined Campaigns
+          </h1>
+          <p className="text-sm text-gray-400 mt-1 ml-9">Chiến dịch bạn đã tham gia</p>
         </div>
 
         {isLoading ? (
@@ -176,6 +176,5 @@ export default function KindlinkJoinedPage() {
           </>
         )}
       </div>
-    </div>
   );
 }
