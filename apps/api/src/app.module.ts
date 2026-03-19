@@ -9,6 +9,8 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ViewHistoriesModule } from './modules/view-histories/view-histories.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { ParticipantsModule } from './modules/participants/participants.module';
+import { UsersModule } from './modules/users/users.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { ParticipantsModule } from './modules/participants/participants.module';
     FavoritesModule,
     UploadModule,
     ParticipantsModule,
+    UsersModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

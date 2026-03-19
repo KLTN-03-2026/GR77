@@ -22,6 +22,8 @@ interface HeaderProps {
   roleLabel?: string;
 }
 
+import NotificationBell from './NotificationBell';
+
 export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -172,12 +174,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
 
         <div className="flex items-center gap-3">
           {/* Notification icon */}
-          <button className={`relative p-2 rounded-2xl transition-colors ${isAdmin ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1]' : 'bg-[#E0F0FA] text-[#2ba6e1] hover:bg-[#d4ebfc]'}`}>
-            <BellIcon className="h-6 w-6" strokeWidth={2} />
-            <span className="absolute -top-2 -right-2 flex h-[24px] min-w-[24px] items-center justify-center rounded-full border-[3px] border-white bg-[#2ba6e1] px-1 text-[11px] font-bold text-white leading-none">
-              14
-            </span>
-          </button>
+          <NotificationBell isAdmin={isAdmin} />
 
           {/* Profile Dropdown - Only show for regular users */}
           {!isAdmin && (

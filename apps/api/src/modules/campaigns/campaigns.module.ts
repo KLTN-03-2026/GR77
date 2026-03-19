@@ -20,8 +20,10 @@ import { AuthModule } from '../auth/auth.module';
  * Imports:
  * - PrismaModule: database access
  */
+import { MailModule } from '../mail/mail.module';
+
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, MailModule],
   controllers: [CampaignsController],
   providers: [CampaignsService],
 })

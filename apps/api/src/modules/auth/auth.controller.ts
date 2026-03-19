@@ -39,8 +39,17 @@ export class AuthController {
   @Post('logout-all')
   @HttpCode(204)
   async logoutAll(@Req() req: any) {
-    // tuỳ bạn set payload trong guard thế nào:
     const userId = req.user.sub || req.user.userId
     await this.authService.logoutAll(userId)
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Body() body: { email: string; code: string }) {
+    return this.authService.verifyEmail(body.email, body.code);
+  }
+
+  @Post('resend-verification')
+  async resendVerification(@Body() body: { email: string }) {
+    return this.authService.resendVerification(body.email);
   }
 }
