@@ -43,30 +43,27 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 bg-[#f9fafb] min-h-screen text-slate-900 font-sans">
-      <div className="max-w-6xl mx-auto">
+    <div className="max-w-5xl mx-auto text-slate-900 font-sans">
 
-        {/* Synced Header with Favorites Page Style */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <WalletIcon className="w-8 h-8 text-cyan-500" />
-              Wallet
-            </h1>
-            <p className="text-sm text-gray-400 ml-10">
-              Quản lý tài chính và lịch sử giao dịch của bạn
-            </p>
-          </div>
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <WalletIcon className="w-7 h-7 text-cyan-500" />
+            Wallet
+          </h1>
+          <p className="text-sm text-gray-400 mt-1 ml-9">
+            Quản lý tài chính và lịch sử giao dịch của bạn
+          </p>
+        </div>
 
-          <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-2xl shadow-sm group hover:border-cyan-200 transition-colors ml-10 md:ml-0">
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mainnet Active</span>
-            <div className="h-4 w-[1px] bg-gray-100 mx-1"></div>
-            <span className="text-xs text-slate-600 font-mono font-semibold">{walletAddr.slice(0, 10)}...{walletAddr.slice(-4)}</span>
-            <button onClick={copyToClipboard} className="text-slate-300 hover:text-cyan-500 transition-colors ml-1">
-              <Square2StackIcon className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-2xl shadow-sm group hover:border-cyan-200 transition-colors mb-8 w-fit">
+          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mainnet Active</span>
+          <div className="h-4 w-[1px] bg-gray-100 mx-1"></div>
+          <span className="text-xs text-slate-600 font-mono font-semibold">{walletAddr.slice(0, 10)}...{walletAddr.slice(-4)}</span>
+          <button onClick={copyToClipboard} className="text-slate-300 hover:text-cyan-500 transition-colors ml-1">
+            <Square2StackIcon className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Main Dashboard Grid */}
@@ -255,6 +252,5 @@ export default function WalletPage() {
 
         </div>
       </div>
-    </div>
   );
 }

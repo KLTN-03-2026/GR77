@@ -4,38 +4,53 @@ import { CampaignsService } from './campaigns.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
+import { JwtAuthGuard } from '../auth/jwt.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 
-/**
- * CampaignsController
- * 
- * Xử lý công khai danh sách chiến dịch (không cần JWT)
- * Public endpoints để xem campaigns và chi tiết
- * 
- * Endpoints:
- * - GET /campaigns - Danh sách tất cả chiến dịch (active)
- * - GET /campaigns/:id - Chi tiết 1 chiến dịch
- */
 @Controller('campaigns')
 export class CampaignsController {
   constructor(private readonly campaignsService: CampaignsService) { }
 
   /**
+   * GET /campaigns/admin
+   * 
+   * Admin-only list of all campaigns
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get('admin/all')
+  findAllAdmin(@Query() query: GetCampaignsQueryDto) {
+    return this.campaignsService.findAllAdmin(query);
+  }
+
+  /**
+   * POST /campaigns/:id/approve
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Post(':id/approve')
+  approve(@Param('id') id: string, @Request() req: any) {
+    const adminId = req.user.userId || req.user.sub;
+    return this.campaignsService.approve(id, adminId);
+  }
+
+  /**
+   * POST /campaigns/:id/reject
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Post(':id/reject')
+  reject(@Param('id') id: string, @Request() req: any, @Body('note') note: string) {
+    const adminId = req.user.userId || req.user.sub;
+    return this.campaignsService.reject(id, adminId, note || 'No reason provided');
+  }
+
+  /**
    * GET /campaigns
    * 
-   * Lấy danh sách chiến dịch với phân trang, tìm kiếm và lọc
-   * 
-   * Query Parameters:
-   * - page: number (default: 1) - Trang hiện tại
-   * - limit: number (default: 20, max: 100) - Số item trên trang
-   * - status: CampaignStatus (default: ACTIVE) - Trạng thái chiến dịch
-   * - category: string - Danh mục (optional)
-   * - q: string - Tìm kiếm theo title, description, location (optional)
-   * 
-   * Response:
-   * {
-   *   meta: { page, limit, total, totalPages },
-   *   items: Campaign[]
-   * }
+   * Public list of active campaigns
    */
   @Get()
   list(@Query() query: GetCampaignsQueryDto) {
@@ -43,9 +58,7 @@ export class CampaignsController {
   }
 
   /**
-   * GET /campaigns/me
-   * 
-   * Lấy danh sách chiến dịch của tôi
+   * GET /campaigns/me/list
    */
   @UseGuards(AuthGuard('jwt'))
   @Get('me/list')
@@ -56,16 +69,6 @@ export class CampaignsController {
 
   /**
    * GET /campaigns/:id
-   * 
-   * Lấy chi tiết 1 chiến dịch
-   * 
-   * Path Parameters:
-   * - id: string - UUID của chiến dịch
-   * 
-   * Response: Campaign detail object
-   * 
-   * Error:
-   * - 404 Not Found - Campaign không tồn tại
    */
   @Get(':id')
   detail(@Param('id') id: string) {
@@ -74,8 +77,6 @@ export class CampaignsController {
 
   /**
    * POST /campaigns
-   * 
-   * Tạo chiến dịch mới
    */
   @UseGuards(AuthGuard('jwt'))
   @Post()
@@ -86,8 +87,6 @@ export class CampaignsController {
 
   /**
    * PATCH /campaigns/:id
-   * 
-   * Cập nhật chiến dịch
    */
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
@@ -96,8 +95,6 @@ export class CampaignsController {
     @Param('id') id: string,
     @Body() updateCampaignDto: UpdateCampaignDto,
   ) {
-    console.log('Update Request received for ID:', id);
-    console.log('User from request:', req.user);
     const userId = req.user.userId || req.user.sub;
     return this.campaignsService.update(userId, id, updateCampaignDto);
   }

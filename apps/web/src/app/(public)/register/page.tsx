@@ -13,6 +13,31 @@ export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(300);
+    const [cooldown, setCooldown] = useState(0);
+    const [attemptsUsed, setAttemptsUsed] = useState(0);
+
+    const [timer, setTimer] = useState<any>(null);
+
+    require("react").useEffect(() => {
+        let interval: any;
+        if (success && timeLeft > 0) {
+            interval = setInterval(() => {
+                setTimeLeft((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [success, timeLeft]);
+
+    require("react").useEffect(() => {
+        let interval: any;
+        if (cooldown > 0) {
+            interval = setInterval(() => {
+                setCooldown((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [cooldown]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,16 +69,95 @@ export default function RegisterPage() {
             }
 
             setSuccess(true);
-            // Optionally auto-login or redirect to login
-            setTimeout(() => {
-                router.push("/login");
-            }, 2000);
         } catch (err: any) {
             setError(err.message || "An error occurred. Please try again.");
         } finally {
             setIsLoading(false);
         }
     };
+
+    const handleResendEmail = async () => {
+        if (attemptsUsed >= 4) {
+            alert("Maximum resend attempts reached.");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const res = await fetch("http://localhost:3001/auth/resend-verification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setCooldown(60);
+                setTimeLeft(300);
+                setAttemptsUsed(prev => prev + 1);
+                alert("A new verification code has been sent!");
+            } else {
+                alert(data.message || "Failed to resend email.");
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (success) {
+        return (
+            <div className="register-page relative min-h-screen flex items-center justify-center overflow-hidden">
+                <style jsx global>{`
+                    .register-page * { font-family: 'Inter', sans-serif; }
+                    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+                    .anim-up { animation: fadeInUp 0.6s ease-out both; }
+                `}</style>
+                <div className="absolute inset-0 anim-gradient-bg" style={{ background: "linear-gradient(135deg, #0097d9 0%, #00AEEF 25%, #33c1f5 50%, #00AEEF 75%, #007bb5 100%)" }} />
+
+                <div className="relative z-10 w-full max-w-[480px] px-6 py-12 anim-up">
+                    <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl p-10 shadow-2xl text-center">
+                        <div className="flex justify-center mb-8">
+                            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg transform hover:rotate-12 transition-transform">
+                                <svg className="w-12 h-12 text-[#00AEEF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <h2 className="text-3xl font-extrabold text-white mb-2">Check Your Email</h2>
+                        <div className="flex justify-center mb-6">
+                            <div className="bg-white/10 px-4 py-2 rounded-full border border-white/20 text-white font-mono text-xl">
+                                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                            </div>
+                        </div>
+                        <p className="text-white/90 text-lg mb-8 leading-relaxed">
+                            We've sent a verification code to <span className="font-bold text-white underline decoration-white/30">{email}</span>.
+                            Mã sẽ hết hạn sau 5 phút.
+                        </p>
+
+                        <div className="space-y-4">
+                            <Link href="/login" className="block w-full py-4 bg-white text-[#00AEEF] font-bold rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95">
+                                Go to Login
+                            </Link>
+                            <button
+                                onClick={handleResendEmail}
+                                disabled={isLoading || cooldown > 0 || attemptsUsed >= 4}
+                                className="block w-full py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-full border border-white/30 transition-all disabled:opacity-50"
+                            >
+                                {isLoading ? "Sending..." : cooldown > 0 ? `Resend in ${cooldown}s` : "Didn't receive code? Resend"}
+                            </button>
+                            {attemptsUsed > 0 && (
+                                <p className="text-white/60 text-xs mt-2">
+                                    Remaining attempts: {4 - attemptsUsed}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>

@@ -6,58 +6,118 @@ import {
   PlusIcon,
   EllipsisHorizontalIcon,
   MegaphoneIcon,
-  WalletIcon
+  WalletIcon,
+  CheckBadgeIcon,
+  XCircleIcon,
+  EyeIcon,
+  UserCircleIcon,
+  MapPinIcon,
+  CalendarIcon,
+  BanknotesIcon,
+  ChartPieIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
-const mockCampaigns = [
-  {
-    id: '1',
-    title: 'Quỹ áo ấm cho trẻ em vùng cao',
-    category: 'Charity',
-    status: 'Active',
-    targetAmount: 120000,
-    amountRaised: 55000,
-    progress: 55,
-  },
-  {
-    id: '2',
-    title: 'Nước sạch cho đồng bào miền Trung',
-    category: 'Health',
-    status: 'Pending',
-    targetAmount: 150000,
-    amountRaised: 30000,
-    progress: 20,
-  },
-  {
-    id: '3',
-    title: 'Học bổng thắp sáng ước mơ',
-    category: 'Education',
-    status: 'Completed',
-    targetAmount: 100000,
-    amountRaised: 100000,
-    progress: 100,
-  },
-  { id: '4', title: 'Máy tính cho em', category: 'Education', status: 'Active', targetAmount: 200000, amountRaised: 85000, progress: 42.5 },
-  { id: '5', title: 'Bữa ăn 0 đồng', category: 'Charity', status: 'Active', targetAmount: 50000, amountRaised: 12000, progress: 24 },
-  { id: '6', title: 'Xây cầu vùng cao', category: 'Charity', status: 'Pending', targetAmount: 300000, amountRaised: 0, progress: 0 },
-  { id: '7', title: 'Tết ấm tình thương', category: 'Charity', status: 'Completed', targetAmount: 80000, amountRaised: 82000, progress: 100 },
-];
+interface Campaign {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  status: string;
+  fundingGoalAmount: number;
+  amountRaised: number;
+  progress: number;
+  coverImageUrl: string;
+  locationText: string;
+  startAt: string;
+  endAt: string;
+  creatorUser: {
+    username: string;
+    email: string;
+  };
+  donationsCount: number;
+  favoritesCount: number;
+}
 
 export default function AdminCampaignsPage() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
 
-  // Logic filter dynamic
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchCampaigns = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('http://localhost:3001/campaigns/admin/all', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch campaigns');
+      const data = await res.json();
+      setCampaigns(data.items);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchCampaigns(); }, []);
+
+  const handleApprove = async (id: string) => {
+    if (!confirm('Are you sure you want to APPROVE this campaign? It will go live immediately.')) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`http://localhost:3001/campaigns/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}` }
+      });
+      if (!res.ok) throw new Error('Failed to approve');
+      await fetchCampaigns();
+      setIsDetailOpen(false);
+    } catch (err: any) { alert(err.message); } finally { setIsSubmitting(false); }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt('Please enter the reason for rejection (this will be sent to the user):');
+    if (!reason) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`http://localhost:3001/campaigns/${id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}`
+        },
+        body: JSON.stringify({ note: reason })
+      });
+      if (!res.ok) throw new Error('Failed to reject');
+      await fetchCampaigns();
+      setIsDetailOpen(false);
+    } catch (err: any) { alert(err.message); } finally { setIsSubmitting(false); }
+  };
+
   const filteredCampaigns = useMemo(() => {
-    return mockCampaigns.filter(campaign => {
+    return campaigns.filter(campaign => {
       const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'All' || campaign.category === selectedCategory;
       const matchesStatus = selectedStatus === 'All' || campaign.status === selectedStatus;
       return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [searchTerm, selectedCategory, selectedStatus]);
+  }, [campaigns, searchTerm, selectedCategory, selectedStatus]);
+
+  const stats = useMemo(() => {
+    const totalRaised = campaigns.reduce((acc, c) => acc + c.amountRaised, 0);
+    return {
+      total: campaigns.length,
+      totalRaised
+    };
+  }, [campaigns]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -68,8 +128,8 @@ export default function AdminCampaignsPage() {
             <MegaphoneIcon className="h-9 w-9 text-black" />
           </div>
           <div className="text-black">
-            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Total Campaigns</p>
-            <h2 className="text-4xl font-black mt-1 tabular-nums">87</h2>
+            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Catalog of Impact</p>
+            <h2 className="text-4xl font-black mt-1 tabular-nums">{stats.total}</h2>
           </div>
         </div>
 
@@ -78,18 +138,17 @@ export default function AdminCampaignsPage() {
             <WalletIcon className="h-9 w-9 text-black" />
           </div>
           <div className="text-black">
-            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Totals Funds Raised</p>
-            <h2 className="text-4xl font-black mt-1 tabular-nums">$6,750</h2>
+            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Aggregated Contributions</p>
+            <h2 className="text-4xl font-black mt-1 tabular-nums">${stats.totalRaised.toLocaleString()}</h2>
           </div>
         </div>
       </div>
 
       {/* Table Section */}
       <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-sm min-h-[500px]">
-        {/* Filters Header (Toolbar) */}
+        {/* Filters Header */}
         <div className="flex flex-wrap items-center gap-3 p-3 bg-[#f8f9fa] border-b border-gray-300">
           <div className="flex flex-wrap items-center gap-3 flex-1">
-            {/* Search */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <MagnifyingGlassIcon className="h-4 w-4 text-[#2ba6e1]" strokeWidth={2.5} />
@@ -97,116 +156,143 @@ export default function AdminCampaignsPage() {
               <input
                 type="text"
                 className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg w-64 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-600 font-medium placeholder:text-gray-400"
-                placeholder="Search Campaigns..."
+                placeholder="Search Intel..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            {/* Category Filter */}
             <div className="relative">
-              <select
-                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="All">Category: All</option>
-                <option value="Charity">Charity</option>
-                <option value="Health">Health</option>
-                <option value="Education">Education</option>
+              <select className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+                <option value="All">Sector: All</option>
+                <option value="Charity">Charity</option><option value="Health">Health</option><option value="Education">Education</option>
               </select>
-              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-                <ChevronDownIcon className="h-4 w-4 text-gray-500" />
-              </div>
+              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-400"><ChevronDownIcon className="h-4 w-4" /></div>
             </div>
 
-            {/* Status Filter */}
             <div className="relative">
-              <select
-                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-              >
-                <option value="All">Status: All</option>
-                <option value="Active">Active</option>
-                <option value="Pending">Pending</option>
-                <option value="Completed">Completed</option>
+              <select className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+                <option value="All">Operational Code: All</option>
+                <option value="PENDING">Pending Review</option>
+                <option value="ACTIVE">Live/Active</option>
+                <option value="REJECTED">Flagged/Rejected</option>
               </select>
-              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-                <ChevronDownIcon className="h-4 w-4 text-gray-500" />
-              </div>
+              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-400"><ChevronDownIcon className="h-4 w-4" /></div>
             </div>
           </div>
-
-          <button className="ml-auto bg-[#7598C1] hover:bg-[#5DA2D5] text-black px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-sm inline-flex items-center">
-            <PlusIcon className="h-4 w-4 mr-1.5 stroke-[2.5]" />
-            Add Campaigns
-          </button>
         </div>
 
         {/* Table Content */}
         <div className="overflow-x-auto">
-          {filteredCampaigns.length > 0 ? (
-            <table className="w-full text-sm text-left border-collapse">
-              <thead>
-                <tr className="bg-white border-b border-gray-300">
-                  <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Campaigns title</th>
-                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Category</th>
-                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Target Amount</th>
-                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Amount Raised</th>
-                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Progress (%)</th>
-                  <th className="px-4 py-3 font-bold text-black text-center">Actions</th>
+          <table className="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr className="bg-white border-b border-gray-300">
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Tactical Objective</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Creator</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Status</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Target</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Progress</th>
+                <th className="px-4 py-3 font-bold text-black text-center">Protocol</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-300">
+              {loading ? (
+                <tr><td colSpan={6} className="py-20 text-center text-gray-400 italic font-medium">Syncing campaign database...</td></tr>
+              ) : filteredCampaigns.map((campaign) => (
+                <tr key={campaign.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors group">
+                  <td className="px-5 py-3 border-r border-gray-300"><span className="font-black text-gray-800 leading-snug">{campaign.title}</span></td>
+                  <td className="px-4 py-3 text-gray-500 border-r border-gray-300 font-bold text-[11px] uppercase truncate max-w-[150px]">{campaign.creatorUser?.username || 'Unknown'}</td>
+                  <td className="px-4 py-3 border-r border-gray-300">
+                    <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight ${campaign.status === 'ACTIVE' ? 'bg-[#7BC712] text-black' :
+                        campaign.status === 'PENDING' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
+                          'bg-red-50 text-red-600 border border-red-100'
+                      }`}>{campaign.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-800 border-r border-gray-300 font-bold tabular-nums">${campaign.fundingGoalAmount.toLocaleString()}</td>
+                  <td className="px-4 py-3 border-r border-gray-300">
+                    <div className="flex flex-col gap-1.5 min-w-[100px]">
+                      <span className="text-[10px] font-black text-[#E56C6C]">{Math.round(campaign.progress)}%</span>
+                      <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-[#E56C6C] rounded-full transition-all duration-700" style={{ width: `${campaign.progress}%` }} /></div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => { setSelectedCampaign(campaign); setIsDetailOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"><EyeIcon className="w-5 h-5" /></button>
+                      {campaign.status === 'PENDING' && (
+                        <>
+                          <button onClick={() => handleApprove(campaign.id)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"><CheckBadgeIcon className="w-5 h-5" /></button>
+                          <button onClick={() => handleReject(campaign.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><XCircleIcon className="w-5 h-5" /></button>
+                        </>
+                      )}
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-300">
-                {filteredCampaigns.map((campaign) => (
-                  <tr key={campaign.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors group cursor-default">
-                    <td className="px-5 py-3 border-r border-gray-300">
-                      <span className="font-medium text-gray-800 leading-snug">{campaign.title}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-800 border-r border-gray-300">
-                      <span className="font-medium">{campaign.category}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-800 border-r border-gray-300">
-                      <span className="font-bold">${campaign.targetAmount.toLocaleString()}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-800 border-r border-gray-300">
-                      <span className="font-bold">${campaign.amountRaised.toLocaleString()}</span>
-                    </td>
-                    <td className="px-4 py-3 border-r border-gray-300">
-                      <div className="flex flex-col gap-1.5 min-w-[120px]">
-                        <div className="flex justify-start px-0.5">
-                          <span className="text-[12px] font-black text-[#E56C6C]">{campaign.progress}%</span>
-                        </div>
-                        <div className="h-2 w-full bg-gray-200/70 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#E56C6C] rounded-full transition-all duration-700 ease-out"
-                            style={{ width: `${campaign.progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center text-gray-500 font-bold tracking-widest cursor-pointer hover:text-gray-900 select-none">
-                      ...
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-32 text-gray-400">
-              <MagnifyingGlassIcon className="h-16 w-16 mb-4 opacity-20" />
-              <p className="text-xl font-medium">No campaigns found matching your filters</p>
-              <button
-                onClick={() => { setSearchTerm(''); setSelectedCategory('All'); setSelectedStatus('All'); }}
-                className="mt-4 text-[#7598C1] font-bold hover:underline"
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      {/* Campaign Detail Overlay */}
+      {isDetailOpen && selectedCampaign && (
+        <div className="fixed inset-0 z-[150] flex justify-end bg-black/40 backdrop-blur-md">
+          <div className="bg-white w-full max-w-3xl h-screen shadow-2xl overflow-y-auto flex flex-col transform animate-in slide-in-from-right duration-500">
+            <div className="relative h-72 bg-gray-900 overflow-hidden shrink-0">
+              <img src={selectedCampaign.coverImageUrl || 'https://via.placeholder.com/1200x600'} className="w-full h-full object-cover opacity-60" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+              <div className="absolute bottom-6 left-8 right-8 text-white">
+                <span className="px-3 py-1 bg-blue-500 text-white text-[10px] font-black uppercase rounded-full mb-3 inline-block">{selectedCampaign.category}</span>
+                <h2 className="text-4xl font-black tracking-tight leading-tight">{selectedCampaign.title}</h2>
+              </div>
+              <button onClick={() => setIsDetailOpen(false)} className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all"><XMarkIcon className="w-6 h-6" /></button>
+            </div>
+
+            <div className="p-10 flex-1 space-y-10">
+              <div className="grid grid-cols-3 gap-8">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gray-50 rounded-2xl"><UserCircleIcon className="w-6 h-6 text-[#7598C1]" /></div>
+                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Architect</p><p className="font-bold text-gray-900">{selectedCampaign.creatorUser?.username}</p></div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gray-50 rounded-2xl"><MapPinIcon className="w-6 h-6 text-[#7598C1]" /></div>
+                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deployment</p><p className="font-bold text-gray-900">{selectedCampaign.locationText}</p></div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gray-50 rounded-2xl"><CalendarIcon className="w-6 h-6 text-[#7598C1]" /></div>
+                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Timeline</p><p className="font-bold text-gray-900">{new Date(selectedCampaign.endAt).toLocaleDateString()}</p></div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 border-b pb-2">Mission Description</h3>
+                <p className="text-gray-600 font-medium leading-relaxed whitespace-pre-wrap">{selectedCampaign.description}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8">
+                <div className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
+                  <div className="flex items-center gap-3 mb-6"><BanknotesIcon className="w-5 h-5 text-green-600" /><h4 className="font-black text-gray-900 uppercase text-xs tracking-widest">Financial Status</h4></div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end"><p className="text-4xl font-black text-gray-900">${selectedCampaign.amountRaised.toLocaleString()}</p><p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Raised of $${selectedCampaign.fundingGoalAmount.toLocaleString()}</p></div>
+                    <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-green-500 rounded-full" style={{ width: `${selectedCampaign.progress}%` }} /></div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
+                  <div className="flex items-center gap-3 mb-6"><ChartPieIcon className="w-5 h-5 text-blue-600" /><h4 className="font-black text-gray-900 uppercase text-xs tracking-widest">Engagement Base</h4></div>
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div className="p-4 bg-white rounded-2xl shadow-sm"><p className="text-2xl font-black text-gray-900">{selectedCampaign.donationsCount}</p><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Donors</p></div>
+                    <div className="p-4 bg-white rounded-2xl shadow-sm"><p className="text-2xl font-black text-gray-900">{selectedCampaign.favoritesCount}</p><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Followers</p></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8 bg-gray-50 border-t flex gap-6">
+              <button onClick={() => handleReject(selectedCampaign.id)} disabled={isSubmitting || selectedCampaign.status !== 'PENDING'} className="flex-1 py-5 bg-white border-2 border-red-500 text-red-500 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-50 transition-all disabled:opacity-30">Flag Revision</button>
+              <button onClick={() => handleApprove(selectedCampaign.id)} disabled={isSubmitting || selectedCampaign.status !== 'PENDING'} className="flex-1 py-5 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black shadow-xl shadow-blue-900/10 transition-all disabled:opacity-30">Authorize Access</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

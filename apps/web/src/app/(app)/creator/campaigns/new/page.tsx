@@ -124,12 +124,16 @@ export default function NewCampaignPage() {
         <div className="w-full max-w-5xl mx-auto pb-20">
 
             {/* Header */}
-            <h1 className="text-xl font-extrabold text-[#1a1a1a] mb-10 tracking-tight flex items-center gap-3">
-                My Campaigns <ChevronRightIcon className="h-5 w-5 stroke-[3]" /> Add
-            </h1>
+            <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <ChevronRightIcon className="w-7 h-7 text-cyan-500" />
+                    Create New Campaign
+                </h1>
+                <p className="text-sm text-gray-400 mt-1 ml-9">Fill in the details to create a new campaign.</p>
+            </div>
 
             {/* Form Container */}
-            <div className="max-w-4xl bg-white">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8">
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
                         {error}
@@ -147,7 +151,7 @@ export default function NewCampaignPage() {
                             <input
                                 type="text"
                                 name="title"
-                                className="w-full bg-[#f4f4f4] border border-transparent rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             />
                         </div>
                     </div>
@@ -162,7 +166,7 @@ export default function NewCampaignPage() {
                             <textarea
                                 name="description"
                                 rows={4}
-                                className="w-full bg-[#f4f4f4] border border-transparent rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
                             ></textarea>
                         </div>
                     </div>
@@ -175,7 +179,7 @@ export default function NewCampaignPage() {
                         <div className="sm:w-3/4 flex">
                             <select
                                 name="category"
-                                className="w-40 bg-[#f4f4f4] border border-transparent rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
+                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
                                 style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236b7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em 1em' }}
                             >
                                 <option value="">Choose</option>
@@ -196,7 +200,7 @@ export default function NewCampaignPage() {
                             <input
                                 type="text"
                                 name="locationText"
-                                className="w-full bg-[#f4f4f4] border border-transparent rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             />
                         </div>
                     </div>
@@ -254,7 +258,7 @@ export default function NewCampaignPage() {
                             <input
                                 type="number"
                                 name="fundingGoalAmount"
-                                className="w-48 bg-[#f4f4f4] border border-transparent rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                className="w-48 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             />
                             <span className="text-[13px] font-bold text-gray-900">VND</span>
                         </div>
@@ -270,7 +274,7 @@ export default function NewCampaignPage() {
                             <input
                                 type="number"
                                 name="minimumDonationAmount"
-                                className="w-48 bg-[#f4f4f4] border border-transparent rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                className="w-48 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             />
                             <span className="text-[13px] font-bold text-gray-900">VND</span>
                         </div>
@@ -286,13 +290,13 @@ export default function NewCampaignPage() {
                             <input
                                 type="date"
                                 name="startAt"
-                                className="w-40 bg-[#f4f4f4] border border-transparent rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             />
                             <span className="text-gray-400 font-bold">--</span>
                             <input
                                 type="date"
                                 name="endAt"
-                                className="w-40 bg-[#f4f4f4] border border-transparent rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             />
 
                             <label className="flex items-center gap-2 ml-4 cursor-pointer">

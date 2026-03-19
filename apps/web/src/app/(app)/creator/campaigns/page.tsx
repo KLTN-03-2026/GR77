@@ -7,7 +7,8 @@ import {
     MagnifyingGlassIcon,
     ArrowDownTrayIcon,
     EllipsisVerticalIcon,
-    ChevronDownIcon
+    ChevronDownIcon,
+    DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -102,40 +103,45 @@ export default function CreatorCampaignsPage() {
     return (
         <div className="w-full max-w-5xl mx-auto pb-10">
             {/* Header section */}
-            <div className="mb-6">
-                <h1 className="text-xl font-extrabold text-[#1a1a1a] mb-5 tracking-tight">My Campaigns</h1>
+            <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <DocumentTextIcon className="w-7 h-7 text-cyan-500" />
+                    My Campaigns
+                </h1>
+                <p className="text-sm text-gray-400 mt-1 ml-9">Quản lý các chiến dịch của bạn</p>
+            </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Search + Table Card */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-4 flex-1 w-full sm:w-auto">
                         <div className="relative w-full max-w-lg">
                             <input
                                 type="text"
-                                className="w-full bg-[#f1f1f1] border border-transparent rounded-full py-2.5 pl-6 pr-12 text-sm focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder-gray-400 font-medium"
-                                placeholder=""
+                                className="w-full bg-gray-50 border border-gray-200 rounded-full py-2.5 pl-6 pr-12 text-sm focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder-gray-400 font-medium"
+                                placeholder="Search campaigns..."
                             />
                             <MagnifyingGlassIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 font-bold" strokeWidth={2.5} />
                         </div>
-                        <span className="text-gray-900 font-black text-xl whitespace-nowrap min-w-[50px] tracking-widest">-- : --</span>
                     </div>
 
-                    <Link href="/creator/campaigns/new" className="inline-flex justify-center items-center bg-gradient-to-r from-[#8cc9f5] to-[#73bdf2] hover:opacity-90 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-sm transition-opacity w-full sm:w-auto">
-                        Add
+                    <Link href="/creator/campaigns/new" className="inline-flex justify-center items-center bg-gradient-to-r from-[#47c9e5] to-[#2b9ec5] hover:opacity-90 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-md transition-opacity w-full sm:w-auto gap-2">
+                        + Add Campaign
                     </Link>
                 </div>
-            </div>
 
             {/* Table or Empty State */}
             {isLoading ? (
-                <div className="flex justify-center items-center py-24 mb-14 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
+                <div className="flex justify-center items-center py-24 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 </div>
             ) : error ? (
-                <div className="flex justify-center items-center py-24 mb-14 text-red-500 font-medium text-lg border-2 border-dashed border-red-200 rounded-2xl bg-red-50">
+                <div className="flex justify-center items-center py-24 text-red-500 font-medium text-lg border-2 border-dashed border-red-200 rounded-2xl bg-red-50">
                     {error}
                 </div>
             ) : campaigns.length > 0 ? (
                 <>
-                    <div className="overflow-x-auto rounded-t-xl rounded-b-xl shadow-sm border border-gray-100 mb-8 bg-white text-gray-800">
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white text-gray-800">
                         <table className="w-full text-center text-[13px] font-medium border-collapse">
                             <thead className="bg-[#7fa8e8] text-white">
                                 <tr>
@@ -209,6 +215,7 @@ export default function CreatorCampaignsPage() {
                     No campaigns have been created yet.
                 </div>
             )}
+            </div>
 
             {/* Main Content Areas Wrapper */}
             <div className="flex flex-col w-full px-2 sm:px-6 mb-10">

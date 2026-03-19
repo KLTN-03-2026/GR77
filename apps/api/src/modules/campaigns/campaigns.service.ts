@@ -13,27 +13,129 @@ import { UpdateCampaignDto } from './dto/update-campaign.dto';
  * Note: Service này chỉ phục vụ việc đọc (GET)
  * CRUD đầy đủ sẽ được thêm sau (POST, PUT, DELETE)
  */
+import { MailService } from '../mail/mail.service';
+
+import { NotificationsService } from '../notifications/notifications.service';
+
 @Injectable()
 export class CampaignsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+    private readonly notificationsService: NotificationsService
+  ) { }
 
-  /**
-   * list campaigns
-   * 
-   */
+  async findAllAdmin(query: GetCampaignsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query.status) where.status = query.status;
+    if (query.category) where.category = { equals: query.category, mode: 'insensitive' };
+    if (query.q) {
+      where.OR = [
+        { title: { contains: query.q, mode: 'insensitive' } },
+        { description: { contains: query.q, mode: 'insensitive' } },
+      ];
+    }
+
+    const [total, items] = await (this.prisma as any).$transaction([
+      (this.prisma as any).campaign.count({ where }),
+      (this.prisma as any).campaign.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          creatorUser: { select: { id: true, username: true, email: true } },
+          _count: { select: { donations: true, favorites: true } }
+        }
+      })
+    ]);
+
+    return {
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      items: items.map((c: any) => ({
+        ...c,
+        amountRaised: Number(c.current_raised_amount || 0),
+        progress: c.fundingGoalAmount > 0 ? (Number(c.current_raised_amount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
+        donationsCount: c._count.donations,
+        favoritesCount: c._count.favorites,
+        _count: undefined,
+      }))
+    };
+  }
+
+  async approve(id: string, adminId: string) {
+    const campaign = await (this.prisma as any).campaign.update({
+      where: { id },
+      data: {
+        status: 'ACTIVE',
+        reviewedByAdminId: adminId,
+        reviewedAt: new Date(),
+        reviewNote: 'Approved by administrator'
+      },
+      include: { creatorUser: true }
+    });
+
+    await this.notificationsService.create({
+      userId: campaign.creatorUserId,
+      title: 'Campaign Approved!',
+      message: `Your campaign "${campaign.title}" has been approved and is now live.`,
+      type: 'CAMPAIGN_APPROVED',
+      link: `/campaigns/${campaign.id}`
+    });
+
+    await this.mailService.sendCampaignStatusUpdateToUser(
+      campaign.creatorUser.email,
+      campaign.title,
+      'ACTIVE'
+    );
+
+    return campaign;
+  }
+
+  async reject(id: string, adminId: string, note: string) {
+    const campaign = await (this.prisma as any).campaign.update({
+      where: { id },
+      data: {
+        status: 'REJECTED',
+        reviewedByAdminId: adminId,
+        reviewedAt: new Date(),
+        reviewNote: note
+      },
+      include: { creatorUser: true }
+    });
+
+    await this.notificationsService.create({
+      userId: campaign.creatorUserId,
+      title: 'Campaign Revision Required',
+      message: `Your campaign "${campaign.title}" was not approved. Reason: ${note}`,
+      type: 'CAMPAIGN_REJECTED',
+      link: `/my-campaigns`
+    });
+
+    await this.mailService.sendCampaignStatusUpdateToUser(
+      campaign.creatorUser.email,
+      campaign.title,
+      'REJECTED',
+      note
+    );
+
+    return campaign;
+  }
+
   async list(query: GetCampaignsQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
     const where: any = {};
-
-    // Nếu truyền status cụ thể thì lọc theo status đó, 
-    // nếu không thì hiện tất cả trừ DRAFT
     if (query.status) {
       where.status = query.status;
     } else {
-      where.status = { not: 'DRAFT' };
+      where.status = 'ACTIVE';
     }
 
     if (query.category) {
@@ -48,7 +150,6 @@ export class CampaignsService {
       ];
     }
 
-    // Transaction: lấy total count + items cùng lúc
     const [total, items] = await (this.prisma as any).$transaction([
       (this.prisma as any).campaign.count({ where }),
       (this.prisma as any).campaign.findMany({
@@ -65,6 +166,7 @@ export class CampaignsService {
           coverImageUrl: true,
           fundingGoalAmount: true,
           minimumDonationAmount: true,
+          current_raised_amount: true,
           startAt: true,
           endAt: true,
           autoCloseWhenGoalReached: true,
@@ -83,18 +185,16 @@ export class CampaignsService {
         total,
         totalPages: Math.ceil(total / limit),
       },
-      items: items.map((c) => ({
+      items: items.map((c: any) => ({
         ...c,
+        amountRaised: Number(c.current_raised_amount || 0),
+        progress: c.fundingGoalAmount > 0 ? (Number(c.current_raised_amount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
         favoritesCount: c._count.favorites,
         _count: undefined,
       })),
     };
   }
 
-  /**
-   * my campaigns
-   * 
-   */
   async listMine(userId: string) {
     const items = await (this.prisma as any).campaign.findMany({
       where: { creatorUserId: userId },
@@ -107,6 +207,7 @@ export class CampaignsService {
         coverImageUrl: true,
         fundingGoalAmount: true,
         minimumDonationAmount: true,
+        current_raised_amount: true,
         startAt: true,
         endAt: true,
         autoCloseWhenGoalReached: true,
@@ -119,55 +220,34 @@ export class CampaignsService {
 
     return items.map((c: any) => ({
       ...c,
+      amountRaised: Number(c.current_raised_amount || 0),
+      progress: c.fundingGoalAmount > 0 ? (Number(c.current_raised_amount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
       favoritesCount: c._count.favorites,
       _count: undefined,
     }));
   }
 
-
-  /**
-   * detail()
-   * campaign/{id}
-   */
   async detail(id: string) {
     const campaign = await (this.prisma as any).campaign.findUnique({
       where: { id },
-      select: {
-        id: true,
-        creatorUserId: true,
-        title: true,
-        description: true,
-        category: true,
-        locationText: true,
-        coverImageUrl: true,
-        fundingGoalAmount: true,
-        minimumDonationAmount: true,
-        startAt: true,
-        endAt: true,
-        autoCloseWhenGoalReached: true,
-        status: true,
-        reviewNote: true,
-        reviewedByAdminId: true,
-        reviewedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        _count: { select: { favorites: true } },
-      },
+      include: {
+        creatorUser: { select: { id: true, username: true, email: true } },
+        _count: { select: { favorites: true, donations: true } }
+      }
     });
 
     if (!campaign) throw new NotFoundException('Campaign not found');
 
     return {
       ...campaign,
+      amountRaised: Number(campaign.current_raised_amount || 0),
+      progress: campaign.fundingGoalAmount > 0 ? (Number(campaign.current_raised_amount || 0) / Number(campaign.fundingGoalAmount)) * 100 : 0,
       favoritesCount: campaign._count.favorites,
+      donationsCount: campaign._count.donations,
       _count: undefined,
     };
   }
 
-  /**
-   * create()
-   * 
-   */
   async create(userId: string, dto: CreateCampaignDto) {
     const campaign = await (this.prisma as any).campaign.create({
       data: {
@@ -175,14 +255,20 @@ export class CampaignsService {
         creatorUserId: userId,
         status: 'PENDING',
       },
+      include: { creatorUser: true }
     });
+
+    // Notify Admins (In-app)
+    await this.notificationsService.notifyAdmins({
+      title: 'New Campaign Submission',
+      message: `"${campaign.creatorUser.username || campaign.creatorUser.email}" submitted a new campaign: "${campaign.title}"`,
+      type: 'CAMPAIGN_SUBMITTED',
+      link: `/admin/campaigns?id=${campaign.id}`
+    });
+
     return campaign;
   }
 
-  /**
-   * update()
-   * 
-   */
   async update(userId: string, id: string, dto: UpdateCampaignDto) {
     const campaign = await (this.prisma as any).campaign.findUnique({
       where: { id },
