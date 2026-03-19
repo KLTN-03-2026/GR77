@@ -32,7 +32,7 @@ export class ViewHistoriesController {
    * JWT payload có dạng: { sub: userId, role: "USER", ... }
    */
   private getUserId(req: any): string {
-    const userId = req?.user?.sub ?? req?.user?.id;
+    const userId = req?.user?.userId ?? req?.user?.sub ?? req?.user?.id;
     if (!userId) throw new UnauthorizedException();
     return userId;
   }
