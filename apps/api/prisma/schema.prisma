@@ -25,6 +25,10 @@ model User {
   lockedAt   DateTime? @map("locked_at")
   lockReason String?   @map("lock_reason") @db.VarChar(500)
 
+  // KYC
+  kycStatus   KycStatus @default(NOT_STARTED) @map("kyc_status")
+  kycSessions KycSession[]
+
   participations    CampaignParticipant[]
   createdCampaigns  Campaign[]            @relation("CampaignCreator")
   reviewedCampaigns Campaign[]            @relation("CampaignReviewer")
@@ -216,6 +220,15 @@ enum ParticipationStatus {
   LEFT
 }
 
+enum KycStatus {
+  NOT_STARTED
+  PENDING_SUBMISSION
+  PROCESSING
+  APPROVED
+  REJECTED
+  MANUAL_REVIEW
+}
+
 enum DonationStatus {
   PENDING
   SUCCESS
@@ -326,4 +339,44 @@ enum ReportStatus {
   REVIEWING
   RESOLVED
   DISMISSED
+}
+
+model KycSession {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  provider     String    @db.VarChar(50) // "sumsub" | "mock"
+  status       KycStatus @default(NOT_STARTED)
+
+  // provider ids
+  externalRef  String?   @map("external_ref") @db.VarChar(100)
+  reviewResult String?   @map("review_result") @db.VarChar(50)
+  rejectReason String?   @map("reject_reason") @db.Text
+
+  // extracted data
+  extractedFullName String?   @map("extracted_full_name")
+  extractedDob      DateTime? @map("extracted_dob")
+  extractedDocNo    String?   @map("extracted_doc_no")
+
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents KycDocument[]
+
+  @@index([userId, status])
+  @@index([externalRef])
+  @@map("kyc_sessions")
+}
+
+model KycDocument {
+  id           String   @id @default(uuid())
+  kycSessionId String   @map("kyc_session_id")
+  type         String   @db.VarChar(30) // "ID_FRONT" | "ID_BACK" | "SELFIE" | "VIDEO"
+  fileUrl      String   @map("file_url") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  session KycSession @relation(fields: [kycSessionId], references: [id], onDelete: Cascade)
+
+  @@index([kycSessionId, type])
+  @@map("kyc_documents")
 }

@@ -11,6 +11,7 @@ import { UploadModule } from './modules/upload/upload.module';
 import { ParticipantsModule } from './modules/participants/participants.module';
 import { UsersModule } from './modules/users/users.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { KycModule } from './modules/kyc/kyc.module';
 
 @Module({
   imports: [
@@ -25,13 +26,11 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     CampaignsModule,    // Campaigns endpoints (public)
     FavoritesModule,    // Favorites endpoints (JWT protected)
     ViewHistoriesModule, // View history endpoints (JWT protected)
-    AuthModule,
-    CampaignsModule,
-    FavoritesModule,
     UploadModule,
     ParticipantsModule,
     UsersModule,
     NotificationsModule,
+    KycModule,          // KYC verification endpoints
   ],
   controllers: [AppController],
   providers: [AppService],
