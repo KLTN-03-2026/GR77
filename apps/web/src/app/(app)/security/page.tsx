@@ -9,6 +9,7 @@ import {
   ArrowRightIcon,
   ArrowLeftIcon,
   LockClosedIcon,
+  EyeIcon,
   EyeSlashIcon,
   FingerPrintIcon,
 } from '@heroicons/react/24/outline';
@@ -17,13 +18,43 @@ export default function SecurityPage() {
   const [resetStep, setResetStep] = useState<'idle' | 'email' | 'otp' | 'newpass' | 'success'>('idle');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [verifiedCode, setVerifiedCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [error, setError] = useState('');
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Auto-fill email from logged-in user
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+        // Decode JWT to get user ID
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userId = payload.sub;
+        if (!userId) return;
+
+        const res = await fetch(`http://localhost:3001/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const user = await res.json();
+          if (user.email) {
+            setEmail(user.email);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch user email:', err);
+      }
+    };
+    fetchUserEmail();
+  }, []);
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -32,57 +63,127 @@ export default function SecurityPage() {
     }
   }, [resendTimer]);
 
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     if (!email) { setError('Please enter your email.'); return; }
     setError('');
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await fetch('http://localhost:3001/auth/send-reset-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to send reset code.');
+      }
       setResetStep('otp');
       setResendTimer(60);
       setOtp(['', '', '', '', '', '']);
       setTimeout(() => otpInputRefs.current[0]?.focus(), 200);
-    }, 1500);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset code.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleVerifyOtp = () => {
-    const code = otp.join('');
+  const handleVerifyOtp = async (codeOverride?: string) => {
+    const code = codeOverride || otp.join('');
     if (code.length < 6) { setError('Please enter all 6 digits.'); return; }
     setError('');
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await fetch('http://localhost:3001/auth/verify-reset-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Invalid or expired code.');
+      }
+      setVerifiedCode(code);
       setResetStep('newpass');
-    }, 1200);
+    } catch (err: any) {
+      const errorMsg = err.message || 'Verification failed.';
+      setError(errorMsg);
+      setIsLoading(false);
+      // Let the text shake and then auto-dismiss error after 1 second
+      setTimeout(() => {
+        setOtp(['', '', '', '', '', '']);
+        otpInputRefs.current[0]?.focus();
+        setError((prev) => prev === errorMsg ? '' : prev);
+      }, 1000);
+      return;
+    }
+    setIsLoading(false);
   };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!newPassword || newPassword.length < 8) { setError('Password must be at least 8 characters.'); return; }
     if (newPassword !== confirmPassword) { setError('Passwords do not match.'); return; }
     setError('');
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await fetch('http://localhost:3001/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: verifiedCode, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update password.');
+      }
       setResetStep('success');
-    }, 1200);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update password.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (resendTimer > 0) return;
-    setResendTimer(60);
+    setIsLoading(true);
+    try {
+      const res = await fetch('http://localhost:3001/auth/send-reset-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to resend code.');
+      }
+      setResendTimer(60);
+      setOtp(['', '', '', '', '', '']);
+      setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend code.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const resetAll = () => {
     setResetStep('idle');
-    setEmail('');
     setOtp(['', '', '', '', '', '']);
+    setVerifiedCode('');
     setNewPassword('');
     setConfirmPassword('');
     setError('');
     setIsLoading(false);
+    // Re-fetch email (don't clear it)
   };
 
   const stepNumber = resetStep === 'email' ? 1 : resetStep === 'otp' ? 2 : resetStep === 'newpass' ? 3 : 0;
+
+  // Password strength checks
+  const hasMinLength = newPassword.length >= 8;
+  const hasUppercase = /[A-Z]/.test(newPassword);
+  const hasNumber = /\d/.test(newPassword);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
 
   const securityTips = [
     { icon: LockClosedIcon, title: 'Use a strong password', desc: 'Mix uppercase, lowercase, numbers and symbols' },
@@ -92,6 +193,20 @@ export default function SecurityPage() {
 
   return (
     <div className="max-w-5xl mx-auto pb-12">
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .shake { animation: shake 0.5s ease-in-out; }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+          20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear,
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+          display: none !important;
+        }
+      `}} />
       {/* Header with gradient banner */}
       <div className="relative rounded-2xl overflow-hidden mb-8 bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 p-8 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.08%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50" />
@@ -108,8 +223,8 @@ export default function SecurityPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content - Change Password */}
-        <div className="lg:col-span-2 h-full">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" style={{ height: '520px' }}>
             <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-4">
               <div className="p-2.5 bg-gradient-to-br from-cyan-50 to-blue-50 text-cyan-600 rounded-xl">
                 <KeyIcon className="w-5 h-5" />
@@ -120,7 +235,7 @@ export default function SecurityPage() {
               </div>
             </div>
 
-            <div className="p-5 md:p-6">
+            <div className="p-5 md:p-6 flex-1">
               {/* Steps indicator */}
               {resetStep !== 'idle' && resetStep !== 'success' && (
                 <div className="flex items-center justify-center gap-1 mb-6">
@@ -183,10 +298,9 @@ export default function SecurityPage() {
                       <input
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your registered email"
-                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-cyan-400 focus:ring-3 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none text-sm"
-                        autoFocus
+                        readOnly
+                        placeholder={email ? '' : 'Loading...'}
+                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 font-medium transition-all outline-none text-sm cursor-not-allowed"
                       />
                     </div>
                     <p className="text-xs text-gray-400 mt-2 ml-1">We'll send a verification code to this email</p>
@@ -226,7 +340,7 @@ export default function SecurityPage() {
                     </p>
                   </div>
 
-                  <div className="flex justify-center gap-2.5">
+                  <div className={`flex justify-center gap-2.5 ${error && resetStep === 'otp' ? 'shake' : ''}`}>
                     {otp.map((digit: string, index: number) => (
                       <input
                         key={index}
@@ -235,22 +349,32 @@ export default function SecurityPage() {
                         inputMode="numeric"
                         maxLength={1}
                         value={digit}
+                        disabled={isLoading}
                         onFocus={(e) => e.target.select()}
                         onChange={(e) => {
                           const val = e.target.value;
                           if (val && !/^\d$/.test(val)) return;
-                          const newOtp = [...otp];
-                          newOtp[index] = val;
-                          setOtp(newOtp);
+                          setOtp((prev) => {
+                            const newOtp = [...prev];
+                            newOtp[index] = val;
+                            const fullCode = newOtp.join('');
+                            if (fullCode.length === 6) {
+                              setTimeout(() => handleVerifyOtp(fullCode), 0);
+                            }
+                            return newOtp;
+                          });
+                          setError('');
                           if (val && index < 5) {
                             setTimeout(() => otpInputRefs.current[index + 1]?.focus(), 0);
                           }
                         }}
                         onKeyDown={(e) => {
-                          if (e.key === 'Backspace' && !otp[index] && index > 0) {
-                            const newOtp = [...otp];
-                            newOtp[index - 1] = '';
-                            setOtp(newOtp);
+                          if (e.key === 'Backspace' && !e.currentTarget.value && index > 0) {
+                            setOtp((prev) => {
+                              const newOtp = [...prev];
+                              newOtp[index - 1] = '';
+                              return newOtp;
+                            });
                             otpInputRefs.current[index - 1]?.focus();
                           }
                         }}
@@ -258,11 +382,16 @@ export default function SecurityPage() {
                           e.preventDefault();
                           const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
                           if (pasted) {
-                            const newOtp = [...otp];
-                            for (let i = 0; i < pasted.length && index + i < 6; i++) {
-                              newOtp[index + i] = pasted[i];
-                            }
-                            setOtp(newOtp);
+                            setOtp((prev) => {
+                              const newOtp = [...prev];
+                              for (let i = 0; i < pasted.length && index + i < 6; i++) {
+                                newOtp[index + i] = pasted[i];
+                              }
+                              if (pasted.length === 6) {
+                                setTimeout(() => handleVerifyOtp(newOtp.join('')), 0);
+                              }
+                              return newOtp;
+                            });
                             const nextIdx = Math.min(index + pasted.length, 5);
                             setTimeout(() => otpInputRefs.current[nextIdx]?.focus(), 0);
                           }
@@ -283,12 +412,20 @@ export default function SecurityPage() {
                     ) : (
                       <button
                         onClick={handleResend}
-                        className="text-xs font-bold text-cyan-500 hover:text-cyan-600 transition-colors underline underline-offset-2"
+                        disabled={isLoading}
+                        className="text-xs font-bold text-cyan-500 hover:text-cyan-600 transition-colors underline underline-offset-2 disabled:opacity-50"
                       >
                         Resend verification code
                       </button>
                     )}
                   </div>
+
+                  {isLoading && (
+                    <div className="flex items-center justify-center gap-2 text-cyan-500">
+                      <div className="w-4 h-4 border-2 border-cyan-200 border-t-cyan-500 rounded-full animate-spin" />
+                      <span className="text-xs font-semibold">Verifying...</span>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between pt-2">
                     <button
@@ -296,17 +433,6 @@ export default function SecurityPage() {
                       className="text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1.5 group"
                     >
                       <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" /> Back
-                    </button>
-                    <button
-                      onClick={handleVerifyOtp}
-                      disabled={isLoading || otp.join('').length < 6}
-                      className="px-7 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-cyan-200/50 flex items-center gap-2 active:scale-[0.98]"
-                    >
-                      {isLoading ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <>Verify <ArrowRightIcon className="w-4 h-4" /></>
-                      )}
                     </button>
                   </div>
                 </div>
@@ -317,24 +443,60 @@ export default function SecurityPage() {
                 <div className="space-y-5">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">New Password</label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password (min 8 characters)"
-                      className="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-cyan-400 focus:ring-3 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none text-sm"
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <input
+                        type={showNewPass ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => { setNewPassword(e.target.value); setError(''); }}
+                        placeholder="Enter new password (min 8 characters)"
+                        autoComplete="new-password"
+                        className="w-full px-4 pr-12 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-cyan-400 focus:ring-3 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none text-sm"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPass(!showNewPass)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showNewPass ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    {/* Password strength indicators */}
+                    {newPassword && (
+                      <div className="mt-3 grid grid-cols-2 gap-1.5">
+                        {[
+                          { label: '8+ characters', met: hasMinLength },
+                          { label: 'Uppercase letter', met: hasUppercase },
+                          { label: 'Number', met: hasNumber },
+                          { label: 'Special character', met: hasSpecial },
+                        ].map((req, i) => (
+                          <div key={i} className={`flex items-center gap-1.5 text-xs font-medium ${req.met ? 'text-green-500' : 'text-gray-300'}`}>
+                            <CheckCircleIcon className="w-3.5 h-3.5" />
+                            {req.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password</label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-enter new password"
-                      className="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-cyan-400 focus:ring-3 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none text-sm"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showConfirmPass ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
+                        placeholder="Re-enter new password"
+                        autoComplete="new-password"
+                        className="w-full px-4 pr-12 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-cyan-400 focus:ring-3 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPass(!showConfirmPass)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showConfirmPass ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                      </button>
+                    </div>
                     {confirmPassword && newPassword !== confirmPassword && (
                       <p className="text-xs text-red-500 mt-1.5 font-medium">Passwords do not match.</p>
                     )}
@@ -386,8 +548,9 @@ export default function SecurityPage() {
           </div>
         </div>
 
-        {/* Right sidebar - Security Tips */}
-        <div className="lg:col-span-1 flex flex-col h-full justify-between">
+        {/* Right sidebar */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          {/* Security Tips */}
           <div className="bg-[#98F4C1]/50 rounded-2xl shadow-sm border-none p-5">
             <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
               <ShieldCheckIcon className="w-5 h-5 text-gray-900" />
@@ -408,19 +571,23 @@ export default function SecurityPage() {
             </div>
           </div>
 
-          {/* Last changed info */}
-          <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-5 border border-cyan-100 mt-6 lg:mt-0">
+          {/* Password Requirements */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-white rounded-lg shadow-sm">
-                <LockClosedIcon className="w-4 h-4 text-cyan-600" />
+                <KeyIcon className="w-4 h-4 text-amber-600" />
               </div>
-              <p className="text-xs font-bold text-cyan-900">Password Status</p>
+              <p className="text-xs font-bold text-amber-900">Password Requirements</p>
             </div>
-            <p className="text-[11px] text-cyan-700 leading-relaxed">
-              Your password was last changed <span className="font-bold">30 days ago</span>.
-              We recommend updating it regularly.
-            </p>
+            <ul className="text-[11px] text-amber-800 space-y-1.5 leading-relaxed">
+              <li>• At least 8 characters long</li>
+              <li>• Contains uppercase letter (A-Z)</li>
+              <li>• Contains a number (0-9)</li>
+              <li>• Contains a special character (!@#$...)</li>
+              <li>• Cannot reuse your current password</li>
+            </ul>
           </div>
+
         </div>
       </div>
     </div>

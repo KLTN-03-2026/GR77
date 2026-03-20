@@ -62,6 +62,31 @@ export class MailService {
         }
     }
 
+    async sendPasswordResetEmail(email: string, code: string) {
+        const info = await this.transporter.sendMail({
+            from: '"Kindlink Security" <security@kindlink.com>',
+            to: email,
+            subject: 'Password Reset Code - Kindlink',
+            html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <h2 style="color: #7598C1;">Password Reset Request</h2>
+          <p>We received a request to reset your Kindlink account password. Enter the following code to proceed:</p>
+          <div style="background: #f4f4f4; padding: 20px; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 10px; color: #333; margin: 20px 0;">
+            ${code}
+          </div>
+          <p>This code will expire in <strong>5 minutes</strong>.</p>
+          <p style="color: #E56C6C;">If you did not request a password reset, please ignore this email and your password will remain unchanged.</p>
+          <hr />
+          <p style="font-size: 12px; color: #888;">Kindlink Security Team</p>
+        </div>
+      `,
+        });
+
+        if (this.configService.get('NODE_ENV') !== 'production') {
+            console.log('Password Reset Email Sent: ', nodemailer.getTestMessageUrl(info));
+        }
+    }
+
     async sendAccountLockEmail(email: string, reason: string) {
         const info = await this.transporter.sendMail({
             from: '"Kindlink Security" <security@kindlink.com>',
