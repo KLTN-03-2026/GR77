@@ -11,6 +11,8 @@ import { UploadModule } from './modules/upload/upload.module';
 import { ParticipantsModule } from './modules/participants/participants.module';
 import { UsersModule } from './modules/users/users.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { DonationsModule } from './modules/donations/donations.module';
+import { WalletModule } from './modules/wallet/wallet.module';
 
 @Module({
   imports: [
@@ -25,13 +27,12 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     CampaignsModule,    // Campaigns endpoints (public)
     FavoritesModule,    // Favorites endpoints (JWT protected)
     ViewHistoriesModule, // View history endpoints (JWT protected)
-    AuthModule,
-    CampaignsModule,
-    FavoritesModule,
     UploadModule,
     ParticipantsModule,
     UsersModule,
     NotificationsModule,
+    DonationsModule,
+    WalletModule,
   ],
   controllers: [AppController],
   providers: [AppService],
