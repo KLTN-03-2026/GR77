@@ -60,7 +60,15 @@ export default function CampaignDetailPage({
             setIsLoading(true);
             setFetchError("");
             try {
-                const res = await fetch(`http://localhost:3001/campaigns/${id}`);
+                const token = localStorage.getItem('accessToken');
+                const headers: HeadersInit = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const res = await fetch(`http://localhost:3001/campaigns/${id}`, {
+                    headers,
+                });
                 if (!res.ok) throw new Error("Campaign not found");
                 const data = await res.json();
                 setCampaign(data);

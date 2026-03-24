@@ -50,25 +50,8 @@ export default function ListCampaignsPage() {
     const [totalFromApi, setTotalFromApi] = useState(0);
     const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
-    // Fetch user's favorited campaign IDs on mount
-    useEffect(() => {
-        const fetchFavorites = async () => {
-            const token = localStorage.getItem('accessToken');
-            if (!token) return;
-            try {
-                const res = await fetch('http://localhost:3001/favorites?limit=1000', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (!res.ok) return;
-                const data = await res.json();
-                const ids = new Set<string>((data.items || []).map((c: any) => c.id));
-                setFavoriteIds(ids);
-            } catch {
-                // silently ignore – user may not be logged in
-            }
-        };
-        fetchFavorites();
-    }, []);
+    // Note: favoriteIds is no longer needed since campaigns response includes isFavorited field
+    // This effect is kept for backward compatibility but could be removed if not used elsewhere
 
     // Callback when a favorite is toggled
     const handleFavoriteToggle = useCallback((campaignId: string, nowFavorited: boolean) => {
@@ -108,7 +91,15 @@ export default function ListCampaignsPage() {
                     params.set('q', search);
                 }
 
-                const res = await fetch(`http://localhost:3001/campaigns?${params.toString()}`);
+                const token = localStorage.getItem('accessToken');
+                const headers: HeadersInit = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const res = await fetch(`http://localhost:3001/campaigns?${params.toString()}`, {
+                    headers,
+                });
 
                 if (!res.ok) {
                     throw new Error('Failed to fetch campaigns');
@@ -117,6 +108,16 @@ export default function ListCampaignsPage() {
                 const data = await res.json();
                 setCampaigns(data.items || []);
                 setTotalFromApi(data.meta?.total || 0);
+
+                // Populate favoriteIds from the isFavorited field in campaigns
+                if (token) {
+                    const ids = new Set<string>(
+                        (data.items || [])
+                            .filter((c: any) => c.isFavorited)
+                            .map((c: any) => c.id)
+                    );
+                    setFavoriteIds(ids);
+                }
             } catch (err: any) {
                 console.error('Fetch error:', err);
                 setError(err.message || 'Something went wrong');
