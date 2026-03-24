@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { KycStatus } from '@prisma/client';
+import { SumsubService } from './sumsub.service';
 
 @Injectable()
 export class KycService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger('KycService');
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sumsubService: SumsubService,
+  ) {}
 
   /**
    * Tạo KYC session mới
@@ -19,11 +25,16 @@ export class KycService {
     });
 
     if (existingSession) {
+      const redirectUrl =
+        provider === 'sumsub'
+          ? `https://id.sumsub.com/idensic/l/${existingSession.externalRef}`
+          : `https://mock-kyc-provider.example/verify/${existingSession.externalRef}`;
+
       return {
         sessionId: existingSession.id,
         provider: existingSession.provider,
         status: existingSession.status,
-        redirectUrl: `https://mock-kyc-provider.example/verify/${existingSession.externalRef}`,
+        redirectUrl,
       };
     }
 
@@ -37,11 +48,28 @@ export class KycService {
       select: { id: true, provider: true, status: true },
     });
 
-    // 3) Mock: tạo externalRef (thực tế sẽ là applicantId từ provider)
-    const externalRef = `mock_${session.id}_${Date.now()}`;
-    const redirectUrl = `https://mock-kyc-provider.example/verify/${externalRef}`;
+    let externalRef: string;
+    let redirectUrl: string;
 
-    // 4) Update session
+    // 3) Gọi provider để get redirect URL
+    if (provider === 'sumsub') {
+      try {
+        const { applicantId, redirectUrl: sumsubUrl } =
+          await this.sumsubService.createApplicant(userId);
+        externalRef = applicantId;
+        redirectUrl = sumsubUrl;
+        this.logger.log(`Sumsub applicant created: ${applicantId}`);
+      } catch (error) {
+        this.logger.error(`Failed to create Sumsub session: ${error.message}`);
+        throw error;
+      }
+    } else {
+      // Mock provider
+      externalRef = `mock_${session.id}_${Date.now()}`;
+      redirectUrl = `https://mock-kyc-provider.example/verify/${externalRef}`;
+    }
+
+    // 4) Update session với provider reference
     await this.prisma.kycSession.update({
       where: { id: session.id },
       data: {
@@ -88,51 +116,99 @@ export class KycService {
   }
 
   /**
-   * Webhook callback từ provider KYC (Mock)
-   * Thực tế sẽ verify signature từ provider
+   * Webhook callback từ provider KYC
+   * Hỗ trợ: mock, sumsub
    */
   async applyWebhook(provider: string, payload: any) {
-    const externalRef = payload?.externalRef;
-    if (!externalRef) {
-      throw new NotFoundException('Missing externalRef in webhook payload');
+    let externalRef: string;
+    let newStatus: KycStatus;
+    let extractedData: any = {};
+
+    if (provider === 'sumsub') {
+      // Parse Sumsub webhook
+      const sumsubData = this.sumsubService.parseWebhook(payload);
+      externalRef = sumsubData.applicantId;
+
+      const statusMap: Record<string, KycStatus> = {
+        APPROVED: KycStatus.APPROVED,
+        REJECTED: KycStatus.REJECTED,
+        REVIEW: KycStatus.MANUAL_REVIEW,
+      };
+
+      newStatus = statusMap[sumsubData.status] ?? KycStatus.MANUAL_REVIEW;
+      extractedData = {
+        fullName: [sumsubData.firstName, sumsubData.lastName]
+          .filter(Boolean)
+          .join(' '),
+        dob: sumsubData.dob,
+        reason: sumsubData.reasons?.[0],
+      };
+
+      this.logger.log(
+        `Sumsub webhook received for applicant: ${externalRef}, status: ${newStatus}`,
+      );
+    } else {
+      // Mock provider
+      externalRef = payload?.externalRef;
+      if (!externalRef) {
+        throw new NotFoundException('Missing externalRef in webhook payload');
+      }
+
+      const statusMap: Record<string, KycStatus> = {
+        APPROVED: KycStatus.APPROVED,
+        REJECTED: KycStatus.REJECTED,
+        REVIEW: KycStatus.MANUAL_REVIEW,
+      };
+
+      newStatus = statusMap[payload.decision] ?? KycStatus.MANUAL_REVIEW;
+      extractedData = {
+        fullName: payload.fullName,
+        dob: payload.dob,
+        reason: payload.reason,
+      };
     }
 
-    // Mapping decision → KycStatus
-    const statusMap: Record<string, KycStatus> = {
-      APPROVED: KycStatus.APPROVED,
-      REJECTED: KycStatus.REJECTED,
-      REVIEW: KycStatus.MANUAL_REVIEW,
-    };
-
-    const newStatus = statusMap[payload.decision] ?? KycStatus.MANUAL_REVIEW;
-
-    // Update session
-    const session = await this.prisma.kycSession.update(
-      {
+    // Find session by externalRef, then update
+    let session;
+    try {
+      const kycSession = await this.prisma.kycSession.findFirst({
         where: { externalRef },
+        select: { id: true, userId: true },
+      });
+
+      if (!kycSession) {
+        this.logger.warn(`KYC session not found: ${externalRef}`);
+        throw new NotFoundException('KYC session not found');
+      }
+
+      session = await this.prisma.kycSession.update({
+        where: { id: kycSession.id },
         data: {
           status: newStatus,
-          reviewResult: payload.decision,
-          rejectReason: payload.reason ?? null,
-          extractedFullName: payload.fullName ?? null,
-          extractedDob: payload.dob ? new Date(payload.dob) : null,
-          extractedDocNo: payload.docNo ?? null,
+          reviewResult: newStatus,
+          rejectReason: extractedData.reason ?? null,
+          extractedFullName: extractedData.fullName ?? null,
+          extractedDob: extractedData.dob ? new Date(extractedData.dob) : null,
         },
         select: { userId: true, status: true },
-      },
-      (error) => {
-        if (error.code === 'P2025') {
-          throw new NotFoundException('KYC session not found');
-        }
+      });
+    } catch (error: any) {
+      if (error instanceof NotFoundException) {
         throw error;
-      },
-    );
+      }
+      this.logger.error(`KYC update error: ${error.message}`);
+      throw error;
+    }
 
     // Update user KYC status
     await this.prisma.user.update({
       where: { id: session.userId },
       data: { kycStatus: session.status },
     });
+
+    this.logger.log(
+      `KYC session updated: ${externalRef}, new status: ${newStatus}`,
+    );
 
     return {
       ok: true,
