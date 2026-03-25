@@ -290,8 +290,9 @@ model UserActionLog {
 
 enum Role {
   USER
-  ADMIN
   ORGANIZER
+  ADMIN
+  SUPER_ADMIN
 }
 
 enum CampaignStatus {

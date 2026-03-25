@@ -23,10 +23,12 @@ interface HeaderProps {
 }
 
 import NotificationBell from './NotificationBell';
+import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 
 export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { translate } = useAdminLanguage();
   const [userName, setUserName] = useState<string>('User');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -105,15 +107,15 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     }
 
     // Admin breadcrumbs
-    if (pathname.includes('/admin/dashboard')) return <><span>Dashboard</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
-    if (pathname.includes('/admin/users')) return <><span>User Management</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
-    if (pathname.includes('/admin/campaigns')) return <><span>Campaign</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
-    if (pathname.includes('/admin/transactions')) return <><span>Transaction</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
-    if (pathname.includes('/admin/withdrawals')) return <><span>Withdrawal</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
-    if (pathname.includes('/admin/revenue')) return <><span>Fee & Revenue</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
-    if (pathname.includes('/admin/moderation')) return <><span>Content Moderation</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
-    if (pathname.includes('/admin/kyc')) return <><span>KYC Verification</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
-    if (pathname.includes('/admin/settings')) return <><span>Settings</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/dashboard')) return <><span>{translate('menu.dashboard')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/users')) return <><span>{translate('menu.users')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/campaigns')) return <><span>{translate('menu.campaigns')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/transactions')) return <><span>{translate('menu.transactions')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/withdrawals')) return <><span>{translate('menu.withdrawals')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/revenue')) return <><span>{translate('menu.revenue')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/moderation')) return <><span>{translate('menu.moderation')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/kyc')) return <><span>{translate('menu.kyc')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
+    if (pathname.includes('/admin/settings')) return <><span>{translate('menu.settings')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
 
     // Default user breadcrumbs
     let title = 'Home';
@@ -158,7 +160,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
           <div className={`hidden md:flex items-center gap-3 ${roleLabel ? 'lg:ml-6' : ''}`}>
             {/* Welcome message */}
             <p className="text-gray-800 text-xl sm:text-2xl lg:text-3xl ml-2 truncate" style={{ fontFamily: 'Allura, cursive' }}>
-              Welcome back,{' '}
+              {isAdmin ? translate('header.welcome') : 'Welcome back,'}{' '}
               <span
                 style={{
                   color: roleLabel === 'ADMIN' ? '#24305E' : '#F6349B',
@@ -167,7 +169,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
               >
                 {userName}
               </span>
-              . Ready to create impact today?
+              {isAdmin ? translate('header.ready') : '. Ready to create impact today?'}
             </p>
           </div>
         </div>
@@ -240,7 +242,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                       className="flex w-full items-center gap-3 px-5 py-3 bg-[#fff5f5] text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
                     >
                       <LogoutIcon className="h-5 w-5 stroke-2" />
-                      <span className="text-base font-bold">{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+                      <span className="text-base font-bold">{isLoggingOut ? translate('sidebar.logging_out') : translate('header.logout')}</span>
                     </button>
                   </div>
                 </div>

@@ -35,10 +35,10 @@ const flowData = [
 ];
 
 const categoriesData = [
-  { name: 'Donation processing', total: 250, net: 210 },
-  { name: 'Project Matching', total: 150, net: 130 },
-  { name: 'Platform Event', total: 100, net: 80 },
-  { name: 'Payment processing Fee', total: 50, net: 40 },
+  { name: 'Xử lý quyên góp', total: 250, net: 210 },
+  { name: 'Dự án đối ứng', total: 150, net: 130 },
+  { name: 'Sự kiện nền tảng', total: 100, net: 80 },
+  { name: 'Phí xử lý thanh toán', total: 50, net: 40 },
 ];
 
 const barData = [
@@ -66,7 +66,7 @@ export default function AdminRevenuePage() {
             <PresentationChartLineIcon className="h-9 w-9 text-black" />
           </div>
           <div className="text-black">
-            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Total Campaigns</p>
+            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Tổng số lượng chiến dịch</p>
             <h2 className="text-4xl font-black mt-1 tabular-nums">87</h2>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function AdminRevenuePage() {
             <CurrencyDollarIcon className="h-9 w-9 text-black" />
           </div>
           <div className="text-black">
-            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Totals Funds Raised</p>
+            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Tổng doanh thu quỹ</p>
             <h2 className="text-4xl font-black mt-1 tabular-nums">$6,750</h2>
           </div>
         </div>
@@ -84,11 +84,11 @@ export default function AdminRevenuePage() {
 
       {/* Secondary Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[ 
-          { label: 'Processing Fees Collected:', value: '$3,600', icon: BanknotesIcon },
-          { label: 'Matching Fees (Net):', value: '$1,500', icon: ArrowTrendingUpIcon },
-          { label: 'Platform Event Fees:', value: '$450', icon: TicketIcon },
-          { label: 'Avg. Donation Fee %:', value: '2.8 %', icon: PercentBadgeIcon, showCheck: true },
+        {[
+          { label: 'Phí xử lý đã thu:', value: '$3,600', icon: BanknotesIcon },
+          { label: 'Phí đối ứng (Thực):', value: '$1,500', icon: ArrowTrendingUpIcon },
+          { label: 'Phí sự kiện nền tảng:', value: '$450', icon: TicketIcon },
+          { label: 'Tỷ lệ % phí quyên góp:', value: '2.8 %', icon: PercentBadgeIcon, showCheck: true },
         ].map((stat, i) => (
           <div key={i} className="bg-[#7598C1] rounded-2xl p-5 text-black shadow-lg">
             <p className="text-xs font-bold uppercase opacity-80 leading-tight mb-2 h-8">{stat.label}</p>
@@ -109,14 +109,14 @@ export default function AdminRevenuePage() {
       {/* Row 1: Area Chart & Filters */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col">
-          <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 tracking-wider">Fee & Revenue Flow (Daily)</h3>
+          <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 tracking-wider">Dòng Doanh thu & Phí (Hàng ngày)</h3>
           <div className="flex-1 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={flowData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7598C1" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#7598C1" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="#7598C1" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#7598C1" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -131,22 +131,22 @@ export default function AdminRevenuePage() {
 
         <div className="bg-[#d1d5db] rounded-3xl p-8 shadow-sm flex flex-col justify-between">
           <div>
-            <h3 className="text-3xl font-black text-gray-800 leading-tight mb-6">Revenue View Filters</h3>
+            <h3 className="text-3xl font-black text-gray-800 leading-tight mb-6">Bộ lọc Phân tích</h3>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-black text-gray-700 uppercase mb-1">Date Range</label>
+                <label className="block text-sm font-black text-gray-700 uppercase mb-1">Khoảng thời gian</label>
                 <div className="relative">
                   <select className="w-full bg-white/50 border-none rounded-2xl py-3 px-4 text-gray-600 font-medium italic appearance-none outline-none focus:ring-2 focus:ring-[#7598C1]">
-                    <option>This month, Last month,...</option>
+                    <option>Tháng này, Tháng trước,...</option>
                   </select>
                   <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-black text-gray-700 uppercase mb-1">Fee caterogy</label>
+                <label className="block text-sm font-black text-gray-700 uppercase mb-1">Hạng mục Phí</label>
                 <div className="relative">
                   <select className="w-full bg-white/50 border-none rounded-2xl py-3 px-4 text-gray-600 font-medium italic appearance-none outline-none focus:ring-2 focus:ring-[#7598C1]">
-                    <option>Processing, Revenue View Filters,...</option>
+                    <option>Phí xử lý, Phí đối ứng,...</option>
                   </select>
                   <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 </div>
@@ -154,7 +154,7 @@ export default function AdminRevenuePage() {
             </div>
           </div>
           <button className="w-full bg-[#7598C1] text-white py-3.5 mt-6 rounded-2xl font-bold shadow-lg hover:bg-[#5DA2D5] transition-all transform active:scale-[0.98]">
-            Update insights
+            Cập nhật Phân tích
           </button>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function AdminRevenuePage() {
       {/* Row 2: Horizontal Bar & Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col">
-          <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 tracking-wider">Key Fee Categories Break down (Total vs .Net)</h3>
+          <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 tracking-wider">Phân tích Số dư Theo Danh mục Phí (Tổng vs Thực nhận)</h3>
           <div className="flex-1 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoriesData} layout="vertical" margin={{ left: 60, right: 60, top: 20 }}>
@@ -171,24 +171,24 @@ export default function AdminRevenuePage() {
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#4b5563', fontWeight: 600 }} width={140} />
                 <Tooltip />
                 <Legend iconType="square" align="center" verticalAlign="bottom" wrapperStyle={{ fontSize: 10, paddingTop: 10 }} />
-                <Bar dataKey="total" name="Total Fees" fill="#7598C1" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 10, fill: '#6b7280', fontWeight: 'bold', formatter: (v: any) => `$${v.toLocaleString()}` }} />
-                <Bar dataKey="net" name="Net Fee Revenue" fill="#10B981" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 10, fill: '#10b981', fontWeight: 'bold', formatter: (v: any) => `${(v/2.5).toFixed(0)}%` }} />
+                <Bar dataKey="total" name="Tổng phí" fill="#7598C1" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 10, fill: '#6b7280', fontWeight: 'bold', formatter: (v: any) => `$${v.toLocaleString()}` }} />
+                <Bar dataKey="net" name="Khấu trừ" fill="#10B981" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 10, fill: '#10b981', fontWeight: 'bold', formatter: (v: any) => `${(v / 2.5).toFixed(0)}%` }} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col justify-center">
-          <h3 className="text-2xl font-black text-gray-800 leading-tight mb-1">Fee & Revenue Key Metrics:</h3>
-          <p className="text-xl font-bold text-gray-400 mb-6">Last 30 days</p>
-          <h4 className="text-2xl font-black text-gray-800 mb-4">Metrics:</h4>
+          <h3 className="text-2xl font-black text-gray-800 leading-tight mb-1">Chỉ số Hiệu suất Chính về Doanh Thu:</h3>
+          <p className="text-xl font-bold text-gray-400 mb-6">30 ngày gần nhất</p>
+          <h4 className="text-2xl font-black text-gray-800 mb-4">Các Thông Số:</h4>
           <div className="space-y-3">
             {[
-              { label: 'Total processing Fees', value: '$3,600' },
-              { label: 'Average Donation Fees', value: '20.8%' },
-              { label: 'Maximum Project Fees', value: '$1,500' },
-              { label: 'Minimum Event Fees', value: '$10' },
-              { label: 'Total Event Fees', value: '$450' },
+              { label: 'Tổng phí Xử lý Thanh toán', value: '$3,600' },
+              { label: 'Phí trung bình trên mỗi Giao dịch Quyên góp', value: '2.8%' },
+              { label: 'Doanh thu trung bình theo Dự án', value: '$1,500' },
+              { label: 'Ngưỡng phí sự kiện tối thiểu', value: '$10' },
+              { label: 'Tổng thu nhập từ phí Tương tác Nền tảng', value: '$450' },
             ].map((m, i) => (
               <div key={i} className="flex items-center text-sm font-bold text-gray-500">
                 <span className="flex-1">{m.label}</span>
@@ -203,7 +203,7 @@ export default function AdminRevenuePage() {
       {/* Row 3: Vertical Bar & Small Horizontal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col">
-          <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 tracking-wider">Fee & Revenue Flow (Daily)</h3>
+          <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 tracking-wider">Biểu Đồ Xu Hướng Lợi Nhuận</h3>
           <div className="flex-1 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barData} margin={{ top: 30, bottom: 20 }}>

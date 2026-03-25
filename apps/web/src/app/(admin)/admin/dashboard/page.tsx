@@ -45,18 +45,18 @@ const donationData: DonationData[] = [
 ];
 
 const fundDistribution: FundDistributionData[] = [
-  { name: 'Education', value: 35, color: '#F76C6C' },
-  { name: 'Health', value: 25, color: '#7BC712' },
-  { name: 'Environment', value: 20, color: '#5DA2D5' },
-  { name: 'Community', value: 20, color: '#FAED26' },
+  { name: 'Giáo dục', value: 35, color: '#F76C6C' },
+  { name: 'Y tế', value: 25, color: '#7BC712' },
+  { name: 'Môi trường', value: 20, color: '#5DA2D5' },
+  { name: 'Cộng đồng', value: 20, color: '#FAED26' },
 ];
 
 const activityLog: ActivityLogItem[] = [
-  { id: '1', name: 'Hiếu', email: 'hieu@gmail.com', activity: 'Registered', time: '2m ago', status: 'Pending' },
-  { id: '2', name: 'Tiên', email: 'tien@gmail.com', activity: 'Donate to Campaigns', time: '10m ago', status: 'Approved' },
-  { id: '3', name: 'Trà My', email: 'my@gmail.com', activity: 'Donate to Campaigns', time: '8m ago', status: 'Approved' },
-  { id: '4', name: 'An', email: 'an@gmail.com', activity: 'Registered', time: '2m ago', status: 'Pending' },
-  { id: '5', name: 'Vương', email: 'vuong@gmail.com', activity: 'Registered', time: '2m ago', status: 'Pending' },
+  { id: '1', name: 'Hiếu', email: 'hieu@gmail.com', activity: 'Đã đăng ký', time: '2 phút trước', status: 'Pending' },
+  { id: '2', name: 'Tiên', email: 'tien@gmail.com', activity: 'Quyên góp chiến dịch', time: '10 phút trước', status: 'Approved' },
+  { id: '3', name: 'Trà My', email: 'my@gmail.com', activity: 'Quyên góp chiến dịch', time: '8 phút trước', status: 'Approved' },
+  { id: '4', name: 'An', email: 'an@gmail.com', activity: 'Đã đăng ký', time: '2 phút trước', status: 'Pending' },
+  { id: '5', name: 'Vương', email: 'vuong@gmail.com', activity: 'Đã đăng ký', time: '2 phút trước', status: 'Pending' },
 ];
 
 // ── STAT CARD ─────────────────────────────────────────────────────────
@@ -83,12 +83,13 @@ function StatCard({
 // ── STATUS BADGE ──────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
   const isApproved = status === 'Approved';
+  const displayStatus = status === 'Approved' ? 'Đã duyệt' : status === 'Pending' ? 'Chờ xử lý' : 'Từ chối';
   return (
     <span
       className={`px-3 py-1 rounded-full text-xs font-bold text-black ${isApproved ? 'bg-[#7BC712]' : 'bg-[#FAED26]'
         }`}
     >
-      {status}
+      {displayStatus}
     </span>
   );
 }
@@ -132,7 +133,7 @@ export default function AdminDashboardPage() {
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
-          label="Total Users"
+          label="Tổng người dùng"
           value="5,240"
           icon={
             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
@@ -141,7 +142,7 @@ export default function AdminDashboardPage() {
           }
         />
         <StatCard
-          label="Active Campaigns"
+          label="Chiến dịch hoạt động"
           value="87"
           icon={
             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
@@ -150,7 +151,7 @@ export default function AdminDashboardPage() {
           }
         />
         <StatCard
-          label="Total Raised"
+          label="Tổng quyên góp"
           value="5,240"
           icon={
             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
@@ -167,8 +168,8 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-2 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-start justify-between mb-1">
             <div>
-              <h2 className="text-lg font-bold text-gray-800">Donation growth</h2>
-              <p className="text-xs text-gray-400">Line chart</p>
+              <h2 className="text-lg font-bold text-gray-800">Tăng trưởng quyên góp</h2>
+              <p className="text-xs text-gray-400">Biểu đồ đường</p>
             </div>
             <svg className="w-5 h-5 text-gray-400 mt-1" fill="currentColor" viewBox="0 0 24 24">
               <path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z" />
@@ -204,8 +205,8 @@ export default function AdminDashboardPage() {
 
         {/* Funds Distribution – Donut Chart */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-800">Funds Distribution</h2>
-          <p className="text-xs text-gray-400 mb-2">Pie chart</p>
+          <h2 className="text-lg font-bold text-gray-800">Phân bổ quỹ</h2>
+          <p className="text-xs text-gray-400 mb-2">Biểu đồ tròn</p>
           <div className="flex items-center gap-6">
             <ResponsiveContainer width={180} height={180}>
               <PieChart>
@@ -241,7 +242,7 @@ export default function AdminDashboardPage() {
         {/* Table header button */}
         <div className="px-5 pt-4 pb-2">
           <button className="px-4 py-1.5 rounded-lg border border-transparent text-sm font-semibold text-black bg-[#7598C1] hover:bg-[#5DA2D5] transition-colors shadow-sm">
-            Recent Activity Log
+            Nhật ký hoạt động gần đây
           </button>
         </div>
 
@@ -249,10 +250,10 @@ export default function AdminDashboardPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left px-5 py-3 font-semibold text-gray-700 w-48">User</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Activity</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Timestamp</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Status</th>
+                <th className="text-left px-5 py-3 font-semibold text-gray-700 w-48">Người dùng</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Hoạt động</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Thời gian</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Trạng thái</th>
               </tr>
             </thead>
             <tbody>

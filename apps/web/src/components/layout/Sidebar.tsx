@@ -14,6 +14,8 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3BottomLeftIcon,
 } from '@heroicons/react/24/outline';
+import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
+
 export interface MenuItem {
   name: string;
   href: string;
@@ -51,7 +53,8 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
 
   // Use provided menuItems or fall back to default user menu
   const items = menuItems ?? userMenuItems;
-  const isAdmin = roleLabel === 'ADMIN';
+  const isAdmin = roleLabel === 'ADMIN' || roleLabel === 'SUPER ADMIN';
+  const { translate } = useAdminLanguage();
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -74,7 +77,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       setIsLoggingOut(false);
-      if (pathname.startsWith('/admin') || roleLabel === 'ADMIN') {
+      if (pathname.startsWith('/admin') || isAdmin) {
         router.push('/admin/login');
       } else {
         router.push('/login');
@@ -140,7 +143,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
                   `}
                 >
                   <ArrowRightOnRectangleIcon className="mr-4 h-6 w-6 stroke-2" />
-                  {isLoggingOut ? 'Logging out...' : 'Log out'}
+                  {isLoggingOut ? translate('sidebar.logging_out') : translate('header.logout')}
                 </button>
               </div>
             )}
@@ -173,7 +176,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
               className="flex flex-col items-center justify-center py-2 px-1 text-red-500 flex-shrink-0 min-w-[70px]"
             >
               <ArrowRightOnRectangleIcon className="h-6 w-6 mb-1" />
-              <span className="text-xs">Logout</span>
+              <span className="text-xs">{translate('header.logout')}</span>
             </button>
           )}
         </div>
