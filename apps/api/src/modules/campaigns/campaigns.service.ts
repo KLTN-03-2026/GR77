@@ -126,7 +126,7 @@ export class CampaignsService {
     return campaign;
   }
 
-  async list(query: GetCampaignsQueryDto) {
+  async list(query: GetCampaignsQueryDto, userId?: string | null) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
@@ -179,6 +179,20 @@ export class CampaignsService {
       }),
     ]);
 
+    // Build a set of campaign IDs the user has favorited
+    let favoritedIds = new Set<string>();
+    if (userId) {
+      const campaignIds = items.map((c: any) => c.id);
+      const userFavorites = await (this.prisma as any).favorite.findMany({
+        where: {
+          userId,
+          campaignId: { in: campaignIds },
+        },
+        select: { campaignId: true },
+      });
+      favoritedIds = new Set(userFavorites.map((f: any) => f.campaignId));
+    }
+
     return {
       meta: {
         page,
@@ -191,6 +205,7 @@ export class CampaignsService {
         amountRaised: Number(c.currentRaisedAmount || 0),
         progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
         favoritesCount: c._count.favorites,
+        isFavorited: favoritedIds.has(c.id),
         _count: undefined,
       })),
     };
