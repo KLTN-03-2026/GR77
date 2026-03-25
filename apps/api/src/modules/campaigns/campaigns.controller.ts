@@ -5,6 +5,7 @@ import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
@@ -51,10 +52,13 @@ export class CampaignsController {
    * GET /campaigns
    * 
    * Public list of active campaigns
+   * If authenticated, each campaign includes isFavorited boolean
    */
+  @UseGuards(OptionalJwtAuthGuard)
   @Get()
-  list(@Query() query: GetCampaignsQueryDto) {
-    return this.campaignsService.list(query);
+  list(@Query() query: GetCampaignsQueryDto, @Request() req: any) {
+    const userId = req.user?.userId || req.user?.sub || null;
+    return this.campaignsService.list(query, userId);
   }
 
   /**
