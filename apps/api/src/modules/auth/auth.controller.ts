@@ -52,4 +52,19 @@ export class AuthController {
   async resendVerification(@Body() body: { email: string }) {
     return this.authService.resendVerification(body.email);
   }
+
+  @Post('send-reset-code')
+  async sendResetCode(@Body() body: { email: string }) {
+    return this.authService.sendResetCode(body.email);
+  }
+
+  @Post('verify-reset-code')
+  async verifyResetCode(@Body() body: { email: string; code: string }) {
+    return this.authService.verifyResetCode(body.email, body.code);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: { email: string; code: string; newPassword: string }) {
+    return this.authService.resetPassword(body.email, body.code, body.newPassword);
+  }
 }
