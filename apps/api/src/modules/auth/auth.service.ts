@@ -349,14 +349,20 @@ export class AuthService {
   async updateProfile(userId: string, data: {
     firstName?: string;
     lastName?: string;
-    location?: string;
+    province?: string;
+    district?: string;
+    ward?: string;
+    address?: string;
     avatarUrl?: string;
     coverImageUrl?: string;
   }) {
     const updateData: any = {};
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
-    if (data.location !== undefined) updateData.location = data.location;
+    if (data.province !== undefined) updateData.province = data.province;
+    if (data.district !== undefined) updateData.district = data.district;
+    if (data.ward !== undefined) updateData.ward = data.ward;
+    if (data.address !== undefined) updateData.address = data.address;
     if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
     if (data.coverImageUrl !== undefined) updateData.coverImageUrl = data.coverImageUrl;
 
@@ -374,7 +380,7 @@ export class AuthService {
       select: {
         id: true, email: true, username: true,
         firstName: true, lastName: true,
-        location: true,
+        province: true, district: true, ward: true, address: true,
         avatarUrl: true, coverImageUrl: true, role: true,
       },
     });

@@ -3,22 +3,27 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   UserIcon,
-  CameraIcon,
-  EnvelopeIcon,
-  MapPinIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+import { useAddressData } from './_hooks/useAddressData';
+import { ProfileHeader } from './_components/ProfileHeader';
+import { PersonalInfoForm } from './_components/PersonalInfoForm';
+import { EmailSection } from './_components/EmailSection';
+import { ChangeEmailModal } from './_components/ChangeEmailModal';
 
 /** ─── Types ───────────────────────────────────────────────── */
-interface UserProfile {
+export interface UserProfile {
   id: string;
   email: string;
   username: string;
   firstName: string | null;
   lastName: string | null;
-  location: string | null;
+  province: string | null;
+  district: string | null;
+  ward: string | null;
+  address: string | null;
   avatarUrl: string | null;
   coverImageUrl: string | null;
   role: string;
@@ -32,7 +37,12 @@ export default function MyProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [location, setLocation] = useState('');
+  const [province, setProvince] = useState('');
+  const [district, setDistrict] = useState('');
+  const [ward, setWard] = useState('');
+  const [address, setAddress] = useState('');
+
+  const { provincesData, districtsData } = useAddressData(province);
 
   // ─── Image state ────────────────────────────────────────────
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -70,7 +80,10 @@ export default function MyProfilePage() {
       setProfile(data);
       setFirstName(data.firstName || '');
       setLastName(data.lastName || '');
-      setLocation(data.location || '');
+      setProvince(data.province || '');
+      setDistrict(data.district || '');
+      setWard(data.ward || '');
+      setAddress(data.address || '');
       setAvatarPreview(data.avatarUrl || null);
       setCoverPreview(data.coverImageUrl || null);
     } catch {
@@ -138,7 +151,10 @@ export default function MyProfilePage() {
       const body: any = {
         firstName,
         lastName,
-        location,
+        province,
+        district,
+        ward,
+        address,
       };
       if (avatarUrl) body.avatarUrl = avatarUrl;
       if (coverImageUrl) body.coverImageUrl = coverImageUrl;
@@ -238,6 +254,7 @@ export default function MyProfilePage() {
 
   // ─── Display name logic ─────────────────────────────────────
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || profile?.username || 'User';
+  const locationString = [address, ward, district, province].filter(Boolean).join(', ');
 
   // ─── Loading ────────────────────────────────────────────────
   if (isLoading) {
@@ -280,287 +297,54 @@ export default function MyProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* ════ Left Column: Avatar & Basic Info ════ */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden text-center relative">
-            {/* Cover Image */}
-            <div className="h-28 relative group">
-              {coverPreview ? (
-                <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-[linear-gradient(90deg,#89A7CA_0%,#3D5169_97%)]" />
-              )}
-              <button
-                onClick={() => coverInputRef.current?.click()}
-                className="absolute top-3 right-3 p-1.5 bg-white/20 hover:bg-white/50 rounded-lg backdrop-blur-sm transition-all text-white opacity-0 group-hover:opacity-100"
-              >
-                <CameraIcon className="w-5 h-5" />
-              </button>
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleCoverChange}
-              />
-            </div>
-
-            {/* Avatar */}
-            <div className="relative -mt-14 flex justify-center">
-              <div className="relative group">
-                <div className="w-28 h-28 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
-                  {avatarPreview ? (
-                    <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-                      <UserIcon className="w-12 h-12 text-cyan-300" />
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => avatarInputRef.current?.click()}
-                  className="absolute bottom-1 right-1 p-1.5 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all text-gray-600 hover:text-cyan-500 z-10"
-                >
-                  <CameraIcon className="w-4 h-4" />
-                </button>
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarChange}
-                />
-              </div>
-            </div>
-
-            {/* Basic Info */}
-            <div className="px-6 pb-6 pt-3">
-              <h2 className="text-xl font-bold text-[#1d2951]">{displayName}</h2>
-              <p className="text-sm font-bold text-cyan-500 uppercase tracking-wider mt-1">
-                {profile?.role || 'USER'}
-              </p>
-
-              <div className="border-t border-gray-50 my-4" />
-
-              <div className="space-y-3 text-left">
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <EnvelopeIcon className="w-4 h-4 text-[#8ea1c1] shrink-0" />
-                  <span className="truncate">{profile?.email}</span>
-                </div>
-                {location && (
-                  <div className="flex items-center gap-3 text-sm text-gray-600">
-                    <MapPinIcon className="w-4 h-4 text-[#8ea1c1] shrink-0" />
-                    <span className="truncate">{location}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Preview badges */}
-          {(avatarFile || coverFile) && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-700 font-medium flex items-start gap-2">
-              <ExclamationCircleIcon className="w-5 h-5 shrink-0 mt-0.5" />
-              <span>Hình ảnh mới sẽ được lưu khi bạn nhấn <strong>"Save Changes"</strong>.</span>
-            </div>
-          )}
-        </div>
+        <ProfileHeader 
+           displayName={displayName}
+           profile={profile}
+           locationString={locationString}
+           coverPreview={coverPreview}
+           avatarPreview={avatarPreview}
+           coverInputRef={coverInputRef}
+           avatarInputRef={avatarInputRef}
+           handleCoverChange={handleCoverChange}
+           handleAvatarChange={handleAvatarChange}
+           avatarFile={avatarFile}
+           coverFile={coverFile}
+        />
 
         {/* ════ Right Column: Edit Form ════ */}
         <div className="lg:col-span-2 space-y-6">
           {/* Personal Information */}
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-            <h3 className="text-xl font-bold text-[#1d2951] mb-6">Personal Information</h3>
-
-            <div className="space-y-6">
-              {/* Name Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Enter first name"
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Enter last name"
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Location */}
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Location</label>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="City, Country"
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Save Actions */}
-              <div className="pt-4 flex justify-end gap-4 border-t border-gray-50">
-                <button
-                  onClick={() => fetchProfile()}
-                  className="px-6 py-3 rounded-2xl font-bold text-[#8ea1c1] hover:text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="px-8 py-3 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center min-w-[160px]"
-                >
-                  {isSaving ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    'Save Changes'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+          <PersonalInfoForm 
+             firstName={firstName} setFirstName={setFirstName}
+             lastName={lastName} setLastName={setLastName}
+             province={province} setProvince={setProvince}
+             district={district} setDistrict={setDistrict}
+             address={address} setAddress={setAddress}
+             provincesData={provincesData} districtsData={districtsData}
+             handleSave={handleSave} isSaving={isSaving} fetchProfile={fetchProfile}
+          />
 
           {/* Email Section */}
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-            <h3 className="text-xl font-bold text-[#1d2951] mb-2">Email Address</h3>
-            <p className="text-sm text-gray-400 mb-6">
-              Changing your email requires password verification and a confirmation code sent to the new email.
-            </p>
-
-            <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-cyan-50 rounded-xl">
-                  <EnvelopeIcon className="w-5 h-5 text-cyan-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-800">{profile?.email}</p>
-                  <p className="text-xs text-gray-400">Primary email address</p>
-                </div>
-              </div>
-              <button
-                onClick={() => { setShowEmailModal(true); resetEmailModal(); }}
-                className="px-5 py-2.5 rounded-xl font-bold text-sm text-cyan-600 bg-cyan-50 hover:bg-cyan-100 transition-colors"
-              >
-                Change Email
-              </button>
-            </div>
-          </div>
+          <EmailSection 
+             email={profile?.email}
+             onOpenModal={() => { setShowEmailModal(true); resetEmailModal(); }}
+          />
         </div>
       </div>
 
       {/* ════ Email Change Modal ════ */}
-      {showEmailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-[scaleIn_0.2s_ease]">
-            {/* Modal Header */}
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">
-                {emailStep === 'form' ? 'Change Email Address' : 'Verify New Email'}
-              </h3>
-              <button
-                onClick={() => { setShowEmailModal(false); resetEmailModal(); }}
-                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <XMarkIcon className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-5">
-              {emailError && (
-                <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-medium rounded-xl px-4 py-3 flex items-center gap-2">
-                  <ExclamationCircleIcon className="w-5 h-5 shrink-0" />
-                  {emailError}
-                </div>
-              )}
-
-              {emailStep === 'form' ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">New Email</label>
-                    <input
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder="newemail@example.com"
-                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Current Password</label>
-                    <input
-                      type="password"
-                      value={emailPassword}
-                      onChange={(e) => setEmailPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
-                    />
-                  </div>
-                  <button
-                    onClick={handleRequestEmailChange}
-                    disabled={emailLoading || !newEmail || !emailPassword}
-                    className="w-full py-3 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                  >
-                    {emailLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      'Send Verification Code'
-                    )}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-gray-500">
-                    A 6-digit verification code has been sent to <strong className="text-gray-800">{newEmail}</strong>.
-                    Please enter it below.
-                  </p>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Verification Code</label>
-                    <input
-                      type="text"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      placeholder="000000"
-                      maxLength={6}
-                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-bold text-center text-2xl tracking-[0.5em] transition-all outline-none"
-                    />
-                  </div>
-                  <button
-                    onClick={handleVerifyEmailChange}
-                    disabled={emailLoading || otpCode.length !== 6}
-                    className="w-full py-3 rounded-2xl font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                  >
-                    {emailLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      'Confirm Email Change'
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setEmailStep('form')}
-                    className="w-full text-center text-sm text-gray-400 hover:text-gray-600 font-medium"
-                  >
-                    ← Back
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ChangeEmailModal 
+        showEmailModal={showEmailModal}
+        onClose={() => { setShowEmailModal(false); resetEmailModal(); }}
+        emailStep={emailStep} setEmailStep={setEmailStep}
+        emailError={emailError}
+        newEmail={newEmail} setNewEmail={setNewEmail}
+        emailPassword={emailPassword} setEmailPassword={setEmailPassword}
+        otpCode={otpCode} setOtpCode={setOtpCode}
+        emailLoading={emailLoading}
+        handleRequestEmailChange={handleRequestEmailChange}
+        handleVerifyEmailChange={handleVerifyEmailChange}
+      />
 
       {/* Keyframe animations */}
       <style jsx global>{`
