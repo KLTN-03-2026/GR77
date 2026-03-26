@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common'
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from '../../prisma/prisma.service'
@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
 import { ConfigService } from '@nestjs/config'
 import { MailService } from '../mail/mail.service'
+import { RegisterDto } from './dto/register.dto'
 
 @Injectable()
 export class AuthService {
@@ -16,13 +17,24 @@ export class AuthService {
     private mailService: MailService,
   ) { }
 
-  async register(email: string, password: string) {
+  async register(dto: RegisterDto) {
+    const { email, password, acceptPolicy } = dto;
+
+    // 1) Validate policy acceptance
+    if (acceptPolicy !== true) {
+      throw new BadRequestException('You must accept the policy to register');
+    }
+
+    // 2) Hash password
     const hashed = await bcrypt.hash(password, 10);
     const username = email.split('@')[0];
 
     // Generate 6-digit verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const verificationExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    // Get policy version from config (or default to today's date)
+    const policyVersion = this.configService.get<string>('POLICY_VERSION') || new Date().toISOString().split('T')[0];
 
     try {
       const user = await this.prisma.user.create({
@@ -35,6 +47,10 @@ export class AuthService {
           isVerified: false,
           verificationResendCount: 0,
           lastResendAt: new Date(),
+
+          // Save policy acceptance
+          acceptedPolicyAt: new Date(),
+          policyVersion,
         },
       });
 
