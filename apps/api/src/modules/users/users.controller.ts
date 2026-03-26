@@ -83,4 +83,31 @@ export class UsersController {
         const { sub, role } = req.user;
         return this.usersService.unlock(id, sub, role);
     }
+
+    /**
+     * POST /users/me/accept-policy
+     * Allows user to accept/update policy.
+     * Anyone can accept policy for themselves (JWT required).
+     */
+    @Post('me/accept-policy')
+    @MinRole(Role.USER) // Any user can do this
+    async acceptPolicy(@Request() req: any) {
+        const userId = req.user.sub;
+        return this.usersService.acceptPolicy(userId);
+    }
+
+    /**
+     * GET /users/me/policy-status
+     * Check if user needs to accept updated policy.
+     */
+    @Get('me/policy-status')
+    @MinRole(Role.USER)
+    async checkPolicyStatus(@Request() req: any) {
+        const userId = req.user.sub;
+        const needsUpdate = await this.usersService.needsPolicyUpdate(userId);
+        return {
+            needsPolicyUpdate: needsUpdate,
+            message: needsUpdate ? 'Please accept the updated policy' : 'Policy is up to date',
+        };
+    }
 }

@@ -33,6 +33,10 @@ model User {
   balance       Decimal @default(0) @db.Decimal(18, 2)
   walletAddress String? @unique @map("wallet_address")
 
+  // Policy Acceptance
+  acceptedPolicyAt DateTime? @map("accepted_policy_at")
+  policyVersion    String?   @map("policy_version")
+
   // Relations
   participations     CampaignParticipant[]
   createdCampaigns   Campaign[]            @relation("CampaignCreator")
