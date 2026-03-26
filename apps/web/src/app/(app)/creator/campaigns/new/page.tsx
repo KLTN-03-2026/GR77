@@ -1,9 +1,15 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRightIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
+
+interface CategoryOption {
+    id: string;
+    name: string;
+    icon?: string;
+}
 
 export default function NewCampaignPage() {
     const router = useRouter();
@@ -12,6 +18,19 @@ export default function NewCampaignPage() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [categories, setCategories] = useState<CategoryOption[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState('');
+
+    useEffect(() => {
+        fetch('http://localhost:3001/categories')
+            .then((res) => res.json())
+            .then((data) => setCategories(data))
+            .catch((err) => console.error('Failed to load categories:', err));
+    }, []);
+
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedCategoryId(e.target.value);
+    };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -74,10 +93,14 @@ export default function NewCampaignPage() {
             }
         }
 
+        // Find category name from selected id
+        const selectedCat = categories.find((c) => c.id === selectedCategoryId);
+
         const data = {
             title: formData.get('title') as string,
             description: formData.get('description') as string,
-            category: formData.get('category') as string,
+            category: selectedCat?.name || '',
+            categoryId: selectedCategoryId || undefined,
             locationText: formData.get('locationText') as string,
             coverImageUrl: coverImageUrl,
             fundingGoalAmount: Number(formData.get('fundingGoalAmount')),
@@ -88,7 +111,6 @@ export default function NewCampaignPage() {
         };
 
         try {
-            // Note: you may need to update the URL and handle the auth token properly based on your auth implementation
             const token = localStorage.getItem('accessToken');
 
             const response = await fetch('http://localhost:3001/campaigns', {
@@ -178,14 +200,17 @@ export default function NewCampaignPage() {
                         </label>
                         <div className="sm:w-3/4 flex">
                             <select
-                                name="category"
-                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
+                                value={selectedCategoryId}
+                                onChange={handleCategoryChange}
+                                className="w-52 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
                                 style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236b7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em 1em' }}
                             >
                                 <option value="">Choose</option>
-                                <option value="education">Education</option>
-                                <option value="health">Health</option>
-                                <option value="environment">Environment</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>

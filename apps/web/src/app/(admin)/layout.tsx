@@ -17,7 +17,9 @@ import {
   FingerPrintIcon,
   Cog6ToothIcon,
   UserGroupIcon,
+  TagIcon,
 } from '@heroicons/react/24/outline';
+
 
 // ── Types ──────────────────────────────────────────────────────────
 export type AdminRole = 'ADMIN' | 'SUPER_ADMIN';
@@ -41,7 +43,9 @@ function useAdminMenu(role: AdminRole): MenuItem[] {
     { name: translate('menu.dashboard'), href: '/admin/dashboard', icon: ChartBarIcon },
     { name: translate('menu.users'), href: '/admin/users', icon: UsersIcon },
     { name: translate('menu.campaigns'), href: '/admin/campaigns', icon: FlagIcon },
+    { name: translate('menu.categories'), href: '/admin/categories', icon: TagIcon },
     { name: translate('menu.transactions'), href: '/admin/transactions', icon: ArrowsRightLeftIcon },
+
     { name: translate('menu.withdrawals'), href: '/admin/withdrawals', icon: ArrowDownTrayIcon },
     { name: translate('menu.revenue'), href: '/admin/revenue', icon: CurrencyDollarIcon },
     { name: translate('menu.moderation'), href: '/admin/moderation', icon: ShieldCheckIcon },

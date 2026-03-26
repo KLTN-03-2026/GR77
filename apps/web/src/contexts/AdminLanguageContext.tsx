@@ -16,6 +16,7 @@ const translations: Record<Language, Record<string, string>> = {
         'menu.dashboard': 'Bảng điều khiển',
         'menu.users': 'Quản lý người dùng',
         'menu.campaigns': 'Chiến dịch',
+        'menu.categories': 'Danh mục chiến dịch',
         'menu.transactions': 'Giao dịch',
         'menu.withdrawals': 'Rút tiền',
         'menu.revenue': 'Phí & Doanh thu',
@@ -43,7 +44,7 @@ const translations: Record<Language, Record<string, string>> = {
         'login.forgot_password': 'Quên mật khẩu?',
         'login.btn_authenticating': 'Đang xác thực...',
         'login.btn_login': 'Đăng nhập',
-        'login.err_invalid': 'Email hoặc mật khẩu không hợp lệ.',
+        'login.err_invalid': 'Mật khẩu hoặc email bạn nhập chưa chính xác',
         'login.err_denied': 'Truy cập bị từ chối. Bạn không có quyền đăng nhập vào cổng thông tin này.',
         'login.err_general': 'Đã xảy ra lỗi. Vui lòng thử lại.',
 
@@ -56,6 +57,28 @@ const translations: Record<Language, Record<string, string>> = {
         'settings.save': 'Lưu thay đổi',
         'settings.saved': 'Đã lưu cấu hình!',
 
+        // Categories Page
+        'categories.total': 'Tổng danh mục',
+        'categories.error.duplicate': 'Danh mục này đã tồn tại trong hệ thống!',
+        'categories.delete.has_campaigns': 'Không thể xóa danh mục này do đang có chiến dịch liên quan!',
+        'categories.add': 'Thêm danh mục',
+        'categories.search': 'Tìm kiếm danh mục...',
+        'categories.campaigns_count': 'Chiến dịch',
+        'categories.created': 'Tạo ngày',
+        'categories.no_results': 'Không tìm thấy danh mục',
+        'categories.modal.title_add': 'Thêm danh mục',
+        'categories.modal.title_edit': 'Sửa danh mục',
+        'categories.modal.name_label': 'Tên danh mục',
+        'categories.modal.name_placeholder': 'VD: Y tế, Giáo dục...',
+        'categories.modal.cancel': 'Hủy',
+        'categories.modal.save': 'Lưu',
+        'categories.modal.saving': 'Đang lưu...',
+        'categories.modal_delete.title': 'Xóa danh mục?',
+        'categories.modal_delete.message': 'Bạn có chắc chắn muốn xóa danh mục này?',
+        'categories.modal_delete.cancel': 'Hủy',
+        'categories.modal_delete.confirm': 'Xóa',
+        'categories.modal_delete.deleting': 'Đang xóa...',
+
         // Fallbacks for other generic text
         'admin.portal': 'Cổng Quản Trị'
     },
@@ -64,6 +87,7 @@ const translations: Record<Language, Record<string, string>> = {
         'menu.dashboard': 'Dashboard',
         'menu.users': 'Users',
         'menu.campaigns': 'Campaigns',
+        'menu.categories': 'Campaign Categories',
         'menu.transactions': 'Transactions',
         'menu.withdrawals': 'Withdrawals',
         'menu.revenue': 'Fee & Revenue',
@@ -103,6 +127,26 @@ const translations: Record<Language, Record<string, string>> = {
         'settings.language.en': 'English',
         'settings.save': 'Save Changes',
         'settings.saved': 'Configuration saved!',
+
+        // Categories Page
+        'categories.total': 'Total Categories',
+        'categories.add': 'Add Category',
+        'categories.search': 'Search Categories...',
+        'categories.campaigns_count': 'Campaigns',
+        'categories.created': 'Created',
+        'categories.no_results': 'No categories found',
+        'categories.modal.title_add': 'Add Category',
+        'categories.modal.title_edit': 'Edit Category',
+        'categories.modal.name_label': 'Category Name',
+        'categories.modal.name_placeholder': 'e.g. Healthcare, Education...',
+        'categories.modal.cancel': 'Cancel',
+        'categories.modal.save': 'Save',
+        'categories.modal.saving': 'Saving...',
+        'categories.modal_delete.title': 'Delete Category?',
+        'categories.modal_delete.message': 'Are you sure you want to delete this category?',
+        'categories.modal_delete.cancel': 'Cancel',
+        'categories.modal_delete.confirm': 'Delete',
+        'categories.modal_delete.deleting': 'Deleting...',
 
         'admin.portal': 'Admin Portal'
     }
