@@ -20,6 +20,18 @@ model User {
   verificationResendCount Int       @default(0) @map("verification_resend_count")
   lastResendAt            DateTime? @map("last_resend_at")
 
+  // Profile Information
+  firstName    String?  @map("first_name") @db.VarChar(100)
+  lastName     String?  @map("last_name") @db.VarChar(100)
+  location     String?  @db.VarChar(255)
+  avatarUrl    String?  @map("avatar_url") @db.VarChar(500)
+  coverImageUrl String? @map("cover_image_url") @db.VarChar(500)
+
+  // Pending Email Change
+  pendingEmail        String?   @map("pending_email")
+  pendingEmailCode    String?   @map("pending_email_code")
+  pendingEmailExpires DateTime? @map("pending_email_expires")
+
   // Security & Management
   isLocked   Boolean   @default(false) @map("is_locked")
   lockedAt   DateTime? @map("locked_at")
