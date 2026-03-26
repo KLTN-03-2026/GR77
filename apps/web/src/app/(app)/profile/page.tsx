@@ -1,28 +1,292 @@
 'use client';
 
-import { useState } from 'react';
-import { UserIcon, CameraIcon, EnvelopeIcon, PhoneIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  UserIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
+import { useAddressData } from './_hooks/useAddressData';
+import { ProfileHeader } from './_components/ProfileHeader';
+import { PersonalInfoForm } from './_components/PersonalInfoForm';
+import { EmailSection } from './_components/EmailSection';
+import { ChangeEmailModal } from './_components/ChangeEmailModal';
+
+/** ─── Types ───────────────────────────────────────────────── */
+export interface UserProfile {
+  id: string;
+  email: string;
+  username: string;
+  firstName: string | null;
+  lastName: string | null;
+  province: string | null;
+  district: string | null;
+  ward: string | null;
+  address: string | null;
+  avatarUrl: string | null;
+  coverImageUrl: string | null;
+  role: string;
+  createdAt: string;
+}
+
+const API = 'http://localhost:3001';
 
 export default function MyProfilePage() {
-  const [firstName, setFirstName] = useState('Trà');
-  const [lastName, setLastName] = useState('My');
-  const [email, setEmail] = useState('tramy@gmail.com');
-  const [phone, setPhone] = useState('+84 123 456 789');
-  const [location, setLocation] = useState('Đà Nẵng, Vietnam');
+  // ─── Profile state ──────────────────────────────────────────
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [province, setProvince] = useState('');
+  const [district, setDistrict] = useState('');
+  const [ward, setWard] = useState('');
+  const [address, setAddress] = useState('');
 
+  const { provincesData, districtsData } = useAddressData(province);
 
+  // ─── Image state ────────────────────────────────────────────
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── Email change state ─────────────────────────────────────
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [emailStep, setEmailStep] = useState<'form' | 'otp'>('form');
+  const [otpCode, setOtpCode] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+
+  // ─── Save state ─────────────────────────────────────────────
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-    }, 1000);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+
+  // ─── Fetch profile ──────────────────────────────────────────
+  const fetchProfile = useCallback(async () => {
+    if (!token) { setIsLoading(false); return; }
+    try {
+      const res = await fetch(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const data: UserProfile = await res.json();
+      setProfile(data);
+      setFirstName(data.firstName || '');
+      setLastName(data.lastName || '');
+      setProvince(data.province || '');
+      setDistrict(data.district || '');
+      setWard(data.ward || '');
+      setAddress(data.address || '');
+      setAvatarPreview(data.avatarUrl || null);
+      setCoverPreview(data.coverImageUrl || null);
+    } catch {
+      showToast('error', 'Không thể tải thông tin profile.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+  // ─── Toast helper ───────────────────────────────────────────
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
   };
+
+  // ─── Image handlers ─────────────────────────────────────────
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  // ─── Upload image helper ────────────────────────────────────
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API}/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Upload failed');
+    const data = await res.json();
+    return data.url;
+  };
+
+  // ─── Save Changes ──────────────────────────────────────────
+  const handleSave = async () => {
+    if (!token) return;
+    setIsSaving(true);
+
+    try {
+      let avatarUrl: string | undefined;
+      let coverImageUrl: string | undefined;
+
+      // Upload avatar if changed
+      if (avatarFile) {
+        avatarUrl = await uploadImage(avatarFile);
+      }
+      // Upload cover if changed
+      if (coverFile) {
+        coverImageUrl = await uploadImage(coverFile);
+      }
+
+      const body: any = {
+        firstName,
+        lastName,
+        province,
+        district,
+        ward,
+        address,
+      };
+      if (avatarUrl) body.avatarUrl = avatarUrl;
+      if (coverImageUrl) body.coverImageUrl = coverImageUrl;
+
+      const res = await fetch(`${API}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed');
+      }
+
+      const data = await res.json();
+      setProfile((prev) => prev ? { ...prev, ...data.user } : prev);
+      setAvatarFile(null);
+      setCoverFile(null);
+
+      // Update localStorage so Header reflects changes immediately
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
+      if (fullName) localStorage.setItem('userName', fullName);
+      if (data.user?.avatarUrl) localStorage.setItem('userAvatar', data.user.avatarUrl);
+      // Trigger storage event for Header to pick up
+      window.dispatchEvent(new Event('storage'));
+
+      showToast('success', 'Profile đã được cập nhật thành công!');
+    } catch (err: any) {
+      showToast('error', err.message || 'Đã xảy ra lỗi khi lưu.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // ─── Email change step 1: request ───────────────────────────
+  const handleRequestEmailChange = async () => {
+    if (!token || !newEmail || !emailPassword) return;
+    setEmailLoading(true);
+    setEmailError('');
+    try {
+      const res = await fetch(`${API}/auth/request-email-change`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newEmail, password: emailPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed');
+      setEmailStep('otp');
+    } catch (err: any) {
+      setEmailError(err.message);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  // ─── Email change step 2: verify OTP ───────────────────────
+  const handleVerifyEmailChange = async () => {
+    if (!token || !otpCode) return;
+    setEmailLoading(true);
+    setEmailError('');
+    try {
+      const res = await fetch(`${API}/auth/verify-email-change`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code: otpCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed');
+      setProfile((prev) => prev ? { ...prev, email: data.user.email } : prev);
+      setShowEmailModal(false);
+      resetEmailModal();
+      showToast('success', 'Email đã được thay đổi thành công!');
+    } catch (err: any) {
+      setEmailError(err.message);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const resetEmailModal = () => {
+    setNewEmail('');
+    setEmailPassword('');
+    setOtpCode('');
+    setEmailStep('form');
+    setEmailError('');
+  };
+
+  // ─── Display name logic ─────────────────────────────────────
+  const displayName = [firstName, lastName].filter(Boolean).join(' ') || profile?.username || 'User';
+  const locationString = [address, ward, district, province].filter(Boolean).join(', ');
+
+  // ─── Loading ────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div className="max-w-5xl mx-auto flex flex-col items-center justify-center py-32">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500" />
+        <p className="text-gray-400 mt-4 font-medium">Loading profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
-      {/* Header Section */}
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold animate-[slideIn_0.3s_ease] ${toast.type === 'success'
+          ? 'bg-green-50 text-green-700 border border-green-200'
+          : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
+          {toast.type === 'success' ? (
+            <CheckCircleIcon className="w-5 h-5 text-green-500" />
+          ) : (
+            <ExclamationCircleIcon className="w-5 h-5 text-red-500" />
+          )}
+          {toast.message}
+          <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70">
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <UserIcon className="w-7 h-7 text-cyan-500" />
@@ -32,135 +296,67 @@ export default function MyProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Column: Avatar & Basic Info Card */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden text-center relative">
-            {/* Cover Area */}
-            <div className="h-28 bg-[linear-gradient(90deg,#89A7CA_0%,#3D5169_97%)] relative">
-              <button className="absolute top-3 right-3 p-1.5 bg-white/20 hover:bg-white/40 rounded-lg backdrop-blur-sm transition-colors text-white">
-                <CameraIcon className="w-5 h-5" />
-              </button>
-            </div>
+        {/* ════ Left Column: Avatar & Basic Info ════ */}
+        <ProfileHeader
+          displayName={displayName}
+          profile={profile}
+          locationString={locationString}
+          coverPreview={coverPreview}
+          avatarPreview={avatarPreview}
+          coverInputRef={coverInputRef}
+          avatarInputRef={avatarInputRef}
+          handleCoverChange={handleCoverChange}
+          handleAvatarChange={handleAvatarChange}
+          avatarFile={avatarFile}
+          coverFile={coverFile}
+        />
 
-            {/* Avatar */}
-            <div className="relative -mt-14 flex justify-center">
-              <div className="relative">
-                <div className="w-28 h-28 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
-                  <img src="/avata.svg" alt="Avatar" className="w-full h-full object-cover" />
-                </div>
-                <button className="absolute bottom-1 right-1 p-1.5 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all text-gray-600 hover:text-[#47c9e5] z-10">
-                  <CameraIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Basic Info */}
-            <div className="px-6 pb-6 pt-3">
-              <h2 className="text-xl font-bold text-[#1d2951]">{firstName} {lastName}</h2>
-              <p className="text-sm font-bold text-[#47c9e5] uppercase tracking-wider mt-1">Pro Account</p>
-
-              <div className="border-t border-gray-50 my-4"></div>
-
-              <div className="space-y-3 text-left">
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <EnvelopeIcon className="w-4 h-4 text-[#8ea1c1]" />
-                  <span className="truncate">{email}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <PhoneIcon className="w-4 h-4 text-[#8ea1c1]" />
-                  <span>{phone}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <MapPinIcon className="w-4 h-4 text-[#8ea1c1]" />
-                  <span className="truncate">{location}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Edit Form */}
+        {/* ════ Right Column: Edit Form ════ */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-            <h3 className="text-xl font-bold text-[#1d2951] mb-6">Personal Information</h3>
+          {/* Email Section */}
+          <EmailSection
+            email={profile?.email}
+            onOpenModal={() => { setShowEmailModal(true); resetEmailModal(); }}
+          />
 
-            <div className="space-y-6">
-              {/* Name Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-[#47c9e5] focus:ring-2 focus:ring-[#47c9e5]/20 text-gray-800 font-medium transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-[#47c9e5] focus:ring-2 focus:ring-[#47c9e5]/20 text-gray-800 font-medium transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Contact Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-[#47c9e5] focus:ring-2 focus:ring-[#47c9e5]/20 text-gray-800 font-medium transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-[#47c9e5] focus:ring-2 focus:ring-[#47c9e5]/20 text-gray-800 font-medium transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Location</label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-[#47c9e5] focus:ring-2 focus:ring-[#47c9e5]/20 text-gray-800 font-medium transition-all"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="pt-4 flex justify-end gap-4 border-t border-gray-50">
-                <button className="px-6 py-3 rounded-2xl font-bold text-[#8ea1c1] hover:text-gray-700 hover:bg-gray-50 transition-colors">
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="px-8 py-3 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center min-w-[140px]"
-                >
-                  {isSaving ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    'Save Changes'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+          {/* Personal Information */}
+          <PersonalInfoForm
+            firstName={firstName} setFirstName={setFirstName}
+            lastName={lastName} setLastName={setLastName}
+            province={province} setProvince={setProvince}
+            district={district} setDistrict={setDistrict}
+            address={address} setAddress={setAddress}
+            provincesData={provincesData} districtsData={districtsData}
+            handleSave={handleSave} isSaving={isSaving} fetchProfile={fetchProfile}
+          />
         </div>
       </div>
+
+      {/* ════ Email Change Modal ════ */}
+      <ChangeEmailModal
+        showEmailModal={showEmailModal}
+        onClose={() => { setShowEmailModal(false); resetEmailModal(); }}
+        emailStep={emailStep} setEmailStep={setEmailStep}
+        emailError={emailError}
+        newEmail={newEmail} setNewEmail={setNewEmail}
+        emailPassword={emailPassword} setEmailPassword={setEmailPassword}
+        otpCode={otpCode} setOtpCode={setOtpCode}
+        emailLoading={emailLoading}
+        handleRequestEmailChange={handleRequestEmailChange}
+        handleVerifyEmailChange={handleVerifyEmailChange}
+      />
+
+      {/* Keyframe animations */}
+      <style jsx global>{`
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }

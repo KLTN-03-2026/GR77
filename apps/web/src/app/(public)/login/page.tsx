@@ -62,8 +62,24 @@ export default function LoginPage() {
                 localStorage.setItem("refreshToken", data.refreshToken);
             }
 
-            const displayName = email.split("@")[0];
-            localStorage.setItem("userName", displayName);
+            // Fetch real profile for display name
+            try {
+                const meRes = await fetch("http://localhost:3001/auth/me", {
+                    headers: { Authorization: `Bearer ${data.accessToken}` },
+                });
+                if (meRes.ok) {
+                    const me = await meRes.json();
+                    const fullName = [me.firstName, me.lastName].filter(Boolean).join(' ');
+                    localStorage.setItem("userName", fullName || me.username || email.split("@")[0]);
+                    if (me.avatarUrl) {
+                        localStorage.setItem("userAvatar", me.avatarUrl);
+                    }
+                } else {
+                    localStorage.setItem("userName", email.split("@")[0]);
+                }
+            } catch {
+                localStorage.setItem("userName", email.split("@")[0]);
+            }
 
             router.push("/creator/campaigns");
         } catch (err: any) {

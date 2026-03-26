@@ -205,4 +205,56 @@ export class MailService {
             console.log('Campaign Status Update Sent: ', nodemailer.getTestMessageUrl(info));
         }
     }
+
+    async sendEmailChangeVerification(newEmail: string, code: string) {
+        const info = await this.transporter.sendMail({
+            from: '"Kindlink Security" <security@kindlink.com>',
+            to: newEmail,
+            subject: 'Verify Your New Email - Kindlink',
+            html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <h2 style="color: #7598C1;">Email Change Verification</h2>
+          <p>You have requested to change your email address to this email. Please enter the following verification code to confirm:</p>
+          <div style="background: #f4f4f4; padding: 20px; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 10px; color: #333; margin: 20px 0;">
+            ${code}
+          </div>
+          <p>This code will expire in <strong>5 minutes</strong>.</p>
+          <p style="color: #E56C6C;">If you did not request this change, please ignore this email.</p>
+          <hr />
+          <p style="font-size: 12px; color: #888;">Kindlink Security Team</p>
+        </div>
+      `,
+        });
+
+        if (this.configService.get('NODE_ENV') !== 'production') {
+            console.log('Email Change Verification Sent: ', nodemailer.getTestMessageUrl(info));
+        }
+    }
+
+    async sendSecurityAlertEmail(oldEmail: string, newEmail: string, actionToken: string) {
+        const revertUrl = `http://localhost:3000/revert-email?token=${actionToken}`;
+        const info = await this.transporter.sendMail({
+            from: '"Kindlink Security" <security@kindlink.com>',
+            to: oldEmail,
+            subject: 'Security Alert: Email Change Requested',
+            html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <h2 style="color: #E56C6C;">Security Alert</h2>
+          <p>We received a request to change the email address associated with your Kindlink account to <strong>${newEmail}</strong>.</p>
+          <p>If you made this request, you do not need to do anything with this email. Please check your new email for the verification code to complete the process.</p>
+          <div style="background: #FFF5F5; border-left: 4px solid #E56C6C; padding: 15px; margin: 20px 0; color: #C53030;">
+            <p style="font-weight: bold; margin-top: 0;">Did you not request this change?</p>
+            <p>If you did not request this email change, please secure your account immediately and cancel this request.</p>
+            <a href="${revertUrl}" style="display: inline-block; background-color: #E56C6C; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px; font-weight: bold;">Không phải tôi, dừng thay đổi</a>
+          </div>
+          <hr />
+          <p style="font-size: 12px; color: #888;">Kindlink Security Team</p>
+        </div>
+      `,
+        });
+
+        if (this.configService.get('NODE_ENV') !== 'production') {
+            console.log('Security Alert Email Sent: ', nodemailer.getTestMessageUrl(info));
+        }
+    }
 }
