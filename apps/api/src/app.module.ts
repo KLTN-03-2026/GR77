@@ -12,8 +12,10 @@ import { ParticipantsModule } from './modules/participants/participants.module';
 import { UsersModule } from './modules/users/users.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { KycModule } from './modules/kyc/kyc.module';
+import { DonationsModule } from './modules/donations/donations.module';
+import { WalletModule } from './modules/wallet/wallet.module';
 
-@Module({
+  @Module({
   imports: [
     // Environment configuration (global)
     ConfigModule.forRoot({
@@ -31,6 +33,8 @@ import { KycModule } from './modules/kyc/kyc.module';
     UsersModule,
     NotificationsModule,
     KycModule,          // KYC verification endpoints
+    DonationsModule,
+    WalletModule,
   ],
   controllers: [AppController],
   providers: [AppService],

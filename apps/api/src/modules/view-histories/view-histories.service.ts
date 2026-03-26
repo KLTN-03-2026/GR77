@@ -61,6 +61,17 @@ export class ViewHistoriesService {
       }),
     ]);
 
+    // Check which campaigns the user has favorited
+    const campaignIds = rows.map((r) => r.campaign.id);
+    const userFavorites = await (this.prisma as any).favorite.findMany({
+      where: {
+        userId,
+        campaignId: { in: campaignIds },
+      },
+      select: { campaignId: true },
+    });
+    const favoritedIds = new Set(userFavorites.map((f: any) => f.campaignId));
+
     return {
       meta: {
         page,
@@ -74,6 +85,7 @@ export class ViewHistoriesService {
           ...campaign,
           lastViewedAt: r.viewedAt,
           favoritesCount: _count.favorites,
+          isFavorited: favoritedIds.has(campaign.id),
         };
       }),
     };

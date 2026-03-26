@@ -40,9 +40,9 @@ export class CampaignsService {
       ];
     }
 
-    const [total, items] = await (this.prisma as any).$transaction([
-      (this.prisma as any).campaign.count({ where }),
-      (this.prisma as any).campaign.findMany({
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.campaign.count({ where }),
+      this.prisma.campaign.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip,
@@ -58,8 +58,8 @@ export class CampaignsService {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
       items: items.map((c: any) => ({
         ...c,
-        amountRaised: Number(c.current_raised_amount || 0),
-        progress: c.fundingGoalAmount > 0 ? (Number(c.current_raised_amount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
+        amountRaised: Number(c.currentRaisedAmount || 0),
+        progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
         donationsCount: c._count.donations,
         favoritesCount: c._count.favorites,
         _count: undefined,
@@ -68,7 +68,7 @@ export class CampaignsService {
   }
 
   async approve(id: string, adminId: string) {
-    const campaign = await (this.prisma as any).campaign.update({
+    const campaign = await this.prisma.campaign.update({
       where: { id },
       data: {
         status: 'ACTIVE',
@@ -97,7 +97,7 @@ export class CampaignsService {
   }
 
   async reject(id: string, adminId: string, note: string) {
-    const campaign = await (this.prisma as any).campaign.update({
+    const campaign = await this.prisma.campaign.update({
       where: { id },
       data: {
         status: 'REJECTED',
@@ -126,7 +126,7 @@ export class CampaignsService {
     return campaign;
   }
 
-  async list(query: GetCampaignsQueryDto) {
+  async list(query: GetCampaignsQueryDto, userId?: string | null) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
@@ -150,9 +150,9 @@ export class CampaignsService {
       ];
     }
 
-    const [total, items] = await (this.prisma as any).$transaction([
-      (this.prisma as any).campaign.count({ where }),
-      (this.prisma as any).campaign.findMany({
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.campaign.count({ where }),
+      this.prisma.campaign.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip,
@@ -166,17 +166,32 @@ export class CampaignsService {
           coverImageUrl: true,
           fundingGoalAmount: true,
           minimumDonationAmount: true,
-          current_raised_amount: true,
+          currentRaisedAmount: true,
           startAt: true,
           endAt: true,
           autoCloseWhenGoalReached: true,
           status: true,
+          donationCount: true,
           createdAt: true,
           updatedAt: true,
           _count: { select: { favorites: true } },
         },
       }),
     ]);
+
+    // Build a set of campaign IDs the user has favorited
+    let favoritedIds = new Set<string>();
+    if (userId) {
+      const campaignIds = items.map((c: any) => c.id);
+      const userFavorites = await (this.prisma as any).favorite.findMany({
+        where: {
+          userId,
+          campaignId: { in: campaignIds },
+        },
+        select: { campaignId: true },
+      });
+      favoritedIds = new Set(userFavorites.map((f: any) => f.campaignId));
+    }
 
     return {
       meta: {
@@ -187,16 +202,17 @@ export class CampaignsService {
       },
       items: items.map((c: any) => ({
         ...c,
-        amountRaised: Number(c.current_raised_amount || 0),
-        progress: c.fundingGoalAmount > 0 ? (Number(c.current_raised_amount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
+        amountRaised: Number(c.currentRaisedAmount || 0),
+        progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
         favoritesCount: c._count.favorites,
+        isFavorited: favoritedIds.has(c.id),
         _count: undefined,
       })),
     };
   }
 
   async listMine(userId: string) {
-    const items = await (this.prisma as any).campaign.findMany({
+    const items = await this.prisma.campaign.findMany({
       where: { creatorUserId: userId },
       orderBy: { createdAt: 'desc' },
       select: {
@@ -207,11 +223,12 @@ export class CampaignsService {
         coverImageUrl: true,
         fundingGoalAmount: true,
         minimumDonationAmount: true,
-        current_raised_amount: true,
+        currentRaisedAmount: true,
         startAt: true,
         endAt: true,
         autoCloseWhenGoalReached: true,
         status: true,
+        donationCount: true,
         createdAt: true,
         updatedAt: true,
         _count: { select: { favorites: true } },
@@ -220,15 +237,15 @@ export class CampaignsService {
 
     return items.map((c: any) => ({
       ...c,
-      amountRaised: Number(c.current_raised_amount || 0),
-      progress: c.fundingGoalAmount > 0 ? (Number(c.current_raised_amount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
+      amountRaised: Number(c.currentRaisedAmount || 0),
+      progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
       favoritesCount: c._count.favorites,
       _count: undefined,
     }));
   }
 
   async detail(id: string) {
-    const campaign = await (this.prisma as any).campaign.findUnique({
+    const campaign = await this.prisma.campaign.findUnique({
       where: { id },
       include: {
         creatorUser: { select: { id: true, username: true, email: true } },
@@ -240,8 +257,8 @@ export class CampaignsService {
 
     return {
       ...campaign,
-      amountRaised: Number(campaign.current_raised_amount || 0),
-      progress: campaign.fundingGoalAmount > 0 ? (Number(campaign.current_raised_amount || 0) / Number(campaign.fundingGoalAmount)) * 100 : 0,
+      amountRaised: Number(campaign.currentRaisedAmount || 0),
+      progress: Number(campaign.fundingGoalAmount) > 0 ? (Number(campaign.currentRaisedAmount || 0) / Number(campaign.fundingGoalAmount)) * 100 : 0,
       favoritesCount: campaign._count.favorites,
       donationsCount: campaign._count.donations,
       _count: undefined,

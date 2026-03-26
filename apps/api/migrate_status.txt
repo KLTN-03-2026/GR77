@@ -1,0 +1,11 @@
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "kindlink", schema "public" at "localhost:5433"
+
+10 migrations found in prisma/migrations
+Following migration have not yet been applied:
+20260318133546_add_campaign_view_histories
+
+To apply migrations in development run prisma migrate dev.
+To apply migrations in production run prisma migrate deploy.

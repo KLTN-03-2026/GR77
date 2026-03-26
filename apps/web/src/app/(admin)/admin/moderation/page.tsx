@@ -1,7 +1,7 @@
 export default function AdminModerationPage() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-800">Content Moderation</h1>
+      <h1 className="text-2xl font-bold text-gray-800">Kiểm duyệt nội dung</h1>
     </div>
   );
 }

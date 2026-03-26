@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import "@/styles/animations.css";
 import Image from "next/image";
 import { Island_Moments } from "next/font/google";
 import Footer from "@/components/layout/Footer";
 import Logo from "@/components/common/logo";
+import { useAuth } from "@/features/Top/hooks/useAuth";
+import RegisterForm from "@/features/Top/components/RegisterForm";
+import OTPInput from "@/features/Top/components/OTPInput";
 
 const islandMoments = Island_Moments({
   weight: "400",
@@ -14,184 +16,14 @@ const islandMoments = Island_Moments({
 });
 
 export default function Home() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  const [timeLeft, setTimeLeft] = useState(300);
-  const [cooldown, setCooldown] = useState(0);
-  const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const [otpValues, setOtpValues] = useState<string[]>(["", "", "", "", "", ""]);
-  const [verifyError, setVerifyError] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verifySuccess, setVerifySuccess] = useState(false);
-  
-  const otpRef0 = useRef<HTMLInputElement>(null);
-  const otpRef1 = useRef<HTMLInputElement>(null);
-  const otpRef2 = useRef<HTMLInputElement>(null);
-  const otpRef3 = useRef<HTMLInputElement>(null);
-  const otpRef4 = useRef<HTMLInputElement>(null);
-  const otpRef5 = useRef<HTMLInputElement>(null);
-  const otpRefs = [otpRef0, otpRef1, otpRef2, otpRef3, otpRef4, otpRef5];
-
-  useEffect(() => {
-    let interval: any;
-    if (success && !verifySuccess && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [success, verifySuccess, timeLeft]);
-
-  useEffect(() => {
-    let interval: any;
-    if (cooldown > 0) {
-      interval = setInterval(() => {
-        setCooldown((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [cooldown]);
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otpValues];
-    newOtp[index] = value.slice(-1);
-    setOtpValues(newOtp);
-    setVerifyError("");
-
-    if (value && index < 5) {
-      setTimeout(() => otpRefs[index + 1].current?.focus(), 0);
-    }
-
-    const fullCode = newOtp.join("");
-    if (fullCode.length === 6) {
-      handleVerifyOtp(fullCode);
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
-      otpRefs[index - 1].current?.focus();
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pastedData.length === 0) return;
-    const newOtp = [...otpValues];
-    for (let i = 0; i < 6; i++) {
-        newOtp[i] = pastedData[i] || "";
-    }
-    setOtpValues(newOtp);
-    setVerifyError("");
-    const focusIndex = Math.min(pastedData.length, 5);
-    otpRefs[focusIndex].current?.focus();
-    if (pastedData.length === 6) {
-        handleVerifyOtp(pastedData);
-    }
-  };
-
-  const handleVerifyOtp = async (code: string) => {
-    setIsVerifying(true);
-    setVerifyError("");
-    try {
-      const res = await fetch("http://localhost:3001/auth/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
-      });
-      if (!res.ok) {
-        let errorMsg = "Invalid or expired verification code.";
-        try {
-          const data = await res.json();
-          errorMsg = data.message || errorMsg;
-        } catch (e) { }
-        throw new Error(errorMsg);
-      }
-      setVerifySuccess(true);
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
-    } catch (err: any) {
-      setVerifyError(err.message || "Verification failed. Please try again.");
-      setOtpValues(["", "", "", "", "", ""]);
-      otpRefs[0].current?.focus();
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleResendEmail = async () => {
-    if (attemptsUsed >= 4) {
-      alert("Maximum resend attempts reached.");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const res = await fetch("http://localhost:3001/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setCooldown(60);
-        setTimeLeft(300);
-        setAttemptsUsed(prev => prev + 1);
-        alert("A new verification code has been sent!");
-      } else {
-        alert(data.message || "Failed to resend email.");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch("http://localhost:3001/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
-        let errorMsg = "Registration failed.";
-        try {
-          const data = await res.json();
-          errorMsg = data.message || errorMsg;
-        } catch (e) { }
-        throw new Error(errorMsg);
-      }
-
-      setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    email, setEmail,
+    password, setPassword,
+    confirmPassword, setConfirmPassword,
+    isLoading, isLoadingResend, error, success,
+    handleRegister, handleResendEmail,
+    cooldown, attemptsUsed
+  } = useAuth();
 
   const partnerLogos = [
     { src: "/images/or1.jpg", name: "Partner 1" },
@@ -233,55 +65,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col w-full overflow-x-hidden bg-white">
-      <style jsx global>{`
-        @keyframes scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes scroll-reverse {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
-        }
-        @keyframes glow-pulse {
-          0%, 100% { border-color: rgba(34, 211, 238, 0.5); box-shadow: 0 0 20px rgba(34, 211, 238, 0.3); }
-          50% { border-color: rgba(34, 211, 238, 1); box-shadow: 0 0 40px rgba(34, 211, 238, 0.6); }
-        }
-        @keyframes star-rotate {
-          from { transform: rotate(0deg) scale(1.2); }
-          to { transform: rotate(360deg) scale(1.5); }
-        }
-        .animate-scroll {
-          animation: scroll 30s linear infinite;
-        }
-        .animate-scroll-reverse {
-          animation: scroll-reverse 40s linear infinite;
-        }
-        .animate-glow {
-          animation: glow-pulse 3s ease-in-out infinite;
-        }
-        .group:hover .animate-star {
-          animation: star-rotate 1.5s linear infinite;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-          20%, 40%, 60%, 80% { transform: translateX(4px); }
-        }
-        .shake { animation: shake 0.5s ease-in-out; }
-        .otp-input { transition: all 0.2s ease; }
-        .otp-input:focus {
-          border-color: #fff;
-          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
-          transform: scale(1.08);
-        }
-      `}</style>
       {/* 1. Hero Section - Full width banner (no left spacing), rounded-bl corner */}
       <section className="relative w-full h-[450px] lg:h-[550px] flex items-center overflow-hidden bg-white">
         {/* Background Image Container - Removed border-l to eliminate left spacing */}
@@ -453,172 +236,25 @@ export default function Home() {
 
             <div className="relative z-10 w-full p-8 lg:p-16 lg:pl-24 text-white">
               {success ? (
-                <div className="space-y-8 max-w-2xl mx-auto flex flex-col items-center">
-                  {verifySuccess ? (
-                    <div className="text-center">
-                      <div className="flex justify-center mb-6">
-                        <div className="w-20 h-20 bg-green-400 rounded-full flex items-center justify-center shadow-lg">
-                          <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      </div>
-                      <h2 className="text-3xl font-extrabold text-white mb-3">Verification Successful!</h2>
-                      <p className="text-white/90 text-lg mb-4">Your account has been verified.</p>
-                      <p className="text-white/70 text-sm">Redirecting to login page...</p>
-                    </div>
-                  ) : (
-                    <div className="text-center w-full">
-                      <div className="flex justify-center mb-6">
-                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg transform hover:rotate-12 transition-transform">
-                          <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <h2 className="text-3xl font-extrabold text-white mb-2">Enter Verification Code</h2>
-                      <div className="flex justify-center mb-4">
-                        <div className="bg-white/10 px-4 py-2 rounded-full border border-white/20 text-white font-mono text-xl">
-                          {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-                        </div>
-                      </div>
-                      <p className="text-white/90 text-base mb-8 leading-relaxed">
-                        We've sent a 6-digit verification code to <span className="font-bold underline text-white">{email}</span>.
-                      </p>
-
-                      <div className={`flex justify-center gap-2 lg:gap-3 mb-6 ${verifyError ? "shake" : ""}`}>
-                        {otpValues.map((digit, index) => (
-                          <input
-                            key={index}
-                            ref={otpRefs[index]}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => handleOtpChange(index, e.target.value)}
-                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                            onPaste={index === 0 ? handleOtpPaste : undefined}
-                            disabled={isVerifying}
-                            className="otp-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold bg-white/20 border-2 border-white/30 rounded-xl text-white outline-none backdrop-blur-sm placeholder-white/30 disabled:opacity-50"
-                            placeholder="·"
-                          />
-                        ))}
-                      </div>
-
-                      {verifyError && (
-                        <div className="mb-4 p-3 bg-red-500/20 border border-red-400/40 rounded-xl text-white text-sm w-full max-w-md mx-auto">
-                          {verifyError}
-                        </div>
-                      )}
-
-                      {isVerifying && (
-                        <div className="mb-4 flex items-center justify-center gap-2 text-white/90">
-                          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                          <span className="text-sm font-medium">Verifying...</span>
-                        </div>
-                      )}
-
-                      <div className="space-y-3 mt-6 max-w-md mx-auto">
-                        <button
-                          onClick={handleResendEmail}
-                          disabled={isLoading || cooldown > 0 || attemptsUsed >= 4}
-                          className="block w-full py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-full border border-white/30 transition-all disabled:opacity-50"
-                        >
-                          {isLoading ? "Sending..." : cooldown > 0 ? `Resend in ${cooldown}s` : "Didn't receive code? Resend"}
-                        </button>
-                        {attemptsUsed > 0 && (
-                          <p className="text-white/60 text-xs mt-2">
-                            Remaining attempts: {4 - attemptsUsed}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <OTPInput 
+                  email={email}
+                  onResend={handleResendEmail}
+                  isLoadingResend={isLoadingResend}
+                  cooldown={cooldown}
+                  attemptsUsed={attemptsUsed}
+                />
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl">
-                  {error && (
-                    <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-white text-sm">
-                      {error}
-                    </div>
-                  )}
-
-                  {/* Row 2: Email */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center">
-                    <div className="lg:col-span-3">
-                      <label className="text-xl font-bold">Email</label>
-                    </div>
-                    <div className="lg:col-span-9">
-                      <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Row 3: Password */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center">
-                    <div className="lg:col-span-3">
-                      <label className="text-xl font-bold">Password</label>
-                    </div>
-                    <div className="lg:col-span-9">
-                      <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Row 4: Confirm Password */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center">
-                    <div className="lg:col-span-3">
-                      <label className="text-xl font-bold leading-tight">Confirm Password</label>
-                    </div>
-                    <div className="lg:col-span-9">
-                      <input
-                        type="password"
-                        placeholder="Confirm Password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        className="w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Row 5: Checkbox & Button - Centered */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 pt-4">
-                    <div className="lg:col-start-4 lg:col-span-9 space-y-8 flex flex-col items-center">
-                      <div className="flex items-center gap-3">
-                        <input type="checkbox" id="terms-check" className="w-6 h-6 accent-green-500 rounded border-none cursor-pointer" defaultChecked />
-                        <label htmlFor="terms-check" className="text-xs lg:text-sm cursor-pointer opacity-95">
-                          I agree to the Terms of Service and Privacy Policy. <a href="/login" className="underline ml-2 hover:text-white/80 transition-colors">Login</a>
-                        </label>
-                      </div>
-
-                      <div className="flex justify-center w-full">
-                        <button
-                          type="submit"
-                          disabled={isLoading}
-                          className="px-24 py-4 bg-white text-blue-900 font-bold text-xl rounded-full shadow-2xl hover:bg-gray-100 hover:scale-105 transition-all border border-gray-100 italic active:scale-95 disabled:opacity-50"
-                        >
-                          {isLoading ? "Signing up..." : "Sign up"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </form>
+                <RegisterForm 
+                  email={email}
+                  setEmail={setEmail}
+                  password={password}
+                  setPassword={setPassword}
+                  confirmPassword={confirmPassword}
+                  setConfirmPassword={setConfirmPassword}
+                  isLoading={isLoading}
+                  error={error}
+                  onSubmit={handleRegister}
+                />
               )}
             </div>
           </div>
