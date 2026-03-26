@@ -49,6 +49,7 @@ export class CampaignsService {
         take: limit,
         include: {
           creatorUser: { select: { id: true, username: true, email: true } },
+          categoryRel: true,
           _count: { select: { donations: true, favorites: true } }
         }
       })
@@ -175,6 +176,7 @@ export class CampaignsService {
           createdAt: true,
           updatedAt: true,
           _count: { select: { favorites: true } },
+          categoryRel: true,
         },
       }),
     ]);
@@ -249,6 +251,7 @@ export class CampaignsService {
       where: { id },
       include: {
         creatorUser: { select: { id: true, username: true, email: true } },
+        categoryRel: true,
         _count: { select: { favorites: true, donations: true } }
       }
     });

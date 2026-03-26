@@ -93,7 +93,7 @@ export default function CampaignDetailPage({
         fetch(`http://localhost:3001/view-histories/${id}`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
-        }).catch(() => {});
+        }).catch(() => { });
     }, [campaign, id]);
 
     /* ── Image carousel ── */
@@ -364,6 +364,16 @@ export default function CampaignDetailPage({
                             <div className="flex items-center gap-6 relative text-lg">
                                 <div className="w-6 h-6 bg-black rounded-full z-10 shrink-0"></div>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                                    <span className="font-bold text-gray-900">Category :</span>
+                                    <span className="font-bold px-4 py-1 rounded-full text-sm bg-gray-50 text-gray-900 border border-gray-100">
+                                        {campaign.categoryRel?.name || campaign.category}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-6 relative text-lg">
+                                <div className="w-6 h-6 bg-black rounded-full z-10 shrink-0"></div>
+                                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                                     <span className="font-bold text-gray-900">Status :</span>
                                     <span className={`font-bold px-4 py-1 rounded-full text-sm ${campaign.status === "ACTIVE" ? "bg-green-50 text-green-600" : "bg-yellow-50 text-yellow-500"}`}>
                                         {campaign.status}
@@ -398,7 +408,7 @@ export default function CampaignDetailPage({
                                 <div className="relative w-56 h-56 shrink-0">
                                     <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                                         <path className="text-gray-100" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" />
-                                        <path className="text-blue-500" strokeDasharray={`${raisedPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+                                        <path className="text-black" strokeDasharray={`${raisedPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                                         <span className="text-4xl font-black text-gray-900">{raisedPercent}%</span>
@@ -413,7 +423,7 @@ export default function CampaignDetailPage({
                                     </div>
                                     <div className="flex justify-between p-4 bg-gray-50 rounded-2xl items-center">
                                         <span className="font-bold text-gray-500">Total Raised:</span>
-                                        <span className="font-black text-blue-600 text-xl">{formatCurrency(totalRaised)} VNĐ</span>
+                                        <span className="font-black text-black text-xl">{formatCurrency(totalRaised)} VNĐ</span>
                                     </div>
                                     <div className="flex gap-4">
                                         <button

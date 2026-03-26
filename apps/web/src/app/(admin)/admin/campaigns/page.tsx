@@ -42,6 +42,7 @@ interface Campaign {
 
 export default function AdminCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -51,15 +52,27 @@ export default function AdminCampaignsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchCampaigns = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:3001/campaigns/admin/all', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}` }
-      });
-      if (!res.ok) throw new Error('Failed to fetch campaigns');
-      const data = await res.json();
-      setCampaigns(data.items);
+      const token = localStorage.getItem('adminAccessToken');
+
+      // Fetch Campaigns and Categories in parallel
+      const [campaignsRes, categoriesRes] = await Promise.all([
+        fetch('http://localhost:3001/campaigns/admin/all', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('http://localhost:3001/categories')
+      ]);
+
+      if (!campaignsRes.ok) throw new Error('Failed to fetch campaigns');
+      const campaignsData = await campaignsRes.json();
+      setCampaigns(campaignsData.items);
+
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json();
+        setCategories(categoriesData);
+      }
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -67,7 +80,7 @@ export default function AdminCampaignsPage() {
     }
   };
 
-  useEffect(() => { fetchCampaigns(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleApprove = async (id: string) => {
     if (!confirm('Bạn có chắc chắn muốn DUYỆT chiến dịch này không? Nó sẽ được hiển thị công khai ngay lập tức.')) return;
@@ -78,7 +91,7 @@ export default function AdminCampaignsPage() {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}` }
       });
       if (!res.ok) throw new Error('Failed to approve');
-      await fetchCampaigns();
+      await fetchData();
       setIsDetailOpen(false);
     } catch (err: any) { alert(err.message); } finally { setIsSubmitting(false); }
   };
@@ -97,16 +110,22 @@ export default function AdminCampaignsPage() {
         body: JSON.stringify({ note: reason })
       });
       if (!res.ok) throw new Error('Failed to reject');
-      await fetchCampaigns();
+      await fetchData();
       setIsDetailOpen(false);
     } catch (err: any) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(campaign => {
-      const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || campaign.category === selectedCategory;
+      const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        campaign.creatorUser?.username?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesCategory = selectedCategory === 'All' ||
+        campaign.category === selectedCategory ||
+        (campaign as any).categoryRel?.name === selectedCategory;
+
       const matchesStatus = selectedStatus === 'All' || campaign.status === selectedStatus;
+
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [campaigns, searchTerm, selectedCategory, selectedStatus]);
@@ -163,11 +182,19 @@ export default function AdminCampaignsPage() {
             </div>
 
             <div className="relative">
-              <select className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+              <select
+                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none min-w-[150px]"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
                 <option value="All">Lĩnh vực: Tất cả</option>
-                <option value="Charity">Từ thiện</option><option value="Health">Y tế</option><option value="Education">Giáo dục</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
               </select>
-              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-400"><ChevronDownIcon className="h-4 w-4" /></div>
+              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-400">
+                <ChevronDownIcon className="h-4 w-4" />
+              </div>
             </div>
 
             <div className="relative">
@@ -187,7 +214,8 @@ export default function AdminCampaignsPage() {
           <table className="w-full text-sm text-left border-collapse">
             <thead>
               <tr className="bg-white border-b border-gray-300">
-                <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Chiến dịch</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Chiến dịch</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Lĩnh vực</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Người tạo</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Trạng thái</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Mục tiêu</th>
@@ -197,10 +225,15 @@ export default function AdminCampaignsPage() {
             </thead>
             <tbody className="divide-y divide-gray-300">
               {loading ? (
-                <tr><td colSpan={6} className="py-20 text-center text-gray-400 italic font-medium">Đang đồng bộ dữ liệu chiến dịch...</td></tr>
+                <tr><td colSpan={7} className="py-20 text-center text-gray-400 italic font-medium">Đang đồng bộ dữ liệu chiến dịch...</td></tr>
               ) : filteredCampaigns.map((campaign) => (
                 <tr key={campaign.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors group">
                   <td className="px-5 py-3 border-r border-gray-300"><span className="font-black text-gray-800 leading-snug">{campaign.title}</span></td>
+                  <td className="px-4 py-3 border-r border-gray-300">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-black uppercase">
+                      {(campaign as any).categoryRel?.name || campaign.category || 'N/A'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-gray-500 border-r border-gray-300 font-bold text-[11px] uppercase truncate max-w-[150px]">{campaign.creatorUser?.username || 'Unknown'}</td>
                   <td className="px-4 py-3 border-r border-gray-300">
                     <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight ${campaign.status === 'ACTIVE' ? 'bg-[#7BC712] text-black' :

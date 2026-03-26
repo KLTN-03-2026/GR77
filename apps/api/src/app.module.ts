@@ -13,6 +13,7 @@ import { UsersModule } from './modules/users/users.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { DonationsModule } from './modules/donations/donations.module';
 import { WalletModule } from './modules/wallet/wallet.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
   imports: [
@@ -25,7 +26,9 @@ import { WalletModule } from './modules/wallet/wallet.module';
     // Features
     AuthModule,         // Auth endpoints
     CampaignsModule,    // Campaigns endpoints (public)
+    CategoriesModule,   // Categories endpoints
     FavoritesModule,    // Favorites endpoints (JWT protected)
+
     ViewHistoriesModule, // View history endpoints (JWT protected)
     UploadModule,
     ParticipantsModule,

@@ -58,7 +58,12 @@ function AdminLoginForm() {
             });
 
             if (!res.ok) {
-                let errorMsg = translate("login.err_invalid");
+                // Ưu tiên dùng thông báo đã dịch cho lỗi login không thành công (401)
+                if (res.status === 401) {
+                    throw new Error(translate("login.err_invalid"));
+                }
+
+                let errorMsg = translate("login.err_general");
                 try {
                     const data = await res.json();
                     errorMsg = data.message || errorMsg;
