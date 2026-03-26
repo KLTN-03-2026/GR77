@@ -313,7 +313,6 @@ enum ParticipationStatus {
   LEFT
 }
 
-<<<<<<< HEAD
 enum KycStatus {
   NOT_STARTED
   PENDING_SUBMISSION
@@ -321,7 +320,8 @@ enum KycStatus {
   APPROVED
   REJECTED
   MANUAL_REVIEW
-=======
+}
+
 enum PaymentMethod {
   MOMO
   VNPAY
@@ -329,7 +329,6 @@ enum PaymentMethod {
   WALLET
   CRYPTO
   PAYOS
->>>>>>> 61c90b4c27ef581544090ecc4626c89920e12bc3
 }
 
 enum DonationStatus {
