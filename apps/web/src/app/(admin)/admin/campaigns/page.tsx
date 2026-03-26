@@ -42,6 +42,7 @@ interface Campaign {
 
 export default function AdminCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -51,15 +52,27 @@ export default function AdminCampaignsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchCampaigns = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:3001/campaigns/admin/all', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}` }
-      });
-      if (!res.ok) throw new Error('Failed to fetch campaigns');
-      const data = await res.json();
-      setCampaigns(data.items);
+      const token = localStorage.getItem('adminAccessToken');
+
+      // Fetch Campaigns and Categories in parallel
+      const [campaignsRes, categoriesRes] = await Promise.all([
+        fetch('http://localhost:3001/campaigns/admin/all', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('http://localhost:3001/categories')
+      ]);
+
+      if (!campaignsRes.ok) throw new Error('Failed to fetch campaigns');
+      const campaignsData = await campaignsRes.json();
+      setCampaigns(campaignsData.items);
+
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json();
+        setCategories(categoriesData);
+      }
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -67,10 +80,10 @@ export default function AdminCampaignsPage() {
     }
   };
 
-  useEffect(() => { fetchCampaigns(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleApprove = async (id: string) => {
-    if (!confirm('Are you sure you want to APPROVE this campaign? It will go live immediately.')) return;
+    if (!confirm('Bạn có chắc chắn muốn DUYỆT chiến dịch này không? Nó sẽ được hiển thị công khai ngay lập tức.')) return;
     setIsSubmitting(true);
     try {
       const res = await fetch(`http://localhost:3001/campaigns/${id}/approve`, {
@@ -78,13 +91,13 @@ export default function AdminCampaignsPage() {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}` }
       });
       if (!res.ok) throw new Error('Failed to approve');
-      await fetchCampaigns();
+      await fetchData();
       setIsDetailOpen(false);
     } catch (err: any) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
   const handleReject = async (id: string) => {
-    const reason = prompt('Please enter the reason for rejection (this will be sent to the user):');
+    const reason = prompt('Vui lòng nhập lý do từ chối (lý do này sẽ được gửi đến người dùng):');
     if (!reason) return;
     setIsSubmitting(true);
     try {
@@ -97,16 +110,22 @@ export default function AdminCampaignsPage() {
         body: JSON.stringify({ note: reason })
       });
       if (!res.ok) throw new Error('Failed to reject');
-      await fetchCampaigns();
+      await fetchData();
       setIsDetailOpen(false);
     } catch (err: any) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(campaign => {
-      const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || campaign.category === selectedCategory;
+      const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        campaign.creatorUser?.username?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesCategory = selectedCategory === 'All' ||
+        campaign.category === selectedCategory ||
+        (campaign as any).categoryRel?.name === selectedCategory;
+
       const matchesStatus = selectedStatus === 'All' || campaign.status === selectedStatus;
+
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [campaigns, searchTerm, selectedCategory, selectedStatus]);
@@ -128,7 +147,7 @@ export default function AdminCampaignsPage() {
             <MegaphoneIcon className="h-9 w-9 text-black" />
           </div>
           <div className="text-black">
-            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Catalog of Impact</p>
+            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Tổng số chiến dịch</p>
             <h2 className="text-4xl font-black mt-1 tabular-nums">{stats.total}</h2>
           </div>
         </div>
@@ -138,7 +157,7 @@ export default function AdminCampaignsPage() {
             <WalletIcon className="h-9 w-9 text-black" />
           </div>
           <div className="text-black">
-            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Aggregated Contributions</p>
+            <p className="text-lg font-bold tracking-wide uppercase opacity-100">Tổng tiền quyên góp</p>
             <h2 className="text-4xl font-black mt-1 tabular-nums">${stats.totalRaised.toLocaleString()}</h2>
           </div>
         </div>
@@ -156,26 +175,34 @@ export default function AdminCampaignsPage() {
               <input
                 type="text"
                 className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg w-64 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-600 font-medium placeholder:text-gray-400"
-                placeholder="Search Intel..."
+                placeholder="Tìm kiếm..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
             <div className="relative">
-              <select className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
-                <option value="All">Sector: All</option>
-                <option value="Charity">Charity</option><option value="Health">Health</option><option value="Education">Education</option>
+              <select
+                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none min-w-[150px]"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <option value="All">Lĩnh vực: Tất cả</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
               </select>
-              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-400"><ChevronDownIcon className="h-4 w-4" /></div>
+              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-400">
+                <ChevronDownIcon className="h-4 w-4" />
+              </div>
             </div>
 
             <div className="relative">
               <select className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
-                <option value="All">Operational Code: All</option>
-                <option value="PENDING">Pending Review</option>
-                <option value="ACTIVE">Live/Active</option>
-                <option value="REJECTED">Flagged/Rejected</option>
+                <option value="All">Trạng thái: Tất cả</option>
+                <option value="PENDING">Chờ duyệt</option>
+                <option value="ACTIVE">Đang hoạt động</option>
+                <option value="REJECTED">Bị từ chối</option>
               </select>
               <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-400"><ChevronDownIcon className="h-4 w-4" /></div>
             </div>
@@ -187,25 +214,31 @@ export default function AdminCampaignsPage() {
           <table className="w-full text-sm text-left border-collapse">
             <thead>
               <tr className="bg-white border-b border-gray-300">
-                <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Tactical Objective</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Creator</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Status</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Target</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Progress</th>
-                <th className="px-4 py-3 font-bold text-black text-center">Protocol</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Chiến dịch</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Lĩnh vực</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Người tạo</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Trạng thái</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Mục tiêu</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Tiến độ</th>
+                <th className="px-4 py-3 font-bold text-black text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-300">
               {loading ? (
-                <tr><td colSpan={6} className="py-20 text-center text-gray-400 italic font-medium">Syncing campaign database...</td></tr>
+                <tr><td colSpan={7} className="py-20 text-center text-gray-400 italic font-medium">Đang đồng bộ dữ liệu chiến dịch...</td></tr>
               ) : filteredCampaigns.map((campaign) => (
                 <tr key={campaign.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors group">
                   <td className="px-5 py-3 border-r border-gray-300"><span className="font-black text-gray-800 leading-snug">{campaign.title}</span></td>
+                  <td className="px-4 py-3 border-r border-gray-300">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-black uppercase">
+                      {(campaign as any).categoryRel?.name || campaign.category || 'N/A'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-gray-500 border-r border-gray-300 font-bold text-[11px] uppercase truncate max-w-[150px]">{campaign.creatorUser?.username || 'Unknown'}</td>
                   <td className="px-4 py-3 border-r border-gray-300">
                     <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight ${campaign.status === 'ACTIVE' ? 'bg-[#7BC712] text-black' :
-                        campaign.status === 'PENDING' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                          'bg-red-50 text-red-600 border border-red-100'
+                      campaign.status === 'PENDING' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
+                        'bg-red-50 text-red-600 border border-red-100'
                       }`}>{campaign.status}</span>
                   </td>
                   <td className="px-4 py-3 text-gray-800 border-r border-gray-300 font-bold tabular-nums">${campaign.fundingGoalAmount.toLocaleString()}</td>
@@ -251,44 +284,44 @@ export default function AdminCampaignsPage() {
               <div className="grid grid-cols-3 gap-8">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-gray-50 rounded-2xl"><UserCircleIcon className="w-6 h-6 text-[#7598C1]" /></div>
-                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Architect</p><p className="font-bold text-gray-900">{selectedCampaign.creatorUser?.username}</p></div>
+                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Người tạo</p><p className="font-bold text-gray-900">{selectedCampaign.creatorUser?.username}</p></div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-gray-50 rounded-2xl"><MapPinIcon className="w-6 h-6 text-[#7598C1]" /></div>
-                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deployment</p><p className="font-bold text-gray-900">{selectedCampaign.locationText}</p></div>
+                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Khu vực</p><p className="font-bold text-gray-900">{selectedCampaign.locationText}</p></div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-gray-50 rounded-2xl"><CalendarIcon className="w-6 h-6 text-[#7598C1]" /></div>
-                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Timeline</p><p className="font-bold text-gray-900">{new Date(selectedCampaign.endAt).toLocaleDateString()}</p></div>
+                  <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thời hạn</p><p className="font-bold text-gray-900">{new Date(selectedCampaign.endAt).toLocaleDateString()}</p></div>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 border-b pb-2">Mission Description</h3>
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 border-b pb-2">Mô tả chiến dịch</h3>
                 <p className="text-gray-600 font-medium leading-relaxed whitespace-pre-wrap">{selectedCampaign.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
-                  <div className="flex items-center gap-3 mb-6"><BanknotesIcon className="w-5 h-5 text-green-600" /><h4 className="font-black text-gray-900 uppercase text-xs tracking-widest">Financial Status</h4></div>
+                  <div className="flex items-center gap-3 mb-6"><BanknotesIcon className="w-5 h-5 text-green-600" /><h4 className="font-black text-gray-900 uppercase text-xs tracking-widest">Trạng thái tài chính</h4></div>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-end"><p className="text-4xl font-black text-gray-900">${selectedCampaign.amountRaised.toLocaleString()}</p><p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Raised of $${selectedCampaign.fundingGoalAmount.toLocaleString()}</p></div>
+                    <div className="flex justify-between items-end"><p className="text-4xl font-black text-gray-900">${selectedCampaign.amountRaised.toLocaleString()}</p><p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Đã quyên góp trên tổng số ${selectedCampaign.fundingGoalAmount.toLocaleString()}</p></div>
                     <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-green-500 rounded-full" style={{ width: `${selectedCampaign.progress}%` }} /></div>
                   </div>
                 </div>
                 <div className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
-                  <div className="flex items-center gap-3 mb-6"><ChartPieIcon className="w-5 h-5 text-blue-600" /><h4 className="font-black text-gray-900 uppercase text-xs tracking-widest">Engagement Base</h4></div>
+                  <div className="flex items-center gap-3 mb-6"><ChartPieIcon className="w-5 h-5 text-blue-600" /><h4 className="font-black text-gray-900 uppercase text-xs tracking-widest">Tương tác</h4></div>
                   <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="p-4 bg-white rounded-2xl shadow-sm"><p className="text-2xl font-black text-gray-900">{selectedCampaign.donationsCount}</p><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Donors</p></div>
-                    <div className="p-4 bg-white rounded-2xl shadow-sm"><p className="text-2xl font-black text-gray-900">{selectedCampaign.favoritesCount}</p><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Followers</p></div>
+                    <div className="p-4 bg-white rounded-2xl shadow-sm"><p className="text-2xl font-black text-gray-900">{selectedCampaign.donationsCount}</p><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Người quyên góp</p></div>
+                    <div className="p-4 bg-white rounded-2xl shadow-sm"><p className="text-2xl font-black text-gray-900">{selectedCampaign.favoritesCount}</p><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Người theo dõi</p></div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="p-8 bg-gray-50 border-t flex gap-6">
-              <button onClick={() => handleReject(selectedCampaign.id)} disabled={isSubmitting || selectedCampaign.status !== 'PENDING'} className="flex-1 py-5 bg-white border-2 border-red-500 text-red-500 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-50 transition-all disabled:opacity-30">Flag Revision</button>
-              <button onClick={() => handleApprove(selectedCampaign.id)} disabled={isSubmitting || selectedCampaign.status !== 'PENDING'} className="flex-1 py-5 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black shadow-xl shadow-blue-900/10 transition-all disabled:opacity-30">Authorize Access</button>
+              <button onClick={() => handleReject(selectedCampaign.id)} disabled={isSubmitting || selectedCampaign.status !== 'PENDING'} className="flex-1 py-5 bg-white border-2 border-red-500 text-red-500 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-50 transition-all disabled:opacity-30">Từ chối</button>
+              <button onClick={() => handleApprove(selectedCampaign.id)} disabled={isSubmitting || selectedCampaign.status !== 'PENDING'} className="flex-1 py-5 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black shadow-xl shadow-blue-900/10 transition-all disabled:opacity-30">Phê duyệt</button>
             </div>
           </div>
         </div>

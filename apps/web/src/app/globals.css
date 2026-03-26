@@ -22,7 +22,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 /*cái ni Híu ghi thêm vì ở mấy cái datetime picker ( có 1 cái datetime-local , 1 cái icon calendar)

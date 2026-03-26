@@ -3,8 +3,37 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { GlobeAltIcon } from "@heroicons/react/24/outline";
+import { AdminLanguageProvider, useAdminLanguage } from "@/contexts/AdminLanguageContext";
 
-export default function AdminLoginPage() {
+function LanguageToggle() {
+    const { language, setLanguage } = useAdminLanguage();
+    return (
+        <div className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50 flex items-center bg-slate-800/50 p-1 rounded-full backdrop-blur-md border border-white/10 shadow-lg">
+            <div className="pl-3 pr-2.5 text-slate-400">
+                <GlobeAltIcon className="w-5 h-5" />
+            </div>
+            <div className="flex gap-1">
+                <button
+                    type="button"
+                    onClick={() => setLanguage('en')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${language === 'en' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-300 hover:text-white hover:bg-white/10'}`}
+                >
+                    EN
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setLanguage('vi')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${language === 'vi' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-300 hover:text-white hover:bg-white/10'}`}
+                >
+                    VI
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function AdminLoginForm() {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
@@ -12,6 +41,7 @@ export default function AdminLoginPage() {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const { translate } = useAdminLanguage();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,7 +58,12 @@ export default function AdminLoginPage() {
             });
 
             if (!res.ok) {
-                let errorMsg = "Invalid email or password.";
+                // Ưu tiên dùng thông báo đã dịch cho lỗi login không thành công (401)
+                if (res.status === 401) {
+                    throw new Error(translate("login.err_invalid"));
+                }
+
+                let errorMsg = translate("login.err_general");
                 try {
                     const data = await res.json();
                     errorMsg = data.message || errorMsg;
@@ -51,8 +86,8 @@ export default function AdminLoginPage() {
                 // ignore decode error
             }
 
-            if (role !== "ADMIN") {
-                setError("Access denied. You do not have permissions for this portal.");
+            if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+                setError(translate("login.err_denied"));
                 setIsLoading(false);
                 return;
             }
@@ -70,7 +105,7 @@ export default function AdminLoginPage() {
 
             router.push("/admin/dashboard");
         } catch (err: any) {
-            setError(err.message || "An error occurred. Please try again.");
+            setError(err.message || translate("login.err_general"));
             setIsLoading(false);
         }
     };
@@ -147,6 +182,7 @@ export default function AdminLoginPage() {
       `}</style>
 
             <div className="login-page relative min-h-screen flex items-center justify-center overflow-hidden">
+                <LanguageToggle />
                 {/* ===== TRANQUIL DARK SLATE GRADIENT BACKGROUND ===== */}
                 <div
                     className="absolute inset-0 anim-gradient-bg"
@@ -178,13 +214,13 @@ export default function AdminLoginPage() {
                     {/* Badge */}
                     <div className="flex justify-center mb-4 anim-up-0">
                         <div className="px-5 py-1.5 rounded-full text-sm font-semibold tracking-wide border border-white/25 bg-white/10 backdrop-blur-sm text-slate-300">
-                            Kindlink Management
+                            {translate("login.badge")}
                         </div>
                     </div>
 
                     {/* Title */}
                     <h1 className="text-center text-3xl sm:text-4xl font-extrabold text-white mb-10 sm:mb-14 anim-up-1 tracking-tight">
-                        Admin Portal
+                        {translate("login.title")}
                     </h1>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
@@ -197,7 +233,7 @@ export default function AdminLoginPage() {
                         {/* Email */}
                         <div className="anim-up-2">
                             <label htmlFor="login-email" className="block text-sm font-semibold text-slate-300 mb-2">
-                                Admin Email
+                                {translate("login.email_label")}
                             </label>
                             <input
                                 id="login-email"
@@ -214,7 +250,7 @@ export default function AdminLoginPage() {
                         {/* Password */}
                         <div className="mb-4 anim-up-3">
                             <label htmlFor="login-password" className="block text-sm font-semibold text-slate-300 mb-2">
-                                Password
+                                {translate("login.password_label")}
                             </label>
                             <div className="relative">
                                 <input
@@ -231,7 +267,7 @@ export default function AdminLoginPage() {
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                                 >
                                     {showPassword ? (
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -270,10 +306,10 @@ export default function AdminLoginPage() {
                                         )}
                                     </div>
                                 </div>
-                                <span className="text-[13px] text-slate-300">Remember me</span>
+                                <span className="text-[13px] text-slate-300">{translate("login.remember_me")}</span>
                             </label>
                             <Link href="#" className="text-[13px] font-bold text-slate-300 hover:text-white transition-colors">
-                                Forgotten admin key?
+                                {translate("login.forgot_password")}
                             </Link>
                         </div>
 
@@ -290,10 +326,10 @@ export default function AdminLoginPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
-                                        Authenticating...
+                                        {translate("login.btn_authenticating")}
                                     </span>
                                 ) : (
-                                    "Enter Dashboard"
+                                    translate("login.btn_login")
                                 )}
                             </button>
                         </div>
@@ -301,5 +337,13 @@ export default function AdminLoginPage() {
                 </div>
             </div>
         </>
+    );
+}
+
+export default function AdminLoginPage() {
+    return (
+        <AdminLanguageProvider>
+            <AdminLoginForm />
+        </AdminLanguageProvider>
     );
 }

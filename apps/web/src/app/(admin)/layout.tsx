@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Sidebar, { type MenuItem } from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { AdminLanguageProvider, useAdminLanguage } from '@/contexts/AdminLanguageContext';
 import {
   ChartBarIcon,
   UsersIcon,
@@ -15,10 +16,16 @@ import {
   ShieldCheckIcon,
   FingerPrintIcon,
   Cog6ToothIcon,
+  UserGroupIcon,
+  TagIcon,
 } from '@heroicons/react/24/outline';
 
+
+// ── Types ──────────────────────────────────────────────────────────
+export type AdminRole = 'ADMIN' | 'SUPER_ADMIN';
+
 /** Decode JWT payload (client-side only, no signature verify) */
-function decodeJwt(token: string): { role?: string; exp?: number } | null {
+function decodeJwt(token: string): { role?: string; sub?: string; exp?: number } | null {
   try {
     const base64 = token.split('.')[1];
     if (!base64) return null;
@@ -28,23 +35,41 @@ function decodeJwt(token: string): { role?: string; exp?: number } | null {
   }
 }
 
-// Navigation Admin 
-const adminMenuItems: MenuItem[] = [
-  { name: 'Dashboard', href: '/admin/dashboard', icon: ChartBarIcon },
-  { name: 'User Management', href: '/admin/users', icon: UsersIcon },
-  { name: 'Campaigns', href: '/admin/campaigns', icon: FlagIcon },
-  { name: 'Transaction', href: '/admin/transactions', icon: ArrowsRightLeftIcon },
-  { name: 'Withdrawal', href: '/admin/withdrawals', icon: ArrowDownTrayIcon },
-  { name: 'Fee & Revenue', href: '/admin/revenue', icon: CurrencyDollarIcon },
-  { name: 'Content Moderation', href: '/admin/moderation', icon: ShieldCheckIcon },
-  { name: 'KYC Verification', href: '/admin/kyc', icon: FingerPrintIcon },
-  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
-];
+// ── Menu definitions ────────────────────────────────────────────────
+function useAdminMenu(role: AdminRole): MenuItem[] {
+  const { translate } = useAdminLanguage();
 
-/** Guard kiểm tra role ADMIN từ JWT */
+  const commonMenuItems: MenuItem[] = [
+    { name: translate('menu.dashboard'), href: '/admin/dashboard', icon: ChartBarIcon },
+    { name: translate('menu.users'), href: '/admin/users', icon: UsersIcon },
+    { name: translate('menu.campaigns'), href: '/admin/campaigns', icon: FlagIcon },
+    { name: translate('menu.categories'), href: '/admin/categories', icon: TagIcon },
+    { name: translate('menu.transactions'), href: '/admin/transactions', icon: ArrowsRightLeftIcon },
+
+    { name: translate('menu.withdrawals'), href: '/admin/withdrawals', icon: ArrowDownTrayIcon },
+    { name: translate('menu.revenue'), href: '/admin/revenue', icon: CurrencyDollarIcon },
+    { name: translate('menu.moderation'), href: '/admin/moderation', icon: ShieldCheckIcon },
+    { name: translate('menu.kyc'), href: '/admin/kyc', icon: FingerPrintIcon },
+    { name: translate('menu.settings'), href: '/admin/settings', icon: Cog6ToothIcon },
+  ];
+
+  const superAdminExtraItems: MenuItem[] = [];
+
+  if (role === 'SUPER_ADMIN') {
+    return [...commonMenuItems, ...superAdminExtraItems];
+  }
+  return commonMenuItems;
+}
+
+// ── AdminGuard ─────────────────────────────────────────────────────
+interface GuardResult {
+  authorized: boolean | null;
+  role: AdminRole | null;
+}
+
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [state, setState] = useState<GuardResult>({ authorized: null, role: null });
 
   useEffect(() => {
     const token = localStorage.getItem('adminAccessToken');
@@ -64,22 +89,23 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Không phải admin → về trang user
-    const role = decoded?.role;
-    if (role !== 'ADMIN' && role !== 'admin') {
+    const role = decoded?.role as string | undefined;
+
+    // Chỉ ADMIN và SUPER_ADMIN được phép vào panel
+    if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
       router.replace('/home');
       return;
     }
 
-    setAuthorized(true);
+    setState({ authorized: true, role: role as AdminRole });
   }, [router]);
 
-  if (authorized === null) {
+  if (state.authorized === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#D0E3F9]/80">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-4 border-[#47c9e5]/30 border-t-[#47c9e5] animate-spin" />
-          <p className="text-sm text-gray-500 font-medium">Verifying access…</p>
+          <p className="text-sm text-gray-500 font-medium">Đang xác thực quyền truy cập…</p>
         </div>
       </div>
     );
@@ -88,45 +114,64 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** Layout cho toàn bộ route group (admin) */
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+// ── Inner Layout ───────────────────────────────────────────────────
+function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [adminRole, setAdminRole] = useState<AdminRole>('ADMIN');
   const pathname = usePathname();
+  const { translate } = useAdminLanguage();
 
+  useEffect(() => {
+    const token = localStorage.getItem('adminAccessToken');
+    if (!token) return;
+    const decoded = decodeJwt(token);
+    if (decoded?.role === 'SUPER_ADMIN') setAdminRole('SUPER_ADMIN');
+  }, []);
 
-  const currentMenu = adminMenuItems.find(item => pathname.startsWith(item.href)) || { name: 'Admin Panel' };
+  const menuItems = useAdminMenu(adminRole);
+  const currentMenu = menuItems.find((item) => pathname.startsWith(item.href)) || { name: translate('admin.portal') };
+
+  const roleLabel = adminRole === 'SUPER_ADMIN' ? 'SUPER ADMIN' : 'ADMIN';
 
   return (
-    <AdminGuard>
-      <div className="min-h-screen bg-[#D0E3F9]/100 flex flex-col">
-        {/* Tái sử dụng Sidebar, truyền menu admin */}
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          menuItems={adminMenuItems}
-          roleLabel="ADMIN"
-          topSpacerClass="h-[128px]"
-        />
+    <div className="min-h-screen bg-[#D0E3F9]/100 flex flex-col">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        menuItems={menuItems}
+        roleLabel={roleLabel}
+        topSpacerClass="h-[128px]"
+      />
 
-        <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
-          {/* Tái sử dụng Header, thêm roleLabel */}
-          <Header
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            isOpen={sidebarOpen}
-            roleLabel="ADMIN"
-          />
-          <main className="pt-[128px] pb-24 lg:pb-4 flex-1">
-            <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
-              <div className="mb-8">
-                <h1 className="text-3xl font-black text-[#24305E] uppercase tracking-wider">{currentMenu.name}</h1>
-              </div>
-              {children}
+      <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
+        <Header
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          isOpen={sidebarOpen}
+          roleLabel={roleLabel}
+        />
+        <main className="pt-[128px] pb-24 lg:pb-4 flex-1">
+          <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
+            <div className="mb-8">
+              <h1 className="text-3xl font-black text-[#24305E] uppercase tracking-wider">
+                {currentMenu.name}
+              </h1>
             </div>
-          </main>
-          {/* Tái sử dụng Footer*/}
-          <Footer isAdmin={true} />
-        </div>
+            {children}
+          </div>
+        </main>
+        <Footer isAdmin={true} />
       </div>
+    </div>
+  );
+}
+
+// ── Layout ─────────────────────────────────────────────────────────
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AdminGuard>
+      <AdminLanguageProvider>
+        <AdminLayoutInner>{children}</AdminLayoutInner>
+      </AdminLanguageProvider>
     </AdminGuard>
   );
 }

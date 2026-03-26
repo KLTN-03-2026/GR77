@@ -5,6 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRightIcon, ArrowPathIcon, PhotoIcon, XMarkIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
+interface CategoryOption {
+    id: string;
+    name: string;
+    icon?: string;
+}
+
 export default function EditCampaignClient({ id }: { id: string }) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
@@ -14,6 +20,8 @@ export default function EditCampaignClient({ id }: { id: string }) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [categories, setCategories] = useState<CategoryOption[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState('');
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -46,7 +54,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
     }, [campaign]);
 
     useEffect(() => {
-        const fetchCampaign = async () => {
+        const fetchData = async () => {
             setIsLoading(true);
             try {
                 const token = localStorage.getItem('accessToken');
@@ -55,17 +63,16 @@ export default function EditCampaignClient({ id }: { id: string }) {
                     return;
                 }
 
-                // Verify token by calling a protected endpoint if necessary, 
-                // but for now we just fetch the campaign details.
-                // Note: detail endpoint is public in current controller implementation.
-                const response = await fetch(`http://localhost:3001/campaigns/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                // Fetch campaign and categories in parallel
+                const [campaignRes, categoriesRes] = await Promise.all([
+                    fetch(`http://localhost:3001/campaigns/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch('http://localhost:3001/categories'),
+                ]);
 
-                if (!response.ok) {
-                    if (response.status === 401) {
+                if (!campaignRes.ok) {
+                    if (campaignRes.status === 401) {
                         localStorage.removeItem('accessToken');
                         router.push('/login');
                         return;
@@ -73,8 +80,20 @@ export default function EditCampaignClient({ id }: { id: string }) {
                     throw new Error('Failed to fetch campaign details');
                 }
 
-                const data = await response.json();
-                setCampaign(data);
+                const campaignData = await campaignRes.json();
+                setCampaign(campaignData);
+
+                if (categoriesRes.ok) {
+                    const catsData = await categoriesRes.json();
+                    setCategories(catsData);
+                    // Pre-select the current category
+                    if (campaignData.categoryId) {
+                        setSelectedCategoryId(campaignData.categoryId);
+                    } else if (campaignData.category) {
+                        const match = catsData.find((c: CategoryOption) => c.name.toLowerCase() === campaignData.category.toLowerCase());
+                        if (match) setSelectedCategoryId(match.id);
+                    }
+                }
             } catch (err: any) {
                 console.error('Fetch error:', err);
                 setError(err.message || 'Something went wrong');
@@ -83,7 +102,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
             }
         };
 
-        fetchCampaign();
+        fetchData();
     }, [id, router]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -135,10 +154,13 @@ export default function EditCampaignClient({ id }: { id: string }) {
             return;
         }
 
+        const selectedCat = categories.find((c) => c.id === selectedCategoryId);
+
         const data = {
             title,
             description,
-            category: formData.get('category') as string,
+            category: selectedCat?.name || formData.get('category') as string,
+            categoryId: selectedCategoryId || undefined,
             locationText: formData.get('locationText') as string,
             coverImageUrl: coverImageUrl,
             fundingGoalAmount: Number(formData.get('fundingGoalAmount')),
@@ -313,15 +335,17 @@ export default function EditCampaignClient({ id }: { id: string }) {
                         <div className="flex flex-col gap-2">
                             <label className="text-[13px] font-bold text-gray-900">Category</label>
                             <select
-                                name="category"
-                                defaultValue={campaign.category}
+                                value={selectedCategoryId}
+                                onChange={(e) => setSelectedCategoryId(e.target.value)}
                                 className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
                                 style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236b7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 1rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em 1.2em' }}
                             >
-                                <option value="education">Education</option>
-                                <option value="health">Health</option>
-                                <option value="environment">Environment</option>
-                                <option value="social">Social Welfare</option>
+                                <option value="">Choose</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">

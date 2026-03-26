@@ -48,4 +48,8 @@ export class CreateCampaignDto {
     @Type(() => Boolean)
     @IsBoolean()
     autoCloseWhenGoalReached?: boolean;
+
+    @IsOptional()
+    @IsString()
+    categoryId?: string;
 }
