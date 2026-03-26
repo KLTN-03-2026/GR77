@@ -271,8 +271,8 @@ export default function MyProfilePage() {
       {/* Toast */}
       {toast && (
         <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold animate-[slideIn_0.3s_ease] ${toast.type === 'success'
-            ? 'bg-green-50 text-green-700 border border-green-200'
-            : 'bg-red-50 text-red-700 border border-red-200'
+          ? 'bg-green-50 text-green-700 border border-green-200'
+          : 'bg-red-50 text-red-700 border border-red-200'
           }`}>
           {toast.type === 'success' ? (
             <CheckCircleIcon className="w-5 h-5 text-green-500" />
@@ -297,43 +297,43 @@ export default function MyProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* ════ Left Column: Avatar & Basic Info ════ */}
-        <ProfileHeader 
-           displayName={displayName}
-           profile={profile}
-           locationString={locationString}
-           coverPreview={coverPreview}
-           avatarPreview={avatarPreview}
-           coverInputRef={coverInputRef}
-           avatarInputRef={avatarInputRef}
-           handleCoverChange={handleCoverChange}
-           handleAvatarChange={handleAvatarChange}
-           avatarFile={avatarFile}
-           coverFile={coverFile}
+        <ProfileHeader
+          displayName={displayName}
+          profile={profile}
+          locationString={locationString}
+          coverPreview={coverPreview}
+          avatarPreview={avatarPreview}
+          coverInputRef={coverInputRef}
+          avatarInputRef={avatarInputRef}
+          handleCoverChange={handleCoverChange}
+          handleAvatarChange={handleAvatarChange}
+          avatarFile={avatarFile}
+          coverFile={coverFile}
         />
 
         {/* ════ Right Column: Edit Form ════ */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
-          <PersonalInfoForm 
-             firstName={firstName} setFirstName={setFirstName}
-             lastName={lastName} setLastName={setLastName}
-             province={province} setProvince={setProvince}
-             district={district} setDistrict={setDistrict}
-             address={address} setAddress={setAddress}
-             provincesData={provincesData} districtsData={districtsData}
-             handleSave={handleSave} isSaving={isSaving} fetchProfile={fetchProfile}
+        <div className="lg:col-span-2">
+          {/* Email Section */}
+          <EmailSection
+            email={profile?.email}
+            onOpenModal={() => { setShowEmailModal(true); resetEmailModal(); }}
           />
 
-          {/* Email Section */}
-          <EmailSection 
-             email={profile?.email}
-             onOpenModal={() => { setShowEmailModal(true); resetEmailModal(); }}
+          {/* Personal Information */}
+          <PersonalInfoForm
+            firstName={firstName} setFirstName={setFirstName}
+            lastName={lastName} setLastName={setLastName}
+            province={province} setProvince={setProvince}
+            district={district} setDistrict={setDistrict}
+            address={address} setAddress={setAddress}
+            provincesData={provincesData} districtsData={districtsData}
+            handleSave={handleSave} isSaving={isSaving} fetchProfile={fetchProfile}
           />
         </div>
       </div>
 
       {/* ════ Email Change Modal ════ */}
-      <ChangeEmailModal 
+      <ChangeEmailModal
         showEmailModal={showEmailModal}
         onClose={() => { setShowEmailModal(false); resetEmailModal(); }}
         emailStep={emailStep} setEmailStep={setEmailStep}

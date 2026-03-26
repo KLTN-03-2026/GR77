@@ -29,7 +29,7 @@ export function PersonalInfoForm({
   handleSave, isSaving, fetchProfile
 }: PersonalInfoFormProps) {
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+    <div className="bg-white rounded-b-2xl shadow-sm border border-gray-100 p-8 -mt-[-10px]">
       <h3 className="text-xl font-bold text-[#1d2951] mb-6">Personal Information</h3>
 
       <div className="space-y-6">
@@ -59,7 +59,7 @@ export function PersonalInfoForm({
 
         {/* Address Section */}
         <div className="pt-2">
-          <label className="block text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100 flex items-center">
+          <label className="block text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200 flex items-center">
             <MapPinIcon className="w-5 h-5 inline mr-1 text-cyan-600" />
             Địa chỉ & Nơi ở
           </label>
@@ -74,21 +74,21 @@ export function PersonalInfoForm({
                 }}
                 className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none appearance-none"
               >
-                <option value="">-- Chọn Tỉnh/Thành --</option>
+                <option value="">-- Tỉnh/Thành phố --</option>
                 {provincesData.map((p: any) => (
                   <option key={p.id} value={p.full_name}>{p.full_name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Phường/Xã/Quận/Huyện</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">Phường/Xã</label>
               <select
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
                 disabled={!province}
                 className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">-- Chọn Nơi Ở --</option>
+                <option value="">-- Phường Xã --</option>
                 {districtsData.map((d: any) => (
                   <option key={d.id} value={d.full_name}>{d.full_name}</option>
                 ))}
@@ -101,24 +101,24 @@ export function PersonalInfoForm({
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Số nhà, tên đường, ngõ/ngách, toà nhà..."
+              placeholder="Số nhà, tên đường, toà nhà..."
               className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
             />
           </div>
         </div>
 
         {/* Save Actions */}
-        <div className="pt-4 flex justify-end gap-4 border-t border-gray-50">
+        <div className="pt-6 flex justify-end gap-4 border-t border-gray-200">
           <button
             onClick={fetchProfile}
-            className="px-6 py-3 rounded-2xl font-bold text-[#8ea1c1] hover:text-gray-700 hover:bg-gray-50 transition-colors"
+            className="px-4 py-3 rounded-lg font-bold text-white bg-gray-500 hover:bg-gray-400 shadow-lg shadow-gray-500/20 transition-all transform active:scale-95 flex items-center justify-center min-w-[100px]"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="px-8 py-3 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center min-w-[160px]"
+            className="px-8 py-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center min-w-[140px]"
           >
             {isSaving ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

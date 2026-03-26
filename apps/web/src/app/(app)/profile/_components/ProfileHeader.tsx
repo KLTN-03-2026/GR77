@@ -30,7 +30,7 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <div className="lg:col-span-1 space-y-6">
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden text-center relative">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden text-center relative">
         {/* Cover Image */}
         <div className="h-28 relative group">
           {coverPreview ? (
@@ -88,7 +88,7 @@ export function ProfileHeader({
             {profile?.role || 'USER'}
           </p>
 
-          <div className="border-t border-gray-50 my-4" />
+          <div className="border-t border-gray-200 my-2" />
 
           <div className="space-y-3 text-left">
             <div className="flex items-center gap-3 text-sm text-gray-600">

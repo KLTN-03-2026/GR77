@@ -8,7 +8,7 @@ interface EmailSectionProps {
 
 export function EmailSection({ email, onOpenModal }: EmailSectionProps) {
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+    <div className="bg-white rounded-t-2xl shadow-sm border border-gray-100 p-8">
       <h3 className="text-xl font-bold text-[#1d2951] mb-2">Email Address</h3>
       <p className="text-sm text-gray-400 mb-6">
         Changing your email requires password verification and a confirmation code sent to the new email.
