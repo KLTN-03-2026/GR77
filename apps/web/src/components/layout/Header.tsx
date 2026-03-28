@@ -127,6 +127,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     else if (pathname.includes('/list')) title = 'All Campaigns';
     else if (pathname.includes('/wallet')) title = 'Wallet';
     else if (pathname.includes('/settings')) title = 'Setting';
+    else if (pathname.includes('/notifications')) title = 'Notifications';
 
     return (
       <>
