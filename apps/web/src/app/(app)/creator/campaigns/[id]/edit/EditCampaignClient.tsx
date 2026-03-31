@@ -232,7 +232,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
     }
 
     return (
-        <div className="w-full max-w-5xl mx-auto pb-20">
+        <div className="w-full pb-20">
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">

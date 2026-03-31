@@ -49,9 +49,12 @@ export class ParticipantsService {
         // 1. Kiểm tra campaign tồn tại & đang ACTIVE
         const campaign = await (this.prisma as any).campaign.findUnique({
             where: { id: campaignId },
-            select: { id: true, status: true },
+            select: { id: true, status: true, creatorUserId: true },
         });
         if (!campaign) throw new NotFoundException('Campaign not found');
+        if (campaign.creatorUserId === userId) {
+            throw new BadRequestException('Bạn không thể tham gia chiến dịch do chính mình tổ chức');
+        }
         if (campaign.status !== 'ACTIVE') {
             throw new BadRequestException('Campaign is not active');
         }
@@ -124,10 +127,18 @@ export class ParticipantsService {
 
         const [total, participants] = await (this.prisma as any).$transaction([
             (this.prisma as any).campaignParticipant.count({
-                where: { userId, status: 'JOINED' },
+                where: {
+                    userId,
+                    status: 'JOINED',
+                    campaign: { creatorUserId: { not: userId } }
+                },
             }),
             (this.prisma as any).campaignParticipant.findMany({
-                where: { userId, status: 'JOINED' },
+                where: {
+                    userId,
+                    status: 'JOINED',
+                    campaign: { creatorUserId: { not: userId } }
+                },
                 orderBy: { joinedAt: 'desc' },
                 skip,
                 take: limit,

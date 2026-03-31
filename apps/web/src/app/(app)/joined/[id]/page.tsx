@@ -108,8 +108,8 @@ export default function JoinedCampaignDetailPage({ params }: { params: Promise<{
   };
 
   return (
-    <div className="p-4 md:p-8 bg-white min-h-screen">
-      <div className="max-w-5xl mx-auto">
+    <div className="bg-white min-h-screen">
+      <div className="w-full">
 
         {/* NÚT BACK VÀ LEAVE */}
         <div className="mb-6 flex items-center justify-between">

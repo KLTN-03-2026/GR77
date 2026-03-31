@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GlobeAltIcon } from "@heroicons/react/24/outline";
 import { AdminLanguageProvider, useAdminLanguage } from "@/contexts/AdminLanguageContext";
+import { useGlobalAuth } from "@/contexts/AuthContext";
 
 function LanguageToggle() {
     const { language, setLanguage } = useAdminLanguage();
@@ -42,6 +43,7 @@ function AdminLoginForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const { translate } = useAdminLanguage();
+    const { login } = useGlobalAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,7 +60,6 @@ function AdminLoginForm() {
             });
 
             if (!res.ok) {
-                // Ưu tiên dùng thông báo đã dịch cho lỗi login không thành công (401)
                 if (res.status === 401) {
                     throw new Error(translate("login.err_invalid"));
                 }
@@ -83,7 +84,6 @@ function AdminLoginForm() {
                     role = payload?.role;
                 }
             } catch {
-                // ignore decode error
             }
 
             if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
@@ -93,15 +93,15 @@ function AdminLoginForm() {
             }
 
             if (data.accessToken) {
-                localStorage.setItem("adminAccessToken", data.accessToken);
+                const displayName = email.split("@")[0];
+                login({
+                    id: data.id || "admin-id", // Backend handles id
+                    email: email,
+                    role: role,
+                    accessToken: data.accessToken,
+                    refreshToken: data.refreshToken
+                });
             }
-            if (data.refreshToken) {
-                localStorage.setItem("adminRefreshToken", data.refreshToken);
-            }
-
-            // Lưu tên hiển thị (dùng phần trước @ của email)
-            const displayName = email.split("@")[0];
-            localStorage.setItem("adminUserName", displayName);
 
             router.push("/admin/dashboard");
         } catch (err: any) {

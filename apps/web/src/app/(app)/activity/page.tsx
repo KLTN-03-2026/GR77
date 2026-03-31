@@ -107,7 +107,7 @@ export default function ActivityPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <ClockIcon className="w-7 h-7 text-cyan-500" />
@@ -153,8 +153,8 @@ export default function ActivityPage() {
                                         )}
                                         {/* Status badge */}
                                         <span className={`absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm uppercase ${campaign.status === 'ACTIVE'
-                                                ? 'bg-green-100/90 text-green-700'
-                                                : 'bg-yellow-100/90 text-yellow-700'
+                                            ? 'bg-green-100/90 text-green-700'
+                                            : 'bg-yellow-100/90 text-yellow-700'
                                             }`}>
                                             {campaign.status}
                                         </span>

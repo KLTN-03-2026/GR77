@@ -165,7 +165,7 @@ export default function ListCampaignsPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
             {/* Page header */}
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">

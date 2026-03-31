@@ -1,5 +1,9 @@
 import { Body, Controller, Post, Get, Patch, UseGuards, Request, HttpCode, Req } from '@nestjs/common'
 import { AuthService } from './auth.service'
+import { RegistrationService } from './registration.service'
+import { PasswordService } from './password.service'
+import { AccountSecurityService } from './account-security.service'
+import { UsersService } from '../users/users.service'
 import { AuthGuard } from '@nestjs/passport'
 import { LogoutDto } from './dto/logout.dto'
 import { PrismaService } from '../../prisma/prisma.service'
@@ -9,12 +13,16 @@ import { PrismaService } from '../../prisma/prisma.service'
 export class AuthController {
   constructor(
     private authService: AuthService,
+    private registrationService: RegistrationService,
+    private passwordService: PasswordService,
+    private accountSecurityService: AccountSecurityService,
+    private usersService: UsersService,
     private prisma: PrismaService,
   ) { }
 
   @Post('register')
   register(@Body() body: any) {
-    return this.authService.register(body.email, body.password)
+    return this.registrationService.register(body.email, body.password)
   }
 
   @Post('login')
@@ -28,21 +36,21 @@ export class AuthController {
     const userId = req.user.sub || req.user.userId;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        firstName: true,
-        lastName: true,
-        province: true,
-        district: true,
-        ward: true,
-        address: true,
-        avatarUrl: true,
-        coverImageUrl: true,
-        role: true,
-        createdAt: true,
-      },
+      include: {
+        profile: true,
+        wallet: {
+          select: {
+            balance: true,
+            walletAddress: true
+          }
+        },
+        security: {
+          select: {
+            isLocked: true,
+            lockReason: true
+          }
+        }
+      }
     });
     return user;
   }
@@ -55,7 +63,7 @@ export class AuthController {
   @Patch('profile')
   async updateProfile(@Request() req, @Body() body: any) {
     const userId = req.user.sub || req.user.userId;
-    return this.authService.updateProfile(userId, body);
+    return this.usersService.updateProfile(userId, body);
   }
 
   /**
@@ -66,7 +74,7 @@ export class AuthController {
   @Post('request-email-change')
   async requestEmailChange(@Request() req, @Body() body: { newEmail: string; password: string }) {
     const userId = req.user.sub || req.user.userId;
-    return this.authService.requestEmailChange(userId, body.newEmail, body.password);
+    return this.accountSecurityService.requestEmailChange(userId, body.newEmail, body.password);
   }
 
   /**
@@ -77,17 +85,17 @@ export class AuthController {
   @Post('verify-email-change')
   async verifyEmailChange(@Request() req, @Body('code') code: string) {
     const userId = req.user.sub || req.user.userId;
-    return await this.authService.verifyEmailChange(userId, code);
+    return await this.accountSecurityService.verifyEmailChange(userId, code);
   }
 
   @Post('revert-email')
   async revertEmailChange(@Body('token') token: string) {
-    return await this.authService.revertEmailChange(token);
+    return await this.accountSecurityService.revertEmailChange(token);
   }
 
   @Post('unlock-account')
   async unlockAccount(@Body() body: any) {
-    return await this.authService.unlockAccount(body.token, body.oldPassword, body.newPassword);
+    return await this.accountSecurityService.unlockAccount(body.token, body.oldPassword, body.newPassword);
   }
 
   @Post('refresh')
@@ -111,26 +119,26 @@ export class AuthController {
 
   @Post('verify-email')
   async verifyEmail(@Body() body: { email: string; code: string }) {
-    return this.authService.verifyEmail(body.email, body.code);
+    return this.registrationService.verifyEmail(body.email, body.code);
   }
 
   @Post('resend-verification')
   async resendVerification(@Body() body: { email: string }) {
-    return this.authService.resendVerification(body.email);
+    return this.registrationService.resendVerification(body.email);
   }
 
   @Post('send-reset-code')
   async sendResetCode(@Body() body: { email: string }) {
-    return this.authService.sendResetCode(body.email);
+    return this.passwordService.sendResetCode(body.email);
   }
 
   @Post('verify-reset-code')
   async verifyResetCode(@Body() body: { email: string; code: string }) {
-    return this.authService.verifyResetCode(body.email, body.code);
+    return this.passwordService.verifyResetCode(body.email, body.code);
   }
 
   @Post('reset-password')
   async resetPassword(@Body() body: { email: string; code: string; newPassword: string }) {
-    return this.authService.resetPassword(body.email, body.code, body.newPassword);
+    return this.passwordService.resetPassword(body.email, body.code, body.newPassword);
   }
 }

@@ -17,7 +17,10 @@ export default function NewCampaignPage() {
     const [error, setError] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>('');
+    const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+    const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
     const [categories, setCategories] = useState<CategoryOption[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
 
@@ -48,6 +51,29 @@ export default function NewCampaignPage() {
         }
     };
 
+    const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length + galleryFiles.length > 5) {
+            setError('Maximum 5 gallery images allowed');
+            return;
+        }
+
+        const newFiles = [...galleryFiles];
+        const newPreviews = [...galleryPreviews];
+
+        files.forEach(file => {
+            if (file.size > 5 * 1024 * 1024) return;
+            newFiles.push(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                newPreviews.push(reader.result as string);
+                setGalleryPreviews([...newPreviews]);
+            };
+            reader.readAsDataURL(file);
+        });
+        setGalleryFiles(newFiles);
+    };
+
     const removeImage = () => {
         setImageFile(null);
         setImagePreview('');
@@ -56,19 +82,29 @@ export default function NewCampaignPage() {
         }
     };
 
+    const removeGalleryImage = (index: number) => {
+        const newFiles = [...galleryFiles];
+        const newPreviews = [...galleryPreviews];
+        newFiles.splice(index, 1);
+        newPreviews.splice(index, 1);
+        setGalleryFiles(newFiles);
+        setGalleryPreviews(newPreviews);
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
 
         const formData = new FormData(e.currentTarget);
-
-        let coverImageUrl = '';
         const token = localStorage.getItem('accessToken');
 
-        // 1. Upload image if exists
-        if (imageFile) {
-            try {
+        let coverImageUrl = '';
+        const galleryUrls: string[] = [];
+
+        try {
+            // 1. Upload cover image if exists
+            if (imageFile) {
                 const uploadFormData = new FormData();
                 uploadFormData.append('file', imageFile);
 
@@ -80,38 +116,46 @@ export default function NewCampaignPage() {
                     body: uploadFormData,
                 });
 
-                if (!uploadResponse.ok) {
-                    throw new Error('Failed to upload image');
-                }
-
+                if (!uploadResponse.ok) throw new Error('Failed to upload cover image');
                 const uploadData = await uploadResponse.json();
                 coverImageUrl = uploadData.url;
-            } catch (err: any) {
-                setError('Failed to upload image: ' + err.message);
-                setIsLoading(false);
-                return;
             }
-        }
 
-        // Find category name from selected id
-        const selectedCat = categories.find((c) => c.id === selectedCategoryId);
+            // 2. Upload gallery images
+            for (const file of galleryFiles) {
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', file);
 
-        const data = {
-            title: formData.get('title') as string,
-            description: formData.get('description') as string,
-            category: selectedCat?.name || '',
-            categoryId: selectedCategoryId || undefined,
-            locationText: formData.get('locationText') as string,
-            coverImageUrl: coverImageUrl,
-            fundingGoalAmount: Number(formData.get('fundingGoalAmount')),
-            minimumDonationAmount: Number(formData.get('minimumDonationAmount')),
-            startAt: new Date(formData.get('startAt') as string).toISOString(),
-            endAt: new Date(formData.get('endAt') as string).toISOString(),
-            autoCloseWhenGoalReached: formData.get('autoCloseWhenGoalReached') === 'on',
-        };
+                const uploadResponse = await fetch('http://localhost:3001/upload', {
+                    method: 'POST',
+                    headers: {
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: uploadFormData,
+                });
 
-        try {
-            const token = localStorage.getItem('accessToken');
+                if (!uploadResponse.ok) throw new Error('Failed to upload gallery images');
+                const uploadData = await uploadResponse.json();
+                galleryUrls.push(uploadData.url);
+            }
+
+            // Find category name from selected id
+            const selectedCat = categories.find((c) => c.id === selectedCategoryId);
+
+            const data = {
+                title: formData.get('title') as string,
+                description: formData.get('description') as string,
+                category: selectedCat?.name || '',
+                categoryId: selectedCategoryId || undefined,
+                locationText: formData.get('locationText') as string,
+                coverImageUrl: coverImageUrl,
+                galleryUrls: galleryUrls,
+                fundingGoalAmount: Number(formData.get('fundingGoalAmount')),
+                minimumDonationAmount: Number(formData.get('minimumDonationAmount')),
+                startAt: new Date(formData.get('startAt') as string).toISOString(),
+                endAt: new Date(formData.get('endAt') as string).toISOString(),
+                autoCloseWhenGoalReached: formData.get('autoCloseWhenGoalReached') === 'on',
+            };
 
             const response = await fetch('http://localhost:3001/campaigns', {
                 method: 'POST',
@@ -132,7 +176,6 @@ export default function NewCampaignPage() {
                 throw new Error(errData.message || 'Failed to create campaign');
             }
 
-            // Redirect to campaigns list on success
             router.push('/creator/campaigns');
         } catch (err: any) {
             console.error(err);
@@ -143,7 +186,7 @@ export default function NewCampaignPage() {
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto pb-20">
+        <div className="w-full pb-20">
 
             {/* Header */}
             <div className="mb-8">
@@ -258,7 +301,7 @@ export default function NewCampaignPage() {
                                         <div className="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
                                             <PhotoIcon className="h-6 w-6 text-blue-500" />
                                         </div>
-                                        <span className="text-[13px] font-bold">Click to upload cover image</span>
+                                        <span className="text-[13px] font-bold">Click upload cover image</span>
                                         <span className="text-[11px] font-medium opacity-60">PNG, JPG up to 5MB</span>
                                     </button>
                                 )}
@@ -270,6 +313,48 @@ export default function NewCampaignPage() {
                                     className="hidden"
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Gallery Images */}
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2">
+                            Gallery Images
+                            <span className="text-gray-400 font-medium">(up to 5)</span>
+                        </label>
+                        <div className="sm:w-3/4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {galleryPreviews.map((preview, index) => (
+                                    <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-100 shadow-sm">
+                                        <img src={preview} alt={`Gallery ${index}`} className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeGalleryImage(index)}
+                                            className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-white text-gray-900 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                            <XMarkIcon className="h-3 w-3 stroke-[3]" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {galleryFiles.length < 5 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => galleryInputRef.current?.click()}
+                                        className="aspect-square bg-[#f4f4f4] hover:bg-[#e8e8e8] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 transition-all text-gray-400 hover:text-blue-500 hover:border-blue-300 group"
+                                    >
+                                        <PhotoIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-bold">Add Image</span>
+                                    </button>
+                                )}
+                            </div>
+                            <input
+                                type="file"
+                                ref={galleryInputRef}
+                                onChange={handleGalleryChange}
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                            />
                         </div>
                     </div>
 

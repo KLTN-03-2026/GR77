@@ -58,7 +58,7 @@ export class UsersController {
     @Post(':id/upgrade-role')
     @MinRole(Role.SUPER_ADMIN)
     async upgradeToAdmin(@Param('id') id: string, @Request() req: any) {
-        return this.usersService.upgradeToAdmin(id, req.user.sub);
+        return this.usersService.upgradeToAdmin(id, req.user.sub, req.user.role);
     }
 
     /**

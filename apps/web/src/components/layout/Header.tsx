@@ -16,41 +16,30 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline';
 
+import NotificationBell from './NotificationBell';
+import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
+import { useGlobalAuth } from '@/contexts/AuthContext';
+
 interface HeaderProps {
   onToggleSidebar: () => void;
   isOpen: boolean;
   roleLabel?: string;
 }
 
-import NotificationBell from './NotificationBell';
-import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
-
 export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { translate } = useAdminLanguage();
-  const [userName, setUserName] = useState<string>('User');
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const { user, logout } = useGlobalAuth();
+
+  const userName = [user?.profile?.firstName, user?.profile?.lastName].filter(Boolean).join(' ') || user?.username || 'User';
+  const userAvatar = user?.profile?.avatarUrl;
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const loadUserInfo = () => {
-    const stored = roleLabel === 'ADMIN'
-      ? localStorage.getItem('adminUserName')
-      : localStorage.getItem('userName');
-    if (stored) setUserName(stored);
-    const avatar = localStorage.getItem('userAvatar');
-    if (avatar) setUserAvatar(avatar);
-  };
-
   useEffect(() => {
-    loadUserInfo();
-
-    // Listen for storage events (fired when profile is updated)
-    const handleStorage = () => loadUserInfo();
-    window.addEventListener('storage', handleStorage);
-
     // Close dropdown on click outside
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -60,7 +49,6 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
@@ -199,7 +187,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center justify-center p-0.5 rounded-full border-2 border-[#47c9e5] hover:shadow-md transition-all overflow-hidden"
               >
-                <img src={userAvatar || '/avata.svg'} alt="Avatar" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover bg-white" />
+                <img src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName || 'User'}`} alt="Avatar" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover bg-white" />
               </button>
 
               {isProfileOpen && (
@@ -207,7 +195,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                   {/* Header: User Info - Compact */}
                   <div className="px-5 py-4 flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
-                      <img src={userAvatar || '/avata.svg'} alt="Avatar" className="h-full w-full object-cover bg-white" />
+                      <img src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName || 'User'}`} alt="Avatar" className="h-full w-full object-cover bg-white" />
                     </div>
                     <div className="overflow-hidden">
                       <p className="text-base font-bold text-[#1d2951] truncate leading-tight">{userName}</p>

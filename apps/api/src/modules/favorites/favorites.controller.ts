@@ -113,4 +113,10 @@ export class FavoritesController {
       limit ? Number(limit) : 20,
     );
   }
+
+  @Get(':campaignId/status')
+  getStatus(@Req() req: any, @Param('campaignId') campaignId: string) {
+    const userId = this.getUserId(req);
+    return this.favoritesService.getStatus(userId, campaignId);
+  }
 }

@@ -24,9 +24,9 @@ export class WalletService {
     async getBalance(userId: string) {
         const user = await (this.prisma as any).user.findUnique({
             where: { id: userId },
-            select: { balance: true }
+            include: { wallet: true }
         });
-        return { balance: user?.balance || 0 };
+        return { balance: user?.wallet?.balance || 0 };
     }
 
     async getTransactions(userId: string) {
@@ -90,9 +90,9 @@ export class WalletService {
                         data: { status: 'SUCCESS' }
                     });
 
-                    // Update User Balance
-                    await tx.user.update({
-                        where: { id: walletTx.userId },
+                    // Update User Balance (Normalized 3NF)
+                    await tx.userWallet.update({
+                        where: { userId: walletTx.userId },
                         data: {
                             balance: { increment: walletTx.amount }
                         }

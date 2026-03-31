@@ -7,60 +7,77 @@ datasource db {
 }
 
 model User {
+  id                 String                @id @default(uuid())
+  email              String                @unique
+  username           String
+  password           String
+  role               Role                  @default(USER)
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+  isVerified         Boolean               @default(false) @map("is_verified")
+  participations     CampaignParticipant[]
+  viewHistories      CampaignViewHistory[]
+  createdCampaigns   Campaign[]            @relation("CampaignCreator")
+  reviewedCampaigns  Campaign[]            @relation("CampaignReviewer")
+  comments           Comment[]
+  donations          Donation[]
+  favorites          Favorite[]
+  notifications      Notification[]
+  tokens             RefreshToken[]
+  reportsSubmitted   Report[]              @relation("ReportSubmitter")
+  reportsReceived    Report[]              @relation("ReportTarget")
+  actionLogs         UserActionLog[]
+  profile            UserProfile?
+  security           UserSecurity?
+  wallet             UserWallet?
+  walletTransactions WalletTransaction[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id            String  @id @default(uuid())
+  userId        String  @unique @map("user_id")
+  firstName     String? @map("first_name") @db.VarChar(100)
+  lastName      String? @map("last_name") @db.VarChar(100)
+  avatarUrl     String? @map("avatar_url") @db.VarChar(500)
+  coverImageUrl String? @map("cover_image_url") @db.VarChar(500)
+  province      String? @db.VarChar(100)
+  district      String? @db.VarChar(100)
+  ward          String? @db.VarChar(100)
+  address       String? @db.VarChar(255)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserWallet {
+  id            String  @id @default(uuid())
+  userId        String  @unique @map("user_id")
+  balance       Decimal @default(0) @db.Decimal(18, 2)
+  walletAddress String? @unique @map("wallet_address")
+  nonce         String?
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_wallets")
+}
+
+model UserSecurity {
   id                      String    @id @default(uuid())
-  email                   String    @unique
-  username                String
-  password                String
-  role                    Role      @default(USER)
-  createdAt               DateTime  @default(now()) @map("created_at")
-  updatedAt               DateTime  @updatedAt @map("updated_at")
-  isVerified              Boolean   @default(false) @map("is_verified")
+  userId                  String    @unique @map("user_id")
+  isLocked                Boolean   @default(false) @map("is_locked")
+  lockedAt                DateTime? @map("locked_at")
+  lockReason              String?   @map("lock_reason") @db.VarChar(500)
   verificationCode        String?   @map("verification_code")
   verificationExpires     DateTime? @map("verification_expires")
   verificationResendCount Int       @default(0) @map("verification_resend_count")
   lastResendAt            DateTime? @map("last_resend_at")
+  pendingEmail            String?   @map("pending_email")
+  pendingEmailCode        String?   @map("pending_email_code")
+  pendingEmailExpires     DateTime? @map("pending_email_expires")
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Profile Information
-  firstName    String?  @map("first_name") @db.VarChar(100)
-  lastName     String?  @map("last_name") @db.VarChar(100)
-  province     String?  @db.VarChar(100)
-  district     String?  @db.VarChar(100)
-  ward         String?  @db.VarChar(100)
-  address      String?  @db.VarChar(255)
-  avatarUrl    String?  @map("avatar_url") @db.VarChar(500)
-  coverImageUrl String? @map("cover_image_url") @db.VarChar(500)
-
-  // Pending Email Change
-  pendingEmail        String?   @map("pending_email")
-  pendingEmailCode    String?   @map("pending_email_code")
-  pendingEmailExpires DateTime? @map("pending_email_expires")
-
-  // Security & Management
-  isLocked   Boolean   @default(false) @map("is_locked")
-  lockedAt   DateTime? @map("locked_at")
-  lockReason String?   @map("lock_reason") @db.VarChar(500)
-
-  // Wallet Features
-  balance       Decimal @default(0) @db.Decimal(18, 2)
-  walletAddress String? @unique @map("wallet_address")
-
-  // Relations
-  participations     CampaignParticipant[]
-  createdCampaigns   Campaign[]            @relation("CampaignCreator")
-  reviewedCampaigns  Campaign[]            @relation("CampaignReviewer")
-  donations          Donation[]
-  favorites          Favorite[]
-  viewHistories      CampaignViewHistory[]
-  tokens             RefreshToken[]
-  walletTransactions WalletTransaction[]
-  notifications      Notification[]
-  actionLogs         UserActionLog[]
-
-  // Reporting
-  reportsSubmitted Report[] @relation("ReportSubmitter")
-  reportsReceived  Report[] @relation("ReportTarget")
-
-  @@map("users")
+  @@map("user_security")
 }
 
 model WalletTransaction {
@@ -81,12 +98,6 @@ model WalletTransaction {
   @@map("wallet_transactions")
 }
 
-enum WalletTransactionType {
-  TOPUP
-  WITHDRAW
-  DONATION
-}
-
 model RefreshToken {
   id        String   @id @default(uuid())
   tokenHash String   @map("token_hash")
@@ -101,36 +112,38 @@ model RefreshToken {
 }
 
 model Campaign {
-  id                       String                 @id @default(uuid())
-  creatorUserId            String                 @map("creator_user_id")
-  title                    String                 @db.VarChar(255)
+  id                       String                @id @default(uuid())
+  creatorUserId            String                @map("creator_user_id")
+  title                    String                @db.VarChar(255)
   description              String
-  category                 String                 @db.VarChar(100)
-  locationText             String                 @map("location_text") @db.VarChar(255)
-  coverImageUrl            String?                @map("cover_image_url") @db.VarChar(500)
-  fundingGoalAmount        Decimal                @map("funding_goal_amount") @db.Decimal(18, 2)
-  minimumDonationAmount    Decimal                @map("minimum_donation_amount") @db.Decimal(18, 2)
-  startAt                  DateTime               @map("start_at")
-  endAt                    DateTime               @map("end_at")
-  autoCloseWhenGoalReached Boolean                @default(true) @map("auto_close_when_goal_reached")
-  status                   CampaignStatus         @default(DRAFT)
-  reviewNote               String?                @map("review_note")
-  reviewedByAdminId        String?                @map("reviewed_by_admin_id")
-  reviewedAt               DateTime?              @map("reviewed_at")
-  createdAt                DateTime               @default(now()) @map("created_at")
-  updatedAt                DateTime               @updatedAt @map("updated_at")
-  currentRaisedAmount      Decimal                @default(0) @map("current_raised_amount") @db.Decimal(18, 2)
-  donationCount            Int                    @default(0) @map("donation_count")
+  category                 String                @db.VarChar(100)
+  locationText             String                @map("location_text") @db.VarChar(255)
+  coverImageUrl            String?               @map("cover_image_url") @db.VarChar(500)
+  fundingGoalAmount        Decimal               @map("funding_goal_amount") @db.Decimal(18, 2)
+  minimumDonationAmount    Decimal               @map("minimum_donation_amount") @db.Decimal(18, 2)
+  startAt                  DateTime              @map("start_at")
+  endAt                    DateTime              @map("end_at")
+  autoCloseWhenGoalReached Boolean               @default(true) @map("auto_close_when_goal_reached")
+  status                   CampaignStatus        @default(DRAFT)
+  reviewNote               String?               @map("review_note")
+  reviewedByAdminId        String?               @map("reviewed_by_admin_id")
+  reviewedAt               DateTime?             @map("reviewed_at")
+  createdAt                DateTime              @default(now()) @map("created_at")
+  updatedAt                DateTime              @updatedAt @map("updated_at")
+  currentRaisedAmount      Decimal               @default(0) @map("current_raised_amount") @db.Decimal(18, 2)
+  donationCount            Int                   @default(0) @map("donation_count")
+  categoryId               String?               @map("category_id")
   fundLedgers              CampaignFundLedger[]
   participants             CampaignParticipant[]
-  creatorUser              User                   @relation("CampaignCreator", fields: [creatorUserId], references: [id])
-  reviewedByAdmin          User?                  @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id])
+  viewHistories            CampaignViewHistory[]
+  categoryRel              CampaignCategory?     @relation(fields: [categoryId], references: [id])
+  creatorUser              User                  @relation("CampaignCreator", fields: [creatorUserId], references: [id])
+  reviewedByAdmin          User?                 @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id])
+  comments                 Comment[]
   donations                Donation[]
   favorites                Favorite[]
-  viewHistories            CampaignViewHistory[]
   reports                  Report[]
-  categoryId               String?                @map("category_id")
-  categoryRel              CampaignCategory?      @relation(fields: [categoryId], references: [id])
+  images                   CampaignImage[]
 
   @@index([status])
   @@index([creatorUserId])
@@ -138,17 +151,28 @@ model Campaign {
   @@map("campaigns")
 }
 
+model CampaignImage {
+  id         String   @id @default(uuid())
+  campaignId String   @map("campaign_id")
+  url        String   @db.VarChar(500)
+  caption    String?  @db.VarChar(255)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("campaign_images")
+}
+
 model CampaignCategory {
   id        String     @id @default(uuid())
   name      String     @unique @db.VarChar(100)
-  slug      String     @unique @db.VarChar(100)
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
+  slug      String     @unique @db.VarChar(100)
   campaigns Campaign[]
 
   @@map("campaign_categories")
 }
-
 
 model Favorite {
   id         String   @id @default(uuid())
@@ -296,11 +320,34 @@ model Report {
   createdAt        DateTime     @default(now()) @map("created_at")
   resolvedAt       DateTime?    @map("resolved_at")
   resolvedById     String?      @map("resolved_by_id")
+  targetCommentId  String?      @map("target_comment_id")
   submitter        User         @relation("ReportSubmitter", fields: [submitterId], references: [id])
-  targetUser       User?        @relation("ReportTarget", fields: [targetUserId], references: [id])
   targetCampaign   Campaign?    @relation(fields: [targetCampaignId], references: [id])
+  targetComment    Comment?     @relation(fields: [targetCommentId], references: [id])
+  targetUser       User?        @relation("ReportTarget", fields: [targetUserId], references: [id])
 
   @@map("reports")
+}
+
+model Comment {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  campaignId String    @map("campaign_id")
+  parentId   String?   @map("parent_id")
+  content    String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("CommentReplies")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports    Report[]
+
+  @@index([campaignId])
+  @@index([userId])
+  @@index([parentId])
+  @@map("comments")
 }
 
 model UserActionLog {
@@ -317,10 +364,16 @@ model UserActionLog {
   @@map("user_action_logs")
 }
 
+enum WalletTransactionType {
+  TOPUP
+  WITHDRAW
+  DONATION
+}
+
 enum Role {
   USER
-  ORGANIZER
   ADMIN
+  ORGANIZER
   SUPER_ADMIN
 }
 

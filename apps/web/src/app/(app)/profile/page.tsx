@@ -12,27 +12,32 @@ import { ProfileHeader } from './_components/ProfileHeader';
 import { PersonalInfoForm } from './_components/PersonalInfoForm';
 import { EmailSection } from './_components/EmailSection';
 import { ChangeEmailModal } from './_components/ChangeEmailModal';
+import { useGlobalAuth } from '@/contexts/AuthContext';
 
 /** ─── Types ───────────────────────────────────────────────── */
 export interface UserProfile {
   id: string;
   email: string;
   username: string;
-  firstName: string | null;
-  lastName: string | null;
-  province: string | null;
-  district: string | null;
-  ward: string | null;
-  address: string | null;
-  avatarUrl: string | null;
-  coverImageUrl: string | null;
   role: string;
   createdAt: string;
+  profile?: {
+    firstName: string | null;
+    lastName: string | null;
+    province: string | null;
+    district: string | null;
+    ward: string | null;
+    address: string | null;
+    avatarUrl: string | null;
+    coverImageUrl: string | null;
+  };
 }
 
 const API = 'http://localhost:3001';
 
 export default function MyProfilePage() {
+  const { updateUser } = useGlobalAuth();
+
   // ─── Profile state ──────────────────────────────────────────
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [firstName, setFirstName] = useState('');
@@ -78,14 +83,16 @@ export default function MyProfilePage() {
       if (!res.ok) throw new Error();
       const data: UserProfile = await res.json();
       setProfile(data);
-      setFirstName(data.firstName || '');
-      setLastName(data.lastName || '');
-      setProvince(data.province || '');
-      setDistrict(data.district || '');
-      setWard(data.ward || '');
-      setAddress(data.address || '');
-      setAvatarPreview(data.avatarUrl || null);
-      setCoverPreview(data.coverImageUrl || null);
+      if (data.profile) {
+        setFirstName(data.profile.firstName || '');
+        setLastName(data.profile.lastName || '');
+        setProvince(data.profile.province || '');
+        setDistrict(data.profile.district || '');
+        setWard(data.profile.ward || '');
+        setAddress(data.profile.address || '');
+        setAvatarPreview(data.profile.avatarUrl || null);
+        setCoverPreview(data.profile.coverImageUrl || null);
+      }
     } catch {
       showToast('error', 'Không thể tải thông tin profile.');
     } finally {
@@ -175,15 +182,10 @@ export default function MyProfilePage() {
 
       const data = await res.json();
       setProfile((prev) => prev ? { ...prev, ...data.user } : prev);
+      updateUser(data.user);
+
       setAvatarFile(null);
       setCoverFile(null);
-
-      // Update localStorage so Header reflects changes immediately
-      const fullName = [firstName, lastName].filter(Boolean).join(' ');
-      if (fullName) localStorage.setItem('userName', fullName);
-      if (data.user?.avatarUrl) localStorage.setItem('userAvatar', data.user.avatarUrl);
-      // Trigger storage event for Header to pick up
-      window.dispatchEvent(new Event('storage'));
 
       showToast('success', 'Profile đã được cập nhật thành công!');
     } catch (err: any) {
@@ -259,7 +261,7 @@ export default function MyProfilePage() {
   // ─── Loading ────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto flex flex-col items-center justify-center py-32">
+      <div className="w-full flex flex-col items-center justify-center py-32">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500" />
         <p className="text-gray-400 mt-4 font-medium">Loading profile...</p>
       </div>
@@ -267,7 +269,7 @@ export default function MyProfilePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold animate-[slideIn_0.3s_ease] ${toast.type === 'success'

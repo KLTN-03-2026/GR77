@@ -101,7 +101,7 @@ export default function CreatorCampaignsPage() {
 
 
     return (
-        <div className="w-full max-w-5xl mx-auto pb-10">
+        <div className="w-full pb-10">
             {/* Header section */}
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -130,91 +130,91 @@ export default function CreatorCampaignsPage() {
                     </Link>
                 </div>
 
-            {/* Table or Empty State */}
-            {isLoading ? (
-                <div className="flex justify-center items-center py-24 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-            ) : error ? (
-                <div className="flex justify-center items-center py-24 text-red-500 font-medium text-lg border-2 border-dashed border-red-200 rounded-2xl bg-red-50">
-                    {error}
-                </div>
-            ) : campaigns.length > 0 ? (
-                <>
-                    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white text-gray-800">
-                        <table className="w-full text-center text-[13px] font-medium border-collapse">
-                            <thead className="bg-[#7fa8e8] text-white">
-                                <tr>
-                                    <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[5%]">ID</th>
-                                    <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[20%]">Name</th>
-                                    <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Created at</th>
-                                    <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Goal (VND)</th>
-                                    <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Address</th>
-                                    <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Approval Status</th>
-                                    <th className="py-3.5 px-4 font-bold w-[15%]">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {campaigns.map((camp, index) => (
-                                    <tr
-                                        key={camp.id}
-                                        onClick={() => router.push(`/creator/campaigns/${camp.id}`)}
-                                        className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors cursor-pointer"
-                                    >
-                                        <td className="border-r border-white font-bold">#{index + 1}</td>
-                                        <td className="border-r border-white px-4 text-left">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
-                                                    {camp.coverImageUrl ? (
-                                                        <img src={camp.coverImageUrl} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold bg-gray-100">
-                                                            No Pic
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-col truncate">
-                                                    <div className="font-bold truncate">{camp.title}</div>
-                                                    <div className="text-[10px] text-gray-400">{camp.category}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
-                                        <td className="border-r border-white font-bold">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
-                                        <td className="border-r border-white px-4 truncate text-left">{camp.locationText}</td>
-                                        <td className="border-r border-white px-4">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${camp.status === 'ACTIVE' ? 'bg-green-100 text-green-600' :
-                                                camp.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
-                                                    'bg-gray-100 text-gray-600'
-                                                }`}>
-                                                {camp.status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button
-                                                className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors group"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    router.push(`/creator/campaigns/${camp.id}/edit`);
-                                                }}
-                                                title="Edit Campaign"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                                </svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {/* Table or Empty State */}
+                {isLoading ? (
+                    <div className="flex justify-center items-center py-24 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                     </div>
-                </>
-            ) : (
-                <div className="flex justify-center items-center py-24 mb-14 text-slate-500 font-medium text-lg border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                    No campaigns have been created yet.
-                </div>
-            )}
+                ) : error ? (
+                    <div className="flex justify-center items-center py-24 text-red-500 font-medium text-lg border-2 border-dashed border-red-200 rounded-2xl bg-red-50">
+                        {error}
+                    </div>
+                ) : campaigns.length > 0 ? (
+                    <>
+                        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white text-gray-800">
+                            <table className="w-full text-center text-[13px] font-medium border-collapse">
+                                <thead className="bg-[#7fa8e8] text-white">
+                                    <tr>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[5%]">ID</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[20%]">Name</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Created at</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Goal (VND)</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Address</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Approval Status</th>
+                                        <th className="py-3.5 px-4 font-bold w-[15%]">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {campaigns.map((camp, index) => (
+                                        <tr
+                                            key={camp.id}
+                                            onClick={() => router.push(`/creator/campaigns/${camp.id}`)}
+                                            className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors cursor-pointer"
+                                        >
+                                            <td className="border-r border-white font-bold">#{index + 1}</td>
+                                            <td className="border-r border-white px-4 text-left">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
+                                                        {camp.coverImageUrl ? (
+                                                            <img src={camp.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold bg-gray-100">
+                                                                No Pic
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col truncate">
+                                                        <div className="font-bold truncate">{camp.title}</div>
+                                                        <div className="text-[10px] text-gray-400">{camp.category}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
+                                            <td className="border-r border-white font-bold">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
+                                            <td className="border-r border-white px-4 truncate text-left">{camp.locationText}</td>
+                                            <td className="border-r border-white px-4">
+                                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${camp.status === 'ACTIVE' ? 'bg-green-100 text-green-600' :
+                                                    camp.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
+                                                        'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                    {camp.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors group"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        router.push(`/creator/campaigns/${camp.id}/edit`);
+                                                    }}
+                                                    title="Edit Campaign"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                                    </svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex justify-center items-center py-24 mb-14 text-slate-500 font-medium text-lg border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
+                        No campaigns have been created yet.
+                    </div>
+                )}
             </div>
 
             {/* Main Content Areas Wrapper */}

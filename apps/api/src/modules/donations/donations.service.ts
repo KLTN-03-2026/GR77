@@ -42,16 +42,16 @@ export class DonationsService {
             return await (this.prisma as any).$transaction(async (tx: any) => {
                 const user = await tx.user.findUnique({
                     where: { id: userId },
-                    select: { balance: true }
+                    include: { wallet: true }
                 });
 
-                if (!user || user.balance < dto.amount) {
+                if (!user || !user.wallet || user.wallet.balance.lessThan(dto.amount)) {
                     throw new BadRequestException('Insufficient wallet balance');
                 }
 
                 // 1. Deduct Balance
-                await tx.user.update({
-                    where: { id: userId },
+                await tx.userWallet.update({
+                    where: { userId: userId },
                     data: { balance: { decrement: new Prisma.Decimal(dto.amount) } }
                 });
 

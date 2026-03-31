@@ -164,8 +164,8 @@ export default function WalletPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-8 bg-white min-h-screen">
-        <div className="max-w-5xl mx-auto flex flex-col items-center justify-center py-24 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50 gap-4">
+      <div className="bg-white min-h-screen">
+        <div className="w-full flex flex-col items-center justify-center py-24 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50 gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
       </div>
@@ -173,8 +173,8 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 bg-white min-h-screen text-gray-900 font-sans tracking-tight">
-      <div className="max-w-5xl mx-auto">
+    <div className="bg-white min-h-screen text-gray-900 font-sans tracking-tight">
+      <div className="w-full">
 
         {/* --- HEADER --- */}
         <div className="mb-8">

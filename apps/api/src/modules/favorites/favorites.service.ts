@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /**
@@ -14,7 +14,7 @@ import { PrismaService } from '../../prisma/prisma.service';
  */
 @Injectable()
 export class FavoritesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /**
    * favorite()
@@ -37,11 +37,15 @@ export class FavoritesService {
    */
   async favorite(userId: string, campaignId: string) {
     // Kiểm tra campaign tồn tại
-    const exists = await (this.prisma as any).campaign.findUnique({
+    const campaign = await (this.prisma as any).campaign.findUnique({
       where: { id: campaignId },
-      select: { id: true },
+      select: { id: true, creatorUserId: true },
     });
-    if (!exists) throw new NotFoundException('Campaign not found');
+    if (!campaign) throw new NotFoundException('Campaign not found');
+
+    if (campaign.creatorUserId === userId) {
+      throw new BadRequestException('Bạn không thể yêu thích chiến dịch do chính mình tổ chức');
+    }
 
     try {
       // Tạo favorite record
@@ -119,10 +123,18 @@ export class FavoritesService {
     // Transaction: 2 queries cùng lúc
     const [total, favorites] = await (this.prisma as any).$transaction([
       // Count tổng favorites của user này
-      (this.prisma as any).favorite.count({ where: { userId } }),
+      (this.prisma as any).favorite.count({
+        where: {
+          userId,
+          campaign: { creatorUserId: { not: userId } }
+        }
+      }),
       // Lấy favorites paginated, join với campaign
       (this.prisma as any).favorite.findMany({
-        where: { userId },
+        where: {
+          userId,
+          campaign: { creatorUserId: { not: userId } }
+        },
         orderBy: { createdAt: 'desc' }, // Cái mới yêu thích trước
         skip,
         take: limit,
@@ -164,5 +176,13 @@ export class FavoritesService {
         _count: undefined,
       })),
     };
+  }
+
+  async getStatus(userId: string, campaignId: string) {
+    const record = await (this.prisma as any).favorite.findUnique({
+      where: { userId_campaignId: { userId, campaignId } },
+      select: { id: true },
+    });
+    return { favorited: !!record };
   }
 }

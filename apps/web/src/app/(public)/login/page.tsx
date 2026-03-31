@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useGlobalAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
     const router = useRouter();
+    const { login } = useGlobalAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -38,47 +40,31 @@ export default function LoginPage() {
 
             const data = await res.json();
 
-            let role: string | undefined;
-            try {
-                if (data.accessToken) {
-                    const payload = JSON.parse(
-                        atob(data.accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
-                    );
-                    role = payload?.role;
-                }
-            } catch {
-            }
-
-            if (role === "ADMIN") {
-                setError("Please use the Admin Portal (/admin/login) to log in.");
-                setIsLoading(false);
-                return;
-            }
-
-            if (data.accessToken) {
-                localStorage.setItem("accessToken", data.accessToken);
-            }
-            if (data.refreshToken) {
-                localStorage.setItem("refreshToken", data.refreshToken);
-            }
-
             // Fetch real profile for display name
+            let userProfile = {};
             try {
                 const meRes = await fetch("http://localhost:3001/auth/me", {
                     headers: { Authorization: `Bearer ${data.accessToken}` },
                 });
                 if (meRes.ok) {
-                    const me = await meRes.json();
-                    const fullName = [me.firstName, me.lastName].filter(Boolean).join(' ');
-                    localStorage.setItem("userName", fullName || me.username || email.split("@")[0]);
-                    if (me.avatarUrl) {
-                        localStorage.setItem("userAvatar", me.avatarUrl);
-                    }
-                } else {
-                    localStorage.setItem("userName", email.split("@")[0]);
+                    userProfile = await meRes.json();
                 }
-            } catch {
-                localStorage.setItem("userName", email.split("@")[0]);
+            } catch (err) {
+                console.error("Failed to fetch profile:", err);
+            }
+
+            // Sync with global auth context
+            login({
+                ...userProfile,
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken,
+            } as any);
+
+            const role = (userProfile as any)?.role;
+            if (role === "ADMIN") {
+                setError("Please use the Admin Portal (/admin/login) to log in.");
+                setIsLoading(false);
+                return;
             }
 
             router.push("/creator/campaigns");

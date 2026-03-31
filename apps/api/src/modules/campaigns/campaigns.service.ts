@@ -139,6 +139,10 @@ export class CampaignsService {
       where.status = 'ACTIVE';
     }
 
+    if (userId) {
+      where.creatorUserId = { not: userId };
+    }
+
     if (query.category) {
       where.category = { equals: query.category, mode: 'insensitive' };
     }
@@ -250,8 +254,53 @@ export class CampaignsService {
     const campaign = await this.prisma.campaign.findUnique({
       where: { id },
       include: {
-        creatorUser: { select: { id: true, username: true, email: true } },
+        creatorUser: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatarUrl: true
+              }
+            }
+          }
+        },
         categoryRel: true,
+        images: { orderBy: { order: 'asc' } },
+        comments: {
+          where: { parentId: null },
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profile: {
+                  select: { avatarUrl: true }
+                }
+              }
+            },
+            replies: {
+              take: 5,
+              orderBy: { createdAt: 'asc' },
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    profile: {
+                      select: { avatarUrl: true }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         _count: { select: { favorites: true, donations: true } }
       }
     });
@@ -269,13 +318,20 @@ export class CampaignsService {
   }
 
   async create(userId: string, dto: CreateCampaignDto) {
+    const { galleryUrls, ...rest } = dto;
     const campaign = await (this.prisma as any).campaign.create({
       data: {
-        ...dto,
+        ...rest,
         creatorUserId: userId,
         status: 'PENDING',
+        images: galleryUrls ? {
+          create: galleryUrls.map((url, index) => ({
+            url,
+            order: index
+          }))
+        } : undefined
       },
-      include: { creatorUser: true }
+      include: { creatorUser: true, images: true }
     });
 
     // Notify Admins (In-app)

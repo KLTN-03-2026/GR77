@@ -18,15 +18,15 @@ export default function CampaignsPage() {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No date';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="w-full">
       {/* Favorite Campaigns Section */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-6">
@@ -50,7 +50,7 @@ export default function CampaignsPage() {
                       className="object-cover"
                     />
                   </div>
-                  
+
                   <div className="p-4 text-center">
                     <h3 className="font-bold text-gray-900 mb-2">
                       {campaign.title}
@@ -66,7 +66,7 @@ export default function CampaignsPage() {
                       {/* cái datetime picker  */}
                       <div className="flex items-center justify-center">
                         <div className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-200 active:scale-95 transition cursor-pointer hover:border-blue-500 hover:text-blue-500">
-                          
+
                           <input
                             type="datetime-local"
                             className="bg-transparent outline-none text-sm cursor-pointer"
@@ -85,8 +85,8 @@ export default function CampaignsPage() {
 
           {/* View favorite campaigns link */}
           <div className="text-right">
-            <Link 
-              href="/favorites" 
+            <Link
+              href="/favorites"
               className="text-pink-500 hover:text-pink-600 font-medium inline-flex items-center gap-2"
             >
               View favorite campaigns
@@ -121,12 +121,12 @@ export default function CampaignsPage() {
                       className="object-cover"
                     />
                   </div>
-                  
+
                   <div className="p-4 text-center">
                     <h3 className="font-bold text-gray-900 mb-2">
                       {campaign.title}
                     </h3>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-sm text-gray-600">Amount Raised</span>
@@ -134,13 +134,13 @@ export default function CampaignsPage() {
                           ${campaign.amountRaised.toLocaleString()}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center justify-center">
                         <div className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-200 active:scale-95 transition cursor-pointer hover:border-blue-500 hover:text-blue-500">
                           <input
                             type="datetime-local"
                             className="bg-transparent outline-none text-sm cursor-pointer"
-                            defaultValue={campaign.endDate || campaign.startDate}/>
+                            defaultValue={campaign.endDate || campaign.startDate} />
                           <CalendarIcon className="h-4 w-4" />
                         </div>
                       </div>
@@ -152,8 +152,8 @@ export default function CampaignsPage() {
           </div>
           {/* View activity link */}
           <div className="text-right">
-            <Link 
-              href="/activity" 
+            <Link
+              href="/activity"
               className="text-blue-500 hover:text-blue-600 font-medium inline-flex items-center gap-2"
             >
               View activity history
@@ -188,12 +188,12 @@ export default function CampaignsPage() {
                       className="object-cover"
                     />
                   </div>
-                  
+
                   <div className="p-4 text-center">
                     <h3 className="font-bold text-gray-900 mb-2">
                       {campaign.title}
                     </h3>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-sm text-gray-600">Amount Raised</span>
@@ -201,13 +201,13 @@ export default function CampaignsPage() {
                           ${campaign.amountRaised.toLocaleString()}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center justify-center">
                         <div className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-200 active:scale-95 transition cursor-pointer hover:border-blue-500 hover:text-blue-500">
                           <input
                             type="datetime-local"
                             className="bg-transparent outline-none text-sm cursor-pointer"
-                            defaultValue={campaign.endDate || campaign.startDate}/>
+                            defaultValue={campaign.endDate || campaign.startDate} />
                           <CalendarIcon className="h-4 w-4" />
                         </div>
                       </div>
@@ -220,8 +220,8 @@ export default function CampaignsPage() {
 
           {/* View joined campaigns link */}
           <div className="text-right">
-            <Link 
-              href="/joined" 
+            <Link
+              href="/joined"
               className="text-green-500 hover:text-green-600 font-medium inline-flex items-center gap-2"
             >
               View joined campaigns
@@ -256,12 +256,12 @@ export default function CampaignsPage() {
                       className="object-cover"
                     />
                   </div>
-                  
+
                   <div className="p-4 text-center">
                     <h3 className="font-bold text-gray-900 mb-2">
                       {campaign.title}
                     </h3>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-sm text-gray-600">Amount Raised</span>
@@ -269,13 +269,13 @@ export default function CampaignsPage() {
                           ${campaign.amountRaised.toLocaleString()}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center justify-center">
                         <div className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 hover:bg-gray-200 active:scale-95 transition cursor-pointer hover:border-blue-500 hover:text-blue-500">
                           <input
                             type="datetime-local"
                             className="bg-transparent outline-none text-sm cursor-pointer"
-                            defaultValue={campaign.endDate || campaign.startDate}/>
+                            defaultValue={campaign.endDate || campaign.startDate} />
                           <CalendarIcon className="h-4 w-4" />
                         </div>
                       </div>
@@ -288,8 +288,8 @@ export default function CampaignsPage() {
 
           {/* View my campaigns link */}
           <div className="text-right">
-            <Link 
-              href="/creator/campaigns" 
+            <Link
+              href="/creator/campaigns"
               className="text-purple-500 hover:text-purple-600 font-medium inline-flex items-center gap-2"
             >
               View my campaigns

@@ -3,15 +3,20 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ViewHistoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // click xem: nếu chưa có -> create, có -> update viewedAt
   async trackView(userId: string, campaignId: string) {
-    const exists = await this.prisma.campaign.findUnique({
+    const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
-      select: { id: true },
+      select: { id: true, creatorUserId: true },
     });
-    if (!exists) throw new NotFoundException('Campaign not found');
+    if (!campaign) throw new NotFoundException('Campaign not found');
+
+    // Nếu người xem là người tạo -> không lưu lịch sử
+    if (campaign.creatorUserId === userId) {
+      return { tracked: false, message: 'Creator views are not tracked' };
+    }
 
     // Prisma upsert theo unique compound key userId + campaignId
     const record = await this.prisma.campaignViewHistory.upsert({
@@ -31,9 +36,17 @@ export class ViewHistoriesService {
     const skip = (page - 1) * limit;
 
     const [total, rows] = await this.prisma.$transaction([
-      this.prisma.campaignViewHistory.count({ where: { userId } }),
+      this.prisma.campaignViewHistory.count({
+        where: {
+          userId,
+          campaign: { creatorUserId: { not: userId } }
+        }
+      }),
       this.prisma.campaignViewHistory.findMany({
-        where: { userId },
+        where: {
+          userId,
+          campaign: { creatorUserId: { not: userId } }
+        },
         orderBy: { viewedAt: 'desc' },
         skip,
         take: limit,

@@ -14,6 +14,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { DonationsModule } from './modules/donations/donations.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { CommentsModule } from './modules/comments/comments.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
     CampaignsModule,    // Campaigns endpoints (public)
     CategoriesModule,   // Categories endpoints
     FavoritesModule,    // Favorites endpoints (JWT protected)
+    CommentsModule,     // Comments endpoints (public/protected)
 
     ViewHistoriesModule, // View history endpoints (JWT protected)
     UploadModule,

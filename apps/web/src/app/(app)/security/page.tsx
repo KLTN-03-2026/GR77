@@ -192,7 +192,7 @@ export default function SecurityPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto pb-12">
+    <div className="w-full pb-12">
       <style dangerouslySetInnerHTML={{
         __html: `
         .shake { animation: shake 0.5s ease-in-out; }

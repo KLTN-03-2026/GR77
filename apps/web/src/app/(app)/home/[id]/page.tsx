@@ -3,33 +3,16 @@
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-    ArrowLeft,
-    MessageSquare,
-    Heart,
-    Send,
-    MoreHorizontal,
-    ThumbsUp,
-    MapPin,
-    Calendar,
-    Target,
-    Sparkles,
-    HandHeart,
-    Share2,
-    Bookmark,
-    Users,
-    Wallet,
-    CheckCircle,
-    XCircle,
-    AlertCircle,
-    RotateCcw
-} from "lucide-react";
+import { useGlobalAuth } from "@/contexts/AuthContext";
+import { ArrowLeft, Bookmark } from "lucide-react";
 
-declare global {
-    interface Window {
-        ethereum?: any;
-    }
-}
+// Sub-components
+import { CampaignHeader } from "@/components/campaign/CampaignHeader";
+import { CampaignMeta } from "@/components/campaign/CampaignMeta";
+import { CampaignGoalProgress } from "@/components/campaign/CampaignGoalProgress";
+import { CampaignDiscussion } from "@/components/campaign/CampaignDiscussion";
+import { DonateModal } from "@/components/campaign/DonateModal";
+import { ReportModal } from "@/components/campaign/ReportModal";
 
 function formatCurrency(amount: number | string) {
     return Number(amount).toLocaleString("vi-VN");
@@ -44,6 +27,12 @@ function formatDate(dateString?: string) {
     });
 }
 
+declare global {
+    interface Window {
+        ethereum?: any;
+    }
+}
+
 const QUICK_AMOUNTS = [50000, 100000, 200000, 500000];
 
 export default function CampaignDetailPage({
@@ -53,11 +42,13 @@ export default function CampaignDetailPage({
 }) {
     const { id } = use(params);
     const router = useRouter();
+    const { user: currentUser } = useGlobalAuth();
 
     /* ── API fetch ── */
     const [campaign, setCampaign] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [fetchError, setFetchError] = useState("");
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
     useEffect(() => {
         const fetchCampaign = async () => {
@@ -85,7 +76,7 @@ export default function CampaignDetailPage({
         fetchCampaign();
     }, [id]);
 
-    // Track view history when campaign loads successfully
+    // Track view history
     useEffect(() => {
         if (!campaign) return;
         const token = localStorage.getItem("accessToken");
@@ -96,41 +87,36 @@ export default function CampaignDetailPage({
         }).catch(() => { });
     }, [campaign, id]);
 
-    /* ── Image carousel ── */
-    const fallbackImages = [
-        "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200",
-        "https://images.unsplash.com/photo-1509099836639-18ba1795216d?q=80&w=1200",
-        "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=1200",
-        "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1200",
-        "https://images.unsplash.com/photo-1594708767771-a7502209ff51?q=80&w=1200",
-    ];
-    const images = campaign?.coverImageUrl
-        ? [campaign.coverImageUrl, ...fallbackImages.slice(0, 4)]
-        : fallbackImages;
-
-    const [currentImgIndex, setCurrentImgIndex] = useState(0);
-    useEffect(() => {
-        if (!campaign) return;
-        const timer = setInterval(
-            () => setCurrentImgIndex((p) => (p + 1) % images.length),
-            3000
-        );
-        return () => clearInterval(timer);
-    }, [images.length, campaign]);
-
-    /* ── State cho Donate modal ── */
+    /* ── State ── */
     const [donateOpen, setDonateOpen] = useState(false);
     const [donateAmount, setDonateAmount] = useState("");
     const [isDonating, setIsDonating] = useState(false);
     const [donated, setDonated] = useState(false);
-    const [bookmarked, setBookmarked] = useState(false);
+    const [isLiked, setIsLiked] = useState(false);
     const [donationMethod, setDonationMethod] = useState<'PAYOS' | 'BLOCKCHAIN'>('PAYOS');
     const [blockchainLoading, setBlockchainLoading] = useState(false);
     const [blockchainError, setBlockchainError] = useState<string | null>(null);
 
-    /* ── Participant state ── */
     const [isJoined, setIsJoined] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
+
+    const [comments, setComments] = useState<any[]>([]);
+    const [newComment, setNewComment] = useState("");
+    const [replyingTo, setReplyingTo] = useState<any>(null);
+    const [isCommenting, setIsCommenting] = useState(false);
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+    const [reportReason, setReportReason] = useState("");
+
+    const fetchComments = async () => {
+        try {
+            const res = await fetch(`http://localhost:3001/comments/campaign/${id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setComments(data);
+            }
+        } catch (err) { }
+    };
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -140,17 +126,57 @@ export default function CampaignDetailPage({
         }
 
         const token = localStorage.getItem("accessToken");
-        if (!token) return;
-        fetch(`http://localhost:3001/participants/${id}/status`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.joined) setIsJoined(true);
+        if (token) {
+            fetch(`http://localhost:3001/participants/${id}/status`, {
+                headers: { Authorization: `Bearer ${token}` },
             })
-            .catch(() => { });
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.joined) setIsJoined(true);
+                })
+                .catch(() => { });
+
+            fetch(`http://localhost:3001/favorites/${id}/status`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.favorited) setIsLiked(true);
+                })
+                .catch(() => { });
+        }
+        fetchComments();
     }, [id]);
 
+    const handleToggleLike = async () => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("Vui lòng đăng nhập để thực hiện chức năng này");
+            router.push("/login");
+            return;
+        }
+
+        try {
+            const method = isLiked ? "DELETE" : "POST";
+            const url = isLiked ? `http://localhost:3001/favorites/${id}` : `http://localhost:3001/favorites`;
+            const body = isLiked ? undefined : JSON.stringify({ campaignId: id });
+
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body,
+            });
+
+            if (res.ok) {
+                setIsLiked(!isLiked);
+            }
+        } catch (err) { }
+    };
+
+    /* ── Handlers ── */
     const handleJoin = async () => {
         const token = localStorage.getItem("accessToken");
         if (!token) {
@@ -183,15 +209,9 @@ export default function CampaignDetailPage({
         }
     };
 
-    /* ── Derived values ── */
-    const fundingGoal = Number(campaign?.fundingGoalAmount ?? 0);
-    const minimumDonation = Number(campaign?.minimumDonationAmount ?? 0);
-    const totalRaised = Number(campaign?.currentRaisedAmount ?? 0);
-    const raisedPercent =
-        fundingGoal > 0 ? Math.min(Math.round((totalRaised / fundingGoal) * 100), 100) : 0;
-
     const handleDonate = async () => {
         const amount = Number(donateAmount);
+        const minimumDonation = Number(campaign?.minimumDonationAmount ?? 0);
         if (!amount || amount < minimumDonation) {
             alert(`Minimum donation is ${formatCurrency(minimumDonation)} VND`);
             return;
@@ -211,10 +231,7 @@ export default function CampaignDetailPage({
                     "Content-Type": "application/json",
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({
-                    campaignId: id,
-                    amount: amount,
-                }),
+                body: JSON.stringify({ campaignId: id, amount: amount }),
             });
 
             if (!res.ok) {
@@ -223,9 +240,7 @@ export default function CampaignDetailPage({
             }
 
             const data = await res.json();
-            if (data.checkoutUrl) {
-                window.location.href = data.checkoutUrl;
-            }
+            if (data.checkoutUrl) window.location.href = data.checkoutUrl;
         } catch (err: any) {
             alert(err.message || "Connection error");
         } finally {
@@ -280,300 +295,229 @@ export default function CampaignDetailPage({
         }
     };
 
+    const handleSubmitComment = async () => {
+        if (!newComment.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("Vui lòng đăng nhập để bình luận");
+            router.push("/login");
+            return;
+        }
+
+        setIsCommenting(true);
+        try {
+            const res = await fetch(`http://localhost:3001/comments`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    campaignId: id,
+                    content: newComment,
+                    parentId: replyingTo?.id || null,
+                }),
+            });
+
+            if (res.ok) {
+                setNewComment("");
+                setReplyingTo(null);
+                fetchComments();
+            } else {
+                const data = await res.json();
+                alert(data.message || "Không thể gửi bình luận");
+            }
+        } catch (err) {
+            alert("Lỗi kết nối");
+        } finally {
+            setIsCommenting(false);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+        const token = localStorage.getItem("accessToken");
+        try {
+            const res = await fetch(`http://localhost:3001/comments/${commentId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) fetchComments();
+        } catch (err) { }
+    };
+
+    const handleReportComment = async () => {
+        if (!reportReason.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        try {
+            const res = await fetch(`http://localhost:3001/comments/${reportingCommentId}/report`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ reason: reportReason }),
+            });
+            if (res.ok) {
+                alert("Đã gửi báo cáo bình luận.");
+                setReportModalOpen(false);
+                setReportReason("");
+            }
+        } catch (err) { }
+    };
+
+    const getAvatar = (user: any) => {
+        return user?.profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}`;
+    };
+
+    /* ── Render ── */
+    const fundingGoal = Number(campaign?.fundingGoalAmount ?? 0);
+    const totalRaised = Number(campaign?.currentRaisedAmount ?? 0);
+    const raisedPercent = fundingGoal > 0 ? Math.min(Math.round((totalRaised / fundingGoal) * 100), 100) : 0;
+
+    const images = campaign?.images?.length
+        ? campaign.images.map((img: any) => img.url)
+        : (campaign?.coverImageUrl ? [campaign.coverImageUrl] : []);
+
     return (
-        <div className="p-4 md:p-8 bg-white min-h-screen">
-            <div className="max-w-5xl mx-auto">
-
-                {/* --- NAVIGATION --- */}
-                <div className="mb-6 flex items-center justify-between">
-                    <Link
-                        href="/list"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all group font-medium"
-                    >
-                        <div className="p-1.5 rounded-full bg-gray-100 group-hover:bg-blue-100 transition-colors">
-                            <ArrowLeft className="w-5 h-5" />
-                        </div>
-                        Back to Campaigns
-                    </Link>
-
-                    {!isLoading && !fetchError && campaign && (
-                        <button
-                            onClick={() => setBookmarked(!bookmarked)}
-                            className={`p-3 rounded-2xl border transition-all ${bookmarked ? "border-blue-400 bg-blue-50 text-blue-500 shadow-sm" : "border-gray-100 text-gray-300 hover:border-blue-200"}`}
-                        >
-                            <Bookmark className="w-5 h-5" fill={bookmarked ? "currentColor" : "none"} />
-                        </button>
-                    )}
-                </div>
-
-                {/* Loading state */}
-                {isLoading && (
-                    <div className="flex flex-col items-center justify-center py-32 gap-4">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
-                        <p className="text-gray-400 font-medium">Loading campaign...</p>
+        <div className="w-full lg:-mt-8">
+            {/* Navigation */}
+            <div className="mb-0 flex items-center justify-between">
+                <Link href="/list" className="inline-flex items-center gap-2 px-0 py-1.5 rounded-full text-gray-400 hover:text-blue-600 transition-all group font-semibold text-sm">
+                    <div className="p-1.5 rounded-full bg-gray-50 group-hover:bg-blue-50 transition-colors">
+                        <ArrowLeft className="w-4 h-4" />
                     </div>
-                )}
+                    Back to Campaigns
+                </Link>
 
-                {/* Error state */}
-                {!isLoading && fetchError && (
-                    <div className="text-center py-32">
-                        <p className="text-red-500 font-bold">{fetchError}</p>
-                    </div>
-                )}
-
-                {/* --- MAIN CONTENT --- */}
                 {!isLoading && !fetchError && campaign && (
-                    <div className="space-y-10">
-
-                        {/* 1. Header & Image Carousel */}
-                        <section>
-                            <h1 className="text-4xl font-extrabold text-gray-900 mb-6 tracking-tight">{campaign.title}</h1>
-                            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl bg-black aspect-video group">
-                                <span className={`absolute top-6 left-6 text-white px-6 py-2 rounded-full font-bold z-20 shadow-xl ${campaign.status === "ACTIVE" ? "bg-green-500" : "bg-yellow-500"}`}>
-                                    {campaign.status}
-                                </span>
-
-                                {images.map((img, index) => (
-                                    <img
-                                        key={index}
-                                        src={img}
-                                        alt={`Slide ${index}`}
-                                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${index === currentImgIndex ? "opacity-100 z-10" : "opacity-0 z-0"}`}
-                                    />
-                                ))}
-
-                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
-                                    {images.map((_, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setCurrentImgIndex(i)}
-                                            className={`h-2.5 transition-all rounded-full ${i === currentImgIndex ? "w-10 bg-white" : "w-2.5 bg-white/50"}`}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                            <p className="mt-8 text-gray-600 leading-relaxed text-xl font-medium max-w-4xl">
-                                {campaign.description}
-                            </p>
-                        </section>
-
-                        {/* 2. Timeline / Details (Restored UI) */}
-                        <section className="relative space-y-12 py-6">
-                            <div className="absolute left-[11px] top-10 bottom-10 w-[1px] bg-black"></div>
-
-                            <div className="flex items-center gap-6 relative text-lg">
-                                <div className="w-6 h-6 bg-black rounded-full z-10 shrink-0"></div>
-                                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                                    <span className="font-bold text-gray-900">Category :</span>
-                                    <span className="font-bold px-4 py-1 rounded-full text-sm bg-gray-50 text-gray-900 border border-gray-100">
-                                        {campaign.categoryRel?.name || campaign.category}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-6 relative text-lg">
-                                <div className="w-6 h-6 bg-black rounded-full z-10 shrink-0"></div>
-                                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                                    <span className="font-bold text-gray-900">Status :</span>
-                                    <span className={`font-bold px-4 py-1 rounded-full text-sm ${campaign.status === "ACTIVE" ? "bg-green-50 text-green-600" : "bg-yellow-50 text-yellow-500"}`}>
-                                        {campaign.status}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-6 relative text-lg">
-                                <div className="w-6 h-6 bg-black rounded-full z-10 shrink-0"></div>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                                    <span className="font-bold text-gray-900">Timeline :</span>
-                                    <span className="text-gray-900">{formatDate(campaign.startAt)}</span>
-                                    <span className="text-gray-400">-</span>
-                                    <span className="text-gray-900">{formatDate(campaign.endAt)}</span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-6 relative text-lg">
-                                <div className="w-6 h-6 bg-black rounded-full z-10 shrink-0"></div>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                                    <span className="font-bold text-gray-900">Location :</span>
-                                    <span className="text-gray-900 uppercase tracking-wide">{campaign.locationText || '—'}</span>
-                                </div>
-                            </div>
-                        </section>
-
-                        <hr className="border-gray-100 border-4 rounded-full" />
-
-                        {/* 3. Progress & Donate CTA (Restored UI with New Logic) */}
-                        <section className="bg-white border border-gray-100 rounded-[3.5rem] p-10 shadow-xl shadow-gray-200/50">
-                            <div className="flex flex-col md:flex-row items-center gap-16 justify-between">
-                                <div className="relative w-56 h-56 shrink-0">
-                                    <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                                        <path className="text-gray-100" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" />
-                                        <path className="text-black" strokeDasharray={`${raisedPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-4xl font-black text-gray-900">{raisedPercent}%</span>
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Raised</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex-1 space-y-6 w-full max-w-md">
-                                    <div className="flex justify-between p-4 bg-gray-50 rounded-2xl items-center">
-                                        <span className="font-bold text-gray-500">Goal Amount:</span>
-                                        <span className="font-black text-gray-900 text-xl">{formatCurrency(fundingGoal)} VNĐ</span>
-                                    </div>
-                                    <div className="flex justify-between p-4 bg-gray-50 rounded-2xl items-center">
-                                        <span className="font-bold text-gray-500">Total Raised:</span>
-                                        <span className="font-black text-black text-xl">{formatCurrency(totalRaised)} VNĐ</span>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <button
-                                            onClick={() => setDonateOpen(true)}
-                                            className="flex-1 py-5 bg-[#FFD700] hover:bg-yellow-400 text-white font-black text-2xl rounded-full shadow-lg shadow-yellow-200/50 transition-all active:scale-95"
-                                        >
-                                            Donate
-                                        </button>
-                                        <button
-                                            onClick={handleJoin}
-                                            disabled={isJoined}
-                                            className="px-10 py-5 bg-gray-900 text-white font-black rounded-full hover:bg-black transition-all disabled:opacity-50"
-                                        >
-                                            {isJoined ? "Joined" : "Join Free"}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* 4. Professional Comment Section (Restored) */}
-                        <section className="space-y-10 pb-20 text-gray-900">
-                            <div className="flex items-center justify-between border-b-2 border-gray-100 pb-4">
-                                <div className="flex items-center gap-3">
-                                    <MessageSquare className="w-7 h-7 text-blue-500" />
-                                    <h3 className="text-2xl font-bold">Community Discussion</h3>
-                                </div>
-                                <span className="text-sm font-bold text-gray-400 bg-gray-100 px-4 py-1 rounded-full">248 Comments</span>
-                            </div>
-
-                            <div className="flex gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Tiên" className="w-12 h-12 rounded-full" alt="User" />
-                                <div className="flex-1 relative">
-                                    <textarea
-                                        placeholder="Share your thoughts about this campaign..."
-                                        className="w-full bg-transparent border-none focus:ring-0 text-gray-700 resize-none py-2 outline-none"
-                                        rows={2}
-                                    />
-                                    <div className="flex justify-end mt-2">
-                                        <button className="bg-blue-600 text-white p-2.5 rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-90">
-                                            <Send className="w-5 h-5" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-10 mt-10">
-                                {[
-                                    { name: "Ngọc Tiên", text: "Dự án quá tuyệt vời, mong có nhiều chương trình như này hơn nữa!", time: "2 giờ trước", likes: 12, img: "1" },
-                                    { name: "Hiuuuu", text: "Mình có thể đăng ký làm tình nguyện viên tại Thái Bình không ạ?", time: "5 giờ trước", likes: 8, img: "2", reply: "Chào Hiuuuu, bạn liên hệ Fanpage nhé!" },
-                                    { name: "Trà My", text: "Gom mặt trời, gom yêu thương <3", time: "1 ngày trước", likes: 45, img: "3" }
-                                ].map((comment, i) => (
-                                    <div key={i} className="flex gap-5 group">
-                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.img}`} className="w-14 h-14 rounded-full shadow-sm" alt="" />
-                                        <div className="flex-1 space-y-3">
-                                            <div className="bg-white border border-gray-50 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <h4 className="font-bold text-gray-900 text-lg">{comment.name}</h4>
-                                                        <span className="text-xs text-gray-400 font-medium tracking-wide uppercase">{comment.time}</span>
-                                                    </div>
-                                                    <button className="text-gray-300 hover:text-gray-600"><MoreHorizontal className="w-5 h-5" /></button>
-                                                </div>
-                                                <p className="text-gray-600 mt-4 leading-relaxed">{comment.text}</p>
-                                                <div className="flex items-center gap-6 mt-6 pt-4 border-t border-gray-50">
-                                                    <button className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-blue-500"><ThumbsUp className="w-4 h-4" /> {comment.likes}</button>
-                                                    <button className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-gray-600"><MessageSquare className="w-4 h-4" /> Reply</button>
-                                                    <button className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-pink-500"><Heart className="w-4 h-4" /> Love</button>
-                                                </div>
-                                            </div>
-                                            {comment.reply && (
-                                                <div className="flex gap-4 ml-10 mt-4">
-                                                    <div className="w-1 bg-blue-100 rounded-full my-2"></div>
-                                                    <div className="bg-blue-50/50 p-5 rounded-[1.5rem] flex-1">
-                                                        <p className="text-sm font-bold text-blue-900">Admin Kindlink</p>
-                                                        <p className="text-gray-600 text-sm mt-1">{comment.reply}</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
-                    </div>
+                    <button
+                        onClick={handleToggleLike}
+                        className={`p-2 rounded-xl border transition-all ${isLiked ? "border-red-400 bg-red-50 text-red-500 shadow-sm" : "border-gray-50 text-gray-300 hover:border-red-200"}`}
+                    >
+                        <Bookmark className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} />
+                    </button>
                 )}
             </div>
 
-            {/* --- DONATE MODAL (Restored Logic) --- */}
-            {donateOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-300 relative">
-                        {donated ? (
-                            <div className="text-center space-y-4 py-10">
-                                <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full mx-auto flex items-center justify-center">
-                                    <CheckCircle className="w-12 h-12" />
-                                </div>
-                                <h3 className="text-3xl font-black text-gray-900">Success!</h3>
-                                <p className="text-gray-500 font-medium font-sans">Cảm ơn bạn đã đóng góp cho chiến dịch.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-center px-2">
-                                    <h3 className="text-2xl font-black text-gray-900">Quyên góp cho quỹ</h3>
-                                    <button onClick={() => setDonateOpen(false)} className="text-gray-300 hover:text-gray-900 text-3xl font-light">&times;</button>
-                                </div>
-
-                                {blockchainError && (
-                                    <div className="bg-red-50 border border-red-100 p-4 rounded-2xl">
-                                        <p className="text-xs text-red-600 leading-relaxed font-bold">{blockchainError}</p>
-                                        <div className="flex gap-2 mt-2">
-                                            <button onClick={() => handleBlockchainDonate(Number(donateAmount))} className="flex-1 py-1.5 bg-red-100 text-red-700 text-[10px] font-bold uppercase rounded-lg">Try Again</button>
-                                            <button onClick={() => handleBlockchainDonate(Number(donateAmount), true)} className="flex-1 py-1.5 bg-gray-900 text-white text-[10px] font-bold uppercase rounded-lg">Demo Success</button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="space-y-4">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Phương thức</p>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button onClick={() => { setDonationMethod('PAYOS'); setBlockchainError(null); }} className={`p-4 rounded-3xl border-2 flex items-center gap-3 transition-all ${donationMethod === 'PAYOS' ? 'border-blue-500 bg-blue-50' : 'border-gray-50 bg-gray-50'}`}>
-                                            <HandHeart className={`w-5 h-5 ${donationMethod === 'PAYOS' ? 'text-blue-500' : 'text-gray-400'}`} />
-                                            <span className="text-sm font-bold text-gray-900">Direct Pay</span>
-                                        </button>
-                                        <button onClick={() => { setDonationMethod('BLOCKCHAIN'); setBlockchainError(null); }} className={`p-4 rounded-3xl border-2 flex items-center gap-3 transition-all ${donationMethod === 'BLOCKCHAIN' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-50 bg-gray-50'}`}>
-                                            <Wallet className={`w-5 h-5 ${donationMethod === 'BLOCKCHAIN' ? 'text-indigo-500' : 'text-gray-400'}`} />
-                                            <span className="text-sm font-bold text-gray-900">Blockchain</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Số tiền (VNĐ)</p>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {QUICK_AMOUNTS.map(amt => (
-                                            <button key={amt} onClick={() => setDonateAmount(String(amt))} className={`py-3 rounded-2xl text-[10px] font-bold border-2 transition-all ${donateAmount === String(amt) ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-100 text-gray-400 hover:border-blue-200'}`}>{(amt / 1000)}K</button>
-                                        ))}
-                                    </div>
-                                    <input type="number" value={donateAmount} onChange={(e) => setDonateAmount(e.target.value)} placeholder="Nhập số tiền khác..." className="w-full bg-gray-50 border-none focus:ring-2 focus:ring-blue-500 rounded-2xl p-5 text-xl font-black text-gray-900" />
-                                </div>
-
-                                <button onClick={handleDonate} disabled={isDonating || blockchainLoading || !donateAmount} className={`w-full py-6 rounded-full font-black text-xl text-white transition-all shadow-xl disabled:opacity-50 ${donationMethod === 'BLOCKCHAIN' ? 'bg-indigo-600 shadow-indigo-100' : 'bg-blue-600 shadow-blue-100'}`}>
-                                    {isDonating || blockchainLoading ? "Processing..." : (donationMethod === 'BLOCKCHAIN' ? "Pay with MetaMask" : "Donate Now")}
-                                </button>
-                            </div>
-                        )}
-                    </div>
+            {isLoading && (
+                <div className="flex flex-col items-center justify-center py-24 gap-4">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" />
+                    <p className="text-gray-400 font-medium">Loading campaign...</p>
                 </div>
             )}
+
+            {fetchError && (
+                <div className="text-center py-24">
+                    <p className="text-red-500 font-bold">{fetchError}</p>
+                </div>
+            )}
+
+            {!isLoading && !fetchError && campaign && (
+                <div className="space-y-4">
+                    {/* Title at top */}
+                    <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">{campaign.title}</h1>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        {/* Left: Image Carousel */}
+                        <div className="lg:col-span-7">
+                            <CampaignHeader
+                                title=""
+                                status={campaign.status}
+                                images={images}
+                                isCreator={currentUser?.id === campaign?.creatorUserId}
+                                isLiked={isLiked}
+                                onToggleLike={handleToggleLike}
+                            />
+                        </div>
+
+                        {/* Right: Campaign Meta Info */}
+                        <div className="lg:col-span-5 bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100/50">
+                            <CampaignMeta campaign={campaign} formatDate={formatDate} />
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-xl shadow-gray-200/40 relative overflow-hidden group">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-1.5 h-6 bg-[#47c9e5] rounded-full"></div>
+                            <h2 className="text-xl font-bold text-gray-900 tracking-tight italic">Mô tả chiến dịch</h2>
+                        </div>
+                        <div className={`text-gray-600 leading-relaxed text-lg font-medium transition-all duration-500 ${!isDescriptionExpanded ? "line-clamp-3" : ""}`}>
+                            {campaign.description}
+                        </div>
+                        {campaign.description?.length > 280 && (
+                            <button
+                                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                className="mt-4 text-sm font-bold text-[#47c9e5] hover:text-cyan-600 transition-all flex items-center gap-1.5"
+                            >
+                                {isDescriptionExpanded ? "Thu gọn" : "Xem thêm"}
+                                <div className={`w-4 h-4 transition-transform duration-300 ${isDescriptionExpanded ? "rotate-180" : ""}`}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                            </button>
+                        )}
+                    </div>
+
+                    <hr className="border-gray-100 border-4 rounded-full" />
+
+                    <CampaignGoalProgress
+                        raisedPercent={raisedPercent}
+                        fundingGoal={fundingGoal}
+                        totalRaised={totalRaised}
+                        isJoined={isJoined}
+                        isCreator={currentUser?.id === campaign?.creatorUserId}
+                        campaignId={campaign?.id}
+                        setDonateOpen={setDonateOpen}
+                        handleJoin={handleJoin}
+                        formatCurrency={formatCurrency}
+                    />
+
+                    <CampaignDiscussion
+                        comments={comments}
+                        campaign={campaign}
+                        currentUser={currentUser}
+                        newComment={newComment}
+                        setNewComment={setNewComment}
+                        replyingTo={replyingTo}
+                        setReplyingTo={setReplyingTo}
+                        isCommenting={isCommenting}
+                        handleSubmitComment={handleSubmitComment}
+                        handleDeleteComment={handleDeleteComment}
+                        setReportingCommentId={setReportingCommentId}
+                        setReportModalOpen={setReportModalOpen}
+                        getAvatar={getAvatar}
+                        formatDate={formatDate}
+                    />
+                </div>
+            )}
+
+            <DonateModal
+                donateOpen={donateOpen}
+                setDonateOpen={setDonateOpen}
+                donateAmount={donateAmount}
+                setDonateAmount={setDonateAmount}
+                isDonating={isDonating}
+                donated={donated}
+                setDonated={setDonated}
+                donationMethod={donationMethod}
+                setDonationMethod={setDonationMethod}
+                blockchainLoading={blockchainLoading}
+                blockchainError={blockchainError}
+                setBlockchainError={setBlockchainError}
+                handleDonate={handleDonate}
+                handleBlockchainDonate={handleBlockchainDonate}
+                QUICK_AMOUNTS={QUICK_AMOUNTS}
+            />
+
+            <ReportModal
+                reportModalOpen={reportModalOpen}
+                setReportModalOpen={setReportModalOpen}
+                reportReason={reportReason}
+                setReportReason={setReportReason}
+                handleReportComment={handleReportComment}
+            />
         </div>
     );
 }

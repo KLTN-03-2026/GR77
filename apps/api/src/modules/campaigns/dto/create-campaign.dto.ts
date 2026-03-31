@@ -52,4 +52,8 @@ export class CreateCampaignDto {
     @IsOptional()
     @IsString()
     categoryId?: string;
+
+    @IsOptional()
+    @IsString({ each: true })
+    galleryUrls?: string[];
 }
