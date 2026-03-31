@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role, Prisma } from '@prisma/client';
-import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { MailService } from '../mail/mail.service';
 
@@ -32,7 +31,6 @@ function mapRoleLabel(role: Role): string {
 export class UsersService {
     constructor(
         private prisma: PrismaService,
-        private configService: ConfigService,
         private mailService: MailService,
     ) { }
 
@@ -236,56 +234,6 @@ export class UsersService {
 
         await this.mailService.sendAccountUnlockEmail(user.email);
         return user;
-    }
-
-    /**
-     * Accept/Update policy acceptance for user.
-     * Called when user first registers or when policy is updated.
-     */
-    async acceptPolicy(userId: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-        });
-
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-
-        const policyVersion = this.configService.get<string>('POLICY_VERSION') || new Date().toISOString().split('T')[0];
-
-        return this.prisma.user.update({
-            where: { id: userId },
-            data: {
-                acceptedPolicyAt: new Date(),
-                policyVersion,
-            },
-            select: {
-                id: true,
-                email: true,
-                acceptedPolicyAt: true,
-                policyVersion: true,
-            },
-        });
-    }
-
-    /**
-     * Check if user needs to accept updated policy.
-     * Returns true if user's policy version differs from current version.
-     */
-    async needsPolicyUpdate(userId: string): Promise<boolean> {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-            select: {
-                policyVersion: true,
-            },
-        });
-
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-
-        const currentVersion = this.configService.get<string>('POLICY_VERSION') || new Date().toISOString().split('T')[0];
-        return user.policyVersion !== currentVersion;
     }
 
     // ── Private helpers ──────────────────────────────────────────
