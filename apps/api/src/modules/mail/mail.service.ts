@@ -1,52 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
+  private from: string;
 
   constructor(private configService: ConfigService) {
-    const host = this.configService.get('MAIL_HOST');
-    const port = this.configService.get('MAIL_PORT');
-    const user = this.configService.get('MAIL_USER');
-    const pass = this.configService.get('MAIL_PASS');
-
-    // For Ethereal testing if credentials aren't provided
-    if (!host || !user || !pass) {
-      console.warn('Mail credentials not provided, using Ethereal fallback');
-      this.transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        auth: {
-          user: 'test.user@ethereal.email',
-          pass: 'test.password',
-        },
-      });
-    } else {
-      const isGmail = host.includes('gmail.com');
-      const transportOptions: any = {
-        host: isGmail ? 'smtp.gmail.com' : host,
-        port: isGmail ? 465 : port,
-        secure: isGmail ? true : (port === 465),
-        auth: {
-          user,
-          pass,
-        },
-        tls: {
-          rejectUnauthorized: false
-        },
-        family: 4
-      };
-
-      this.transporter = nodemailer.createTransport(transportOptions);
-    }
+    const apiKey = this.configService.get('RESEND_API_KEY');
+    this.resend = new Resend(apiKey || 're_default_key');
+    // If domain is not verified, Resend requires using their default onboarding email
+    this.from = this.configService.get('MAIL_FROM') || 'onboarding@resend.dev';
   }
 
   async sendVerificationEmail(email: string, code: string) {
     const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
-    const info = await this.transporter.sendMail({
-      from: '"Kindlink" <no-reply@kindlink.com>',
+    await this.resend.emails.send({
+      from: `Kindlink <${this.from}>`,
       to: email,
       subject: 'Verify your Kindlink account',
       html: `
@@ -63,15 +34,11 @@ export class MailService {
         </div>
       `,
     });
-
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      console.log('Verification Email Sent: ', nodemailer.getTestMessageUrl(info));
-    }
   }
 
   async sendPasswordResetEmail(email: string, code: string) {
-    const info = await this.transporter.sendMail({
-      from: '"Kindlink Security" <security@kindlink.com>',
+    await this.resend.emails.send({
+      from: `Kindlink Security <${this.from}>`,
       to: email,
       subject: 'Password Reset Code - Kindlink',
       html: `
@@ -88,15 +55,11 @@ export class MailService {
         </div>
       `,
     });
-
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      console.log('Password Reset Email Sent: ', nodemailer.getTestMessageUrl(info));
-    }
   }
 
   async sendAccountLockEmail(email: string, reason: string) {
-    const info = await this.transporter.sendMail({
-      from: '"Kindlink Security" <security@kindlink.com>',
+    await this.resend.emails.send({
+      from: `Kindlink Security <${this.from}>`,
       to: email,
       subject: 'Account Restricted - Kindlink Security',
       html: `
@@ -114,15 +77,11 @@ export class MailService {
         </div>
       `,
     });
-
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      console.log('Account Lock Email Sent: ', nodemailer.getTestMessageUrl(info));
-    }
   }
 
   async sendAccountUnlockEmail(email: string) {
-    const info = await this.transporter.sendMail({
-      from: '"Kindlink Security" <security@kindlink.com>',
+    await this.resend.emails.send({
+      from: `Kindlink Security <${this.from}>`,
       to: email,
       subject: 'Account Restored - Kindlink Security',
       html: `
@@ -138,19 +97,14 @@ export class MailService {
         </div>
       `,
     });
-
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      console.log('Account Unlock Email Sent: ', nodemailer.getTestMessageUrl(info));
-    }
   }
 
   async sendCampaignApprovalRequestToAdmin(campaignTitle: string, creatorName: string, campaignId: string) {
-    // In a real app, you might fetch all admins or send to a specific security alias
     const adminEmail = this.configService.get('ADMIN_NOTIFICATION_EMAIL') || 'admin@kindlink.com';
     const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
 
-    const info = await this.transporter.sendMail({
-      from: '"Kindlink System" <system@kindlink.com>',
+    await this.resend.emails.send({
+      from: `Kindlink System <${this.from}>`,
       to: adminEmail,
       subject: 'New Campaign Pending Approval - Kindlink',
       html: `
@@ -169,18 +123,14 @@ export class MailService {
         </div>
       `,
     });
-
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      console.log('Campaign Review Request Sent: ', nodemailer.getTestMessageUrl(info));
-    }
   }
 
   async sendCampaignStatusUpdateToUser(email: string, campaignTitle: string, status: 'ACTIVE' | 'REJECTED', note?: string) {
     const isApproved = status === 'ACTIVE';
     const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
 
-    const info = await this.transporter.sendMail({
-      from: '"Kindlink Community" <community@kindlink.com>',
+    await this.resend.emails.send({
+      from: `Kindlink Community <${this.from}>`,
       to: email,
       subject: isApproved ? 'Campaign Approved!' : 'Updates regarding your campaign submission',
       html: `
@@ -207,15 +157,11 @@ export class MailService {
         </div>
       `,
     });
-
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      console.log('Campaign Status Update Sent: ', nodemailer.getTestMessageUrl(info));
-    }
   }
 
   async sendEmailChangeVerification(newEmail: string, code: string) {
-    const info = await this.transporter.sendMail({
-      from: '"Kindlink Security" <security@kindlink.com>',
+    await this.resend.emails.send({
+      from: `Kindlink Security <${this.from}>`,
       to: newEmail,
       subject: 'Verify Your New Email - Kindlink',
       html: `
@@ -232,16 +178,12 @@ export class MailService {
         </div>
       `,
     });
-
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      console.log('Email Change Verification Sent: ', nodemailer.getTestMessageUrl(info));
-    }
   }
 
   async sendSecurityAlertEmail(oldEmail: string, newEmail: string, actionToken: string) {
-    const revertUrl = `http://localhost:3000/revert-email?token=${actionToken}`;
-    const info = await this.transporter.sendMail({
-      from: '"Kindlink Security" <security@kindlink.com>',
+    const revertUrl = `${this.configService.get('WEB_URL') || 'http://localhost:3000'}/revert-email?token=${actionToken}`;
+    await this.resend.emails.send({
+      from: `Kindlink Security <${this.from}>`,
       to: oldEmail,
       subject: 'Security Alert: Email Change Requested',
       html: `
@@ -259,9 +201,5 @@ export class MailService {
         </div>
       `,
     });
-
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      console.log('Security Alert Email Sent: ', nodemailer.getTestMessageUrl(info));
-    }
   }
 }
