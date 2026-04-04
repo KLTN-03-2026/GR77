@@ -1,8 +1,7 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common'
+import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from '../../prisma/prisma.service'
-import { Prisma } from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
 import { ConfigService } from '@nestjs/config'
 
@@ -14,30 +13,10 @@ export class AuthService {
     private configService: ConfigService,
   ) { }
 
-  async register(email: string, password: string) {
-    const hashed = await bcrypt.hash(password, 10)
-
-    try {
-      const user = await this.prisma.user.create({
-        data: { email, username: email, password: hashed },
-      })
-
-      return { id: user.id, email: user.email }
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ConflictException('Email already exists')
-      }
-
-      throw error
-    }
-  }
-
   async login(email: string, password: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
+      include: { security: true }
     })
 
     if (!user) throw new UnauthorizedException()
@@ -46,12 +25,20 @@ export class AuthService {
 
     if (!isMatch) throw new UnauthorizedException()
 
+    if (!user.isVerified) {
+      throw new UnauthorizedException('EMAIL_NOT_VERIFIED');
+    }
+
+    if (user.security?.isLocked) {
+      throw new UnauthorizedException(`ACCOUNT_LOCKED|${user.security.lockReason || 'No reason provided'}`);
+    }
+
     const payload = {
       sub: user.id,
       role: user.role,
     }
 
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m', })
+    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '1h', })
 
     const refreshToken = await this.issueRefreshToken(user.id)
 
@@ -95,7 +82,7 @@ export class AuthService {
 
       const newAccessToken = await this.jwtService.signAsync(
         { sub: user.id, role: user.role },
-        { expiresIn: '15m' },
+        { expiresIn: '1h' },
       )
 
       const newRefreshToken = await this.issueRefreshToken(user.id)
@@ -146,7 +133,7 @@ export class AuthService {
         where: { id: tokenId, userId, revoked: false },
       })
 
-      if (!tokenRecord) return // idempotent: logout lại cũng coi như ok
+      if (!tokenRecord) return
 
       const ok = await bcrypt.compare(refreshToken, tokenRecord.tokenHash)
       if (!ok) throw new UnauthorizedException()
@@ -156,7 +143,6 @@ export class AuthService {
         data: { revoked: true },
       })
     } catch {
-      // production hay làm logout idempotent: luôn trả 204 để không leak thông tin
       return
     }
   }

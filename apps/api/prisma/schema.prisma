@@ -7,33 +7,467 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tokens    RefreshToken[]
+  id                 String                @id @default(uuid())
+  email              String                @unique
+  username           String
+  password           String
+  role               Role                  @default(USER)
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+  isVerified         Boolean               @default(false) @map("is_verified")
+  participations     CampaignParticipant[]
+  viewHistories      CampaignViewHistory[]
+  createdCampaigns   Campaign[]            @relation("CampaignCreator")
+  reviewedCampaigns  Campaign[]            @relation("CampaignReviewer")
+  comments           Comment[]
+  donations          Donation[]
+  favorites          Favorite[]
+  notifications      Notification[]
+  tokens             RefreshToken[]
+  reportsSubmitted   Report[]              @relation("ReportSubmitter")
+  reportsReceived    Report[]              @relation("ReportTarget")
+  actionLogs         UserActionLog[]
+  profile            UserProfile?
+  security           UserSecurity?
+  wallet             UserWallet?
+  walletTransactions WalletTransaction[]
 
   @@map("users")
 }
 
+model UserProfile {
+  id            String  @id @default(uuid())
+  userId        String  @unique @map("user_id")
+  firstName     String? @map("first_name") @db.VarChar(100)
+  lastName      String? @map("last_name") @db.VarChar(100)
+  avatarUrl     String? @map("avatar_url") @db.VarChar(500)
+  coverImageUrl String? @map("cover_image_url") @db.VarChar(500)
+  province      String? @db.VarChar(100)
+  district      String? @db.VarChar(100)
+  ward          String? @db.VarChar(100)
+  address       String? @db.VarChar(255)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserWallet {
+  id            String  @id @default(uuid())
+  userId        String  @unique @map("user_id")
+  balance       Decimal @default(0) @db.Decimal(18, 2)
+  walletAddress String? @unique @map("wallet_address")
+  nonce         String?
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_wallets")
+}
+
+model UserSecurity {
+  id                      String    @id @default(uuid())
+  userId                  String    @unique @map("user_id")
+  isLocked                Boolean   @default(false) @map("is_locked")
+  lockedAt                DateTime? @map("locked_at")
+  lockReason              String?   @map("lock_reason") @db.VarChar(500)
+  verificationCode        String?   @map("verification_code")
+  verificationExpires     DateTime? @map("verification_expires")
+  verificationResendCount Int       @default(0) @map("verification_resend_count")
+  lastResendAt            DateTime? @map("last_resend_at")
+  pendingEmail            String?   @map("pending_email")
+  pendingEmailCode        String?   @map("pending_email_code")
+  pendingEmailExpires     DateTime? @map("pending_email_expires")
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_security")
+}
+
+model WalletTransaction {
+  id          String                   @id @default(uuid())
+  userId      String                   @map("user_id")
+  type        WalletTransactionType
+  amount      Decimal                  @db.Decimal(18, 2)
+  status      PaymentTransactionStatus @default(PENDING)
+  orderId     String?                  @unique @map("order_id")
+  description String?
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
+  user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@map("wallet_transactions")
+}
+
 model RefreshToken {
   id        String   @id @default(uuid())
-  tokenHash String
-  userId    String
+  tokenHash String   @map("token_hash")
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  revoked   Boolean  @default(false) @map("revoked")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  revoked   Boolean  @default(false)
 
   @@index([userId])
   @@map("refresh_tokens")
 }
 
+model Campaign {
+  id                       String                @id @default(uuid())
+  creatorUserId            String                @map("creator_user_id")
+  title                    String                @db.VarChar(255)
+  description              String
+  category                 String                @db.VarChar(100)
+  locationText             String                @map("location_text") @db.VarChar(255)
+  coverImageUrl            String?               @map("cover_image_url") @db.VarChar(500)
+  fundingGoalAmount        Decimal               @map("funding_goal_amount") @db.Decimal(18, 2)
+  minimumDonationAmount    Decimal               @map("minimum_donation_amount") @db.Decimal(18, 2)
+  startAt                  DateTime              @map("start_at")
+  endAt                    DateTime              @map("end_at")
+  autoCloseWhenGoalReached Boolean               @default(true) @map("auto_close_when_goal_reached")
+  status                   CampaignStatus        @default(DRAFT)
+  reviewNote               String?               @map("review_note")
+  reviewedByAdminId        String?               @map("reviewed_by_admin_id")
+  reviewedAt               DateTime?             @map("reviewed_at")
+  createdAt                DateTime              @default(now()) @map("created_at")
+  updatedAt                DateTime              @updatedAt @map("updated_at")
+  currentRaisedAmount      Decimal               @default(0) @map("current_raised_amount") @db.Decimal(18, 2)
+  donationCount            Int                   @default(0) @map("donation_count")
+  categoryId               String?               @map("category_id")
+  fundLedgers              CampaignFundLedger[]
+  images                   CampaignImage[]
+  participants             CampaignParticipant[]
+  viewHistories            CampaignViewHistory[]
+  categoryRel              CampaignCategory?     @relation(fields: [categoryId], references: [id])
+  creatorUser              User                  @relation("CampaignCreator", fields: [creatorUserId], references: [id])
+  reviewedByAdmin          User?                 @relation("CampaignReviewer", fields: [reviewedByAdminId], references: [id])
+  comments                 Comment[]
+  donations                Donation[]
+  favorites                Favorite[]
+  reports                  Report[]
+  withdrawalRequests       WithdrawalRequest[]
+
+  @@index([status])
+  @@index([creatorUserId])
+  @@index([category])
+  @@map("campaigns")
+}
+
+model WithdrawalRequest {
+  id            String           @id @default(uuid())
+  campaignId    String           @map("campaign_id")
+  amount        Decimal          @db.Decimal(18, 2)
+  reason        String?          @db.VarChar(500)
+  method        WithdrawalMethod @default(WALLET)
+  bankName      String?          @map("bank_name")
+  accountNumber String?          @map("account_number")
+  accountOwner  String?          @map("account_owner")
+  walletAddress String?          @map("wallet_address")
+  status        WithdrawalStatus @default(PENDING)
+  txHash        String?          @map("tx_hash") @db.VarChar(100)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  campaign      Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([status])
+  @@map("withdrawal_requests")
+}
+
+model CampaignImage {
+  id         String   @id @default(uuid())
+  campaignId String   @map("campaign_id")
+  url        String   @db.VarChar(500)
+  caption    String?  @db.VarChar(255)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("campaign_images")
+}
+
+model CampaignCategory {
+  id        String     @id @default(uuid())
+  name      String     @unique @db.VarChar(100)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  slug      String     @unique @db.VarChar(100)
+  campaigns Campaign[]
+
+  @@map("campaign_categories")
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  campaignId String   @map("campaign_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([userId, createdAt])
+  @@index([campaignId])
+  @@map("favorites")
+}
+
+model CampaignParticipant {
+  id         String              @id @default(uuid())
+  userId     String              @map("user_id")
+  campaignId String              @map("campaign_id")
+  status     ParticipationStatus @default(JOINED)
+  joinedAt   DateTime            @default(now()) @map("joined_at")
+  leftAt     DateTime?           @map("left_at")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+  campaign   Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([userId])
+  @@index([campaignId])
+  @@index([userId, status])
+  @@index([campaignId, status])
+  @@map("campaign_participants")
+}
+
+model Donation {
+  id                  String               @id @default(uuid())
+  userId              String?              @map("user_id")
+  campaignId          String               @map("campaign_id")
+  amount              Decimal              @db.Decimal(18, 2)
+  message             String?              @db.VarChar(500)
+  isAnonymous         Boolean              @default(false) @map("is_anonymous")
+  paymentMethod       PaymentMethod        @map("payment_method")
+  status              DonationStatus       @default(PENDING)
+  donatedAt           DateTime?            @map("donated_at")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  ledgerEntries       CampaignFundLedger[]
+  campaign            Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user                User?                @relation(fields: [userId], references: [id])
+  paymentTransactions PaymentTransaction[]
+
+  @@index([userId])
+  @@index([campaignId])
+  @@index([status])
+  @@index([campaignId, status])
+  @@map("donations")
+}
+
+model PaymentTransaction {
+  id                String                   @id @default(uuid())
+  donationId        String                   @map("donation_id")
+  provider          PaymentProvider
+  status            PaymentTransactionStatus @default(PENDING)
+  orderId           String                   @unique @map("order_id") @db.VarChar(100)
+  requestId         String                   @unique @map("request_id") @db.VarChar(100)
+  partnerCode       String?                  @map("partner_code") @db.VarChar(100)
+  transId           String?                  @map("trans_id") @db.VarChar(100)
+  requestType       String?                  @map("request_type") @db.VarChar(50)
+  amount            Decimal                  @db.Decimal(18, 2)
+  payUrl            String?                  @map("pay_url") @db.VarChar(1000)
+  deeplink          String?                  @db.VarChar(1000)
+  qrCodeUrl         String?                  @map("qr_code_url") @db.VarChar(1000)
+  resultCode        Int?                     @map("result_code")
+  responseTime      DateTime?                @map("response_time")
+  rawCreateResponse Json?                    @map("raw_create_response")
+  rawIpnPayload     Json?                    @map("raw_ipn_payload")
+  paidAt            DateTime?                @map("paid_at")
+  createdAt         DateTime                 @default(now()) @map("created_at")
+  updatedAt         DateTime                 @updatedAt @map("updated_at")
+  donation          Donation                 @relation(fields: [donationId], references: [id], onDelete: Cascade)
+
+  @@index([donationId])
+  @@index([provider])
+  @@index([status])
+  @@index([orderId])
+  @@map("payment_transactions")
+}
+
+model CampaignFundLedger {
+  id         String          @id @default(uuid())
+  campaignId String          @map("campaign_id")
+  donationId String?         @map("donation_id")
+  type       LedgerEntryType
+  amount     Decimal         @db.Decimal(18, 2)
+  note       String?         @db.VarChar(500)
+  createdAt  DateTime        @default(now()) @map("created_at")
+  campaign   Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  donation   Donation?       @relation(fields: [donationId], references: [id])
+
+  @@index([campaignId])
+  @@index([donationId])
+  @@index([campaignId, type])
+  @@map("campaign_fund_ledger")
+}
+
+model CampaignViewHistory {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  campaignId String   @map("campaign_id")
+  viewedAt   DateTime @default(now()) @map("viewed_at")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([campaignId])
+  @@index([userId, viewedAt])
+  @@map("campaign_view_histories")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String   @db.VarChar(255)
+  message   String
+  type      String   @db.VarChar(50)
+  link      String?  @db.VarChar(500)
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isRead])
+  @@index([userId])
+  @@map("notifications")
+}
+
+model Report {
+  id               String       @id @default(uuid())
+  submitterId      String       @map("submitter_id")
+  targetUserId     String?      @map("target_user_id")
+  targetCampaignId String?      @map("target_campaign_id")
+  reason           String       @db.VarChar(500)
+  details          String?
+  status           ReportStatus @default(PENDING)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  resolvedAt       DateTime?    @map("resolved_at")
+  resolvedById     String?      @map("resolved_by_id")
+  targetCommentId  String?      @map("target_comment_id")
+  submitter        User         @relation("ReportSubmitter", fields: [submitterId], references: [id])
+  targetCampaign   Campaign?    @relation(fields: [targetCampaignId], references: [id])
+  targetComment    Comment?     @relation(fields: [targetCommentId], references: [id])
+  targetUser       User?        @relation("ReportTarget", fields: [targetUserId], references: [id])
+
+  @@map("reports")
+}
+
+model Comment {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  campaignId String    @map("campaign_id")
+  parentId   String?   @map("parent_id")
+  content    String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("CommentReplies")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports    Report[]
+
+  @@index([campaignId])
+  @@index([userId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model UserActionLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String   @db.VarChar(100)
+  details   String?
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([action])
+  @@index([userId])
+  @@map("user_action_logs")
+}
+
+enum WithdrawalMethod {
+  WALLET
+  BANK
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum WalletTransactionType {
+  TOPUP
+  WITHDRAW
+  DONATION
+}
+
 enum Role {
   USER
   ADMIN
+  ORGANIZER
+  SUPER_ADMIN
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  REJECTED
+  PAUSED
+  COMPLETED
+}
+
+enum ParticipationStatus {
+  JOINED
+  LEFT
+}
+
+enum PaymentMethod {
+  MOMO
+  VNPAY
+  BANK_TRANSFER
+  WALLET
+  CRYPTO
+  PAYOS
+}
+
+enum DonationStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+}
+
+enum LedgerEntryType {
+  DONATION_IN
+  REFUND_OUT
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+}
+
+enum PaymentProvider {
+  MOMO
+  VNPAY
+  INTERNAL
+  BLOCKCHAIN
+  PAYOS
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  DISMISSED
 }

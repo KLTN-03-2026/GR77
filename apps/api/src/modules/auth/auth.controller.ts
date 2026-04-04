@@ -1,16 +1,28 @@
-import { Body, Controller, Post, Get, UseGuards, Request, HttpCode, Req } from '@nestjs/common'
+import { Body, Controller, Post, Get, Patch, UseGuards, Request, HttpCode, Req } from '@nestjs/common'
 import { AuthService } from './auth.service'
+import { RegistrationService } from './registration.service'
+import { PasswordService } from './password.service'
+import { AccountSecurityService } from './account-security.service'
+import { UsersService } from '../users/users.service'
 import { AuthGuard } from '@nestjs/passport'
 import { LogoutDto } from './dto/logout.dto'
+import { PrismaService } from '../../prisma/prisma.service'
 
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(
+    private authService: AuthService,
+    private registrationService: RegistrationService,
+    private passwordService: PasswordService,
+    private accountSecurityService: AccountSecurityService,
+    private usersService: UsersService,
+    private prisma: PrismaService,
+  ) { }
 
   @Post('register')
   register(@Body() body: any) {
-    return this.authService.register(body.email, body.password)
+    return this.registrationService.register(body.email, body.password)
   }
 
   @Post('login')
@@ -20,8 +32,70 @@ export class AuthController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
-  getMe(@Request() req) {
-    return req.user
+  async getMe(@Request() req) {
+    const userId = req.user.sub || req.user.userId;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: true,
+        wallet: {
+          select: {
+            balance: true,
+            walletAddress: true
+          }
+        },
+        security: {
+          select: {
+            isLocked: true,
+            lockReason: true
+          }
+        }
+      }
+    });
+    return user;
+  }
+
+  /**
+   * PATCH /auth/profile
+   * Update profile info (name, phone, location, avatar, cover)
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('profile')
+  async updateProfile(@Request() req, @Body() body: any) {
+    const userId = req.user.sub || req.user.userId;
+    return this.usersService.updateProfile(userId, body);
+  }
+
+  /**
+   * POST /auth/request-email-change
+   * Step 1: Verify password, send OTP to new email
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('request-email-change')
+  async requestEmailChange(@Request() req, @Body() body: { newEmail: string; password: string }) {
+    const userId = req.user.sub || req.user.userId;
+    return this.accountSecurityService.requestEmailChange(userId, body.newEmail, body.password);
+  }
+
+  /**
+   * POST /auth/verify-email-change
+   * Step 2: Verify OTP and update email in DB
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('verify-email-change')
+  async verifyEmailChange(@Request() req, @Body('code') code: string) {
+    const userId = req.user.sub || req.user.userId;
+    return await this.accountSecurityService.verifyEmailChange(userId, code);
+  }
+
+  @Post('revert-email')
+  async revertEmailChange(@Body('token') token: string) {
+    return await this.accountSecurityService.revertEmailChange(token);
+  }
+
+  @Post('unlock-account')
+  async unlockAccount(@Body() body: any) {
+    return await this.accountSecurityService.unlockAccount(body.token, body.oldPassword, body.newPassword);
   }
 
   @Post('refresh')
@@ -39,8 +113,32 @@ export class AuthController {
   @Post('logout-all')
   @HttpCode(204)
   async logoutAll(@Req() req: any) {
-    // tuỳ bạn set payload trong guard thế nào:
     const userId = req.user.sub || req.user.userId
     await this.authService.logoutAll(userId)
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Body() body: { email: string; code: string }) {
+    return this.registrationService.verifyEmail(body.email, body.code);
+  }
+
+  @Post('resend-verification')
+  async resendVerification(@Body() body: { email: string }) {
+    return this.registrationService.resendVerification(body.email);
+  }
+
+  @Post('send-reset-code')
+  async sendResetCode(@Body() body: { email: string }) {
+    return this.passwordService.sendResetCode(body.email);
+  }
+
+  @Post('verify-reset-code')
+  async verifyResetCode(@Body() body: { email: string; code: string }) {
+    return this.passwordService.verifyResetCode(body.email, body.code);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: { email: string; code: string; newPassword: string }) {
+    return this.passwordService.resetPassword(body.email, body.code, body.newPassword);
   }
 }
