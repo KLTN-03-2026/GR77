@@ -5,11 +5,13 @@ import {
     UseInterceptors,
     HttpStatus,
     HttpCode,
+    Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import * as express from 'express';
 
 @Controller('upload')
 export class UploadController {
@@ -35,9 +37,13 @@ export class UploadController {
             },
         }),
     )
-    uploadFile(@UploadedFile() file: Express.Multer.File) {
+    uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: express.Request) {
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        const host = req.headers['x-forwarded-host'] || req.get('host');
+        const baseUrl = `${protocol}://${host}`;
+
         return {
-            url: `http://localhost:3001/uploads/${file.filename}`,
+            url: `${baseUrl}/uploads/${file.filename}`,
             filename: file.filename,
         };
     }
