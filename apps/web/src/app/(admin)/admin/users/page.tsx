@@ -176,7 +176,7 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:3001/users', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/users`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}` },
       });
       if (!res.ok) throw new Error('Failed to fetch users');
@@ -204,7 +204,7 @@ export default function AdminUsersPage() {
     setIsSubmitting(true);
     setCreateSuccess('');
     try {
-      const res = await authFetch('http://localhost:3001/users', {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/users`, {
         method: 'POST',
         body: JSON.stringify({ email: formData.email, role: formData.role }),
       });
@@ -222,7 +222,7 @@ export default function AdminUsersPage() {
 
   const handleViewDetails = async (id: string) => {
     try {
-      const res = await authFetch(`http://localhost:3001/users/${id}`);
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/${id}`);
       setSelectedUser(await res.json());
       setIsDetailOpen(true);
       setActiveTab('overview');
@@ -244,7 +244,7 @@ export default function AdminUsersPage() {
     }
     setIsSubmitting(true);
     try {
-      const res = await authFetch(`http://localhost:3001/users/${user.id}/${action}`, {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/${user.id}/${action}`, {
         method: 'POST',
         body: action === 'lock' ? JSON.stringify({ reason }) : '{}',
       });
@@ -265,7 +265,7 @@ export default function AdminUsersPage() {
     if (!user) return;
     setIsSubmitting(true);
     try {
-      const res = await authFetch(`http://localhost:3001/users/${user.id}/upgrade-role`, {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/${user.id}/upgrade-role`, {
         method: 'POST',
         body: '{}',
       });

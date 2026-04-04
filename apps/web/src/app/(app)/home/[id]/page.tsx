@@ -61,7 +61,7 @@ export default function CampaignDetailPage({
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
-                const res = await fetch(`http://localhost:3001/campaigns/${id}`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}`, {
                     headers,
                 });
                 if (!res.ok) throw new Error("Campaign not found");
@@ -81,7 +81,7 @@ export default function CampaignDetailPage({
         if (!campaign) return;
         const token = localStorage.getItem("accessToken");
         if (!token) return;
-        fetch(`http://localhost:3001/view-histories/${id}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/view-histories/${id}`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
         }).catch(() => { });
@@ -110,7 +110,7 @@ export default function CampaignDetailPage({
 
     const fetchComments = async () => {
         try {
-            const res = await fetch(`http://localhost:3001/comments/campaign/${id}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/comments/campaign/${id}`);
             if (res.ok) {
                 const data = await res.json();
                 setComments(data);
@@ -127,7 +127,7 @@ export default function CampaignDetailPage({
 
         const token = localStorage.getItem("accessToken");
         if (token) {
-            fetch(`http://localhost:3001/participants/${id}/status`, {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/participants/${id}/status`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -136,7 +136,7 @@ export default function CampaignDetailPage({
                 })
                 .catch(() => { });
 
-            fetch(`http://localhost:3001/favorites/${id}/status`, {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${id}/status`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -158,7 +158,7 @@ export default function CampaignDetailPage({
 
         try {
             const method = isLiked ? "DELETE" : "POST";
-            const url = isLiked ? `http://localhost:3001/favorites/${id}` : `http://localhost:3001/favorites`;
+            const url = isLiked ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites`;
             const body = isLiked ? undefined : JSON.stringify({ campaignId: id });
 
             const res = await fetch(url, {
@@ -186,7 +186,7 @@ export default function CampaignDetailPage({
         }
         setIsJoining(true);
         try {
-            const res = await fetch(`http://localhost:3001/participants`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/participants`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -225,7 +225,7 @@ export default function CampaignDetailPage({
         setIsDonating(true);
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await fetch(`http://localhost:3001/donations`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/donations`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -273,7 +273,7 @@ export default function CampaignDetailPage({
             }
 
             const token = localStorage.getItem("accessToken");
-            await fetch(`http://localhost:3001/donations/blockchain`, {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/donations/blockchain`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -306,7 +306,7 @@ export default function CampaignDetailPage({
 
         setIsCommenting(true);
         try {
-            const res = await fetch(`http://localhost:3001/comments`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/comments`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -338,7 +338,7 @@ export default function CampaignDetailPage({
         if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
         const token = localStorage.getItem("accessToken");
         try {
-            const res = await fetch(`http://localhost:3001/comments/${commentId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/comments/${commentId}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -350,7 +350,7 @@ export default function CampaignDetailPage({
         if (!reportReason.trim()) return;
         const token = localStorage.getItem("accessToken");
         try {
-            const res = await fetch(`http://localhost:3001/comments/${reportingCommentId}/report`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/comments/${reportingCommentId}/report`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

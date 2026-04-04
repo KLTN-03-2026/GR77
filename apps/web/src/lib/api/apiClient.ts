@@ -10,7 +10,7 @@ interface ApiResponse<T = any> {
     statusCode?: number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
 
 // Queue system for refresh token requests
 let isRefreshing = false;

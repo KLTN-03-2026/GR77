@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({ ...JSON.parse(storedUser), accessToken, refreshToken: refreshToken ?? undefined });
 
           // Fetch dữ liệu mới nhất từ DB (bao gồm avatarUrl mới nhất)
-          const res = await fetch("http://localhost:3001/auth/me", {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/me`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
           if (res.ok) {

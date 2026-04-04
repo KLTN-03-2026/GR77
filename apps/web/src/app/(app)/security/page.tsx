@@ -40,7 +40,7 @@ export default function SecurityPage() {
         const userId = payload.sub;
         if (!userId) return;
 
-        const res = await fetch(`http://localhost:3001/users/${userId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -68,7 +68,7 @@ export default function SecurityPage() {
     setError('');
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/auth/send-reset-code', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/send-reset-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -94,7 +94,7 @@ export default function SecurityPage() {
     setError('');
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/auth/verify-reset-code', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/verify-reset-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -126,7 +126,7 @@ export default function SecurityPage() {
     setError('');
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/auth/reset-password', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: verifiedCode, newPassword }),
@@ -147,7 +147,7 @@ export default function SecurityPage() {
     if (resendTimer > 0) return;
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/auth/send-reset-code', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/send-reset-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

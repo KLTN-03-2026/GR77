@@ -61,7 +61,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     try {
       const refreshToken = localStorage.getItem(isAdminLogout ? 'adminRefreshToken' : 'refreshToken');
       if (refreshToken) {
-        await fetch('http://localhost:3001/auth/logout', {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

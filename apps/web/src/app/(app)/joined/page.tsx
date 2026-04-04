@@ -45,7 +45,7 @@ export default function KindlinkJoinedPage() {
           return;
         }
 
-        const res = await fetch(`http://localhost:3001/participants/me?page=${currentPage}&limit=${itemsPerPage}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/participants/me?page=${currentPage}&limit=${itemsPerPage}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

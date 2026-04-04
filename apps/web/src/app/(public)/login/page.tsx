@@ -21,7 +21,7 @@ export default function LoginPage() {
         setError("");
 
         try {
-            const res = await fetch("http://localhost:3001/auth/login", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -43,7 +43,7 @@ export default function LoginPage() {
             // Fetch real profile for display name
             let userProfile = {};
             try {
-                const meRes = await fetch("http://localhost:3001/auth/me", {
+                const meRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/me`, {
                     headers: { Authorization: `Bearer ${data.accessToken}` },
                 });
                 if (meRes.ok) {

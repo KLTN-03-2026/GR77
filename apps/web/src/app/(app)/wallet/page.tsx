@@ -42,7 +42,7 @@ export default function WalletPage() {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:3001/wallet/transactions', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/wallet/transactions`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -151,7 +151,7 @@ export default function WalletPage() {
           const addr = accounts[0];
 
           // 1. Get Nonce
-          const nonceRes = await fetch('http://localhost:3001/wallet/nonce', {
+          const nonceRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/wallet/nonce`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
 
@@ -181,7 +181,7 @@ export default function WalletPage() {
           console.log('[Wallet] Signature:', signature);
 
           // 3. Link Wallet in Backend
-          const linkRes = await fetch('http://localhost:3001/wallet/link', {
+          const linkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/wallet/link`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

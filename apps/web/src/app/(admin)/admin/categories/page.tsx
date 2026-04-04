@@ -51,7 +51,7 @@ export default function AdminCategoriesPage() {
     const fetchCategories = async () => {
         try {
             setLoading(true);
-            const res = await fetch('http://localhost:3001/categories');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`);
             if (!res.ok) throw new Error('Failed to fetch categories');
             const data = await res.json();
             setCategories(data);
@@ -98,8 +98,8 @@ export default function AdminCategoriesPage() {
 
         const token = localStorage.getItem('adminAccessToken');
         const url = currentCategory
-            ? `http://localhost:3001/categories/${currentCategory.id}`
-            : 'http://localhost:3001/categories';
+            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/categories/${currentCategory.id}`
+            : `${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`;
         const method = currentCategory ? 'PATCH' : 'POST';
 
         try {
@@ -140,7 +140,7 @@ export default function AdminCategoriesPage() {
 
         const token = localStorage.getItem('adminAccessToken');
         try {
-            const res = await fetch(`http://localhost:3001/categories/${currentCategory.id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/categories/${currentCategory.id}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,

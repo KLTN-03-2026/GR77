@@ -38,7 +38,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
     useEffect(() => {
         const fetchCampaign = async () => {
             try {
-                const response = await fetch(`http://localhost:3001/campaigns/${id}`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}`);
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(errorText || 'Failed to fetch campaign details');
@@ -75,7 +75,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                 ...(withdrawalMethod === 'BANK' ? { bankName, accountNumber, accountOwner } : {})
             };
 
-            const response = await fetch(`http://localhost:3001/withdrawals/campaign/${id}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/withdrawals/campaign/${id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

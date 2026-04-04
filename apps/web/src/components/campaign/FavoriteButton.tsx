@@ -53,7 +53,7 @@ export default function FavoriteButton({
                 if (prev) {
                     // Currently favorited → unfavorite
                     const res = await fetch(
-                        `http://localhost:3001/favorites/${campaignId}`,
+                        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${campaignId}`,
                         {
                             method: 'DELETE',
                             headers: { Authorization: `Bearer ${token}` },
@@ -66,7 +66,7 @@ export default function FavoriteButton({
                     }
                 } else {
                     // Not favorited → favorite
-                    const res = await fetch('http://localhost:3001/favorites', {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/favorites`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
