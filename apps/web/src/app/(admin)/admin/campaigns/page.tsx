@@ -59,10 +59,10 @@ export default function AdminCampaignsPage() {
 
       // Fetch Campaigns and Categories in parallel
       const [campaignsRes, categoriesRes] = await Promise.all([
-        fetch('http://localhost:3001/campaigns/admin/all', {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/campaigns/admin/all`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('http://localhost:3001/categories')
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`)
       ]);
 
       if (!campaignsRes.ok) throw new Error('Failed to fetch campaigns');
@@ -86,7 +86,7 @@ export default function AdminCampaignsPage() {
     if (!confirm('Bạn có chắc chắn muốn DUYỆT chiến dịch này không? Nó sẽ được hiển thị công khai ngay lập tức.')) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`http://localhost:3001/campaigns/${id}/approve`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}/approve`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}` }
       });
@@ -101,7 +101,7 @@ export default function AdminCampaignsPage() {
     if (!reason) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`http://localhost:3001/campaigns/${id}/reject`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

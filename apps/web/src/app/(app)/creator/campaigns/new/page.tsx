@@ -25,7 +25,7 @@ export default function NewCampaignPage() {
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
 
     useEffect(() => {
-        fetch('http://localhost:3001/categories')
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`)
             .then((res) => res.json())
             .then((data) => setCategories(data))
             .catch((err) => console.error('Failed to load categories:', err));
@@ -108,7 +108,7 @@ export default function NewCampaignPage() {
                 const uploadFormData = new FormData();
                 uploadFormData.append('file', imageFile);
 
-                const uploadResponse = await fetch('http://localhost:3001/upload', {
+                const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/upload`, {
                     method: 'POST',
                     headers: {
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -126,7 +126,7 @@ export default function NewCampaignPage() {
                 const uploadFormData = new FormData();
                 uploadFormData.append('file', file);
 
-                const uploadResponse = await fetch('http://localhost:3001/upload', {
+                const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/upload`, {
                     method: 'POST',
                     headers: {
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -157,7 +157,7 @@ export default function NewCampaignPage() {
                 autoCloseWhenGoalReached: formData.get('autoCloseWhenGoalReached') === 'on',
             };
 
-            const response = await fetch('http://localhost:3001/campaigns', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/campaigns`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

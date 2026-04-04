@@ -65,10 +65,10 @@ export default function EditCampaignClient({ id }: { id: string }) {
 
                 // Fetch campaign and categories in parallel
                 const [campaignRes, categoriesRes] = await Promise.all([
-                    fetch(`http://localhost:3001/campaigns/${id}`, {
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     }),
-                    fetch('http://localhost:3001/categories'),
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`),
                 ]);
 
                 if (!campaignRes.ok) {
@@ -121,7 +121,7 @@ export default function EditCampaignClient({ id }: { id: string }) {
                 const uploadFormData = new FormData();
                 uploadFormData.append('file', imageFile);
 
-                const uploadResponse = await fetch('http://localhost:3001/upload', {
+                const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/upload`, {
                     method: 'POST',
                     headers: {
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -177,8 +177,8 @@ export default function EditCampaignClient({ id }: { id: string }) {
                 return;
             }
 
-            console.log('Sending update request to:', `http://localhost:3001/campaigns/${id}`);
-            const response = await fetch(`http://localhost:3001/campaigns/${id}`, {
+            console.log('Sending update request to:', `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

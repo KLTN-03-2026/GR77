@@ -27,7 +27,7 @@ function RevertEmailContent() {
     // Call revert-email as soon as the component mounts
     const revertEmail = async () => {
       try {
-        const res = await fetch('http://localhost:3001/auth/revert-email', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/revert-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token }),
@@ -66,7 +66,7 @@ function RevertEmailContent() {
     setErrorMsg('');
 
     try {
-      const res = await fetch('http://localhost:3001/auth/unlock-account', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/unlock-account`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, oldPassword, newPassword }),

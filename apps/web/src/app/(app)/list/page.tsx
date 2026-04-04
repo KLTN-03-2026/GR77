@@ -49,7 +49,7 @@ export default function ListCampaignsPage() {
 
     // Fetch dynamic categories
     useEffect(() => {
-        fetch('http://localhost:3001/categories')
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`)
             .then(res => res.json())
             .then(data => setCategories(data))
             .catch(err => console.error('Failed to load categories:', err));
@@ -78,7 +78,7 @@ export default function ListCampaignsPage() {
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
-                const res = await fetch(`http://localhost:3001/campaigns?${params.toString()}`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns?${params.toString()}`, {
                     headers,
                 });
 

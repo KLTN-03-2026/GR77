@@ -39,7 +39,7 @@ export default function JoinedCampaignDetailPage({ params }: { params: Promise<{
       setIsLoading(true);
       setFetchError("");
       try {
-        const res = await fetch(`http://localhost:3001/campaigns/${id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}`);
         if (!res.ok) throw new Error("Campaign not found");
         const data = await res.json();
         setCampaign(data);
@@ -85,7 +85,7 @@ export default function JoinedCampaignDetailPage({ params }: { params: Promise<{
 
     setIsLeaving(true);
     try {
-      const res = await fetch(`http://localhost:3001/participants/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/participants/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`

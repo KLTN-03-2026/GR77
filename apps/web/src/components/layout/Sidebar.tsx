@@ -63,7 +63,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
-        await fetch('http://localhost:3001/auth/logout', {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

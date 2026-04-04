@@ -51,7 +51,7 @@ export default function RegisterPage() {
         }
 
         try {
-            const res = await fetch("http://localhost:3001/auth/register", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -84,7 +84,7 @@ export default function RegisterPage() {
 
         setIsLoading(true);
         try {
-            const res = await fetch("http://localhost:3001/auth/resend-verification", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/resend-verification`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),
@@ -164,7 +164,7 @@ export default function RegisterPage() {
         setIsVerifying(true);
         setVerifyError("");
         try {
-            const res = await fetch("http://localhost:3001/auth/verify-email", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/verify-email`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, code }),
