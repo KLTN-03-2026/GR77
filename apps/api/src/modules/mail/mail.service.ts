@@ -24,21 +24,26 @@ export class MailService {
         },
       });
     } else {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure: port === 465, // true for 465, false for 587
+      const transportOptions: any = {
         auth: {
           user,
           pass,
         },
-        // Railway/Cloud specific fixes
         tls: {
           rejectUnauthorized: false
         },
-        // Force IPv4 because IPv6 on Railway often causes ENETUNREACH
         family: 4
-      } as any);
+      };
+
+      if (host.includes('gmail.com')) {
+        transportOptions.service = 'gmail';
+      } else {
+        transportOptions.host = host;
+        transportOptions.port = port;
+        transportOptions.secure = port === 465;
+      }
+
+      this.transporter = nodemailer.createTransport(transportOptions);
     }
   }
 
