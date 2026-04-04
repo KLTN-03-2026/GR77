@@ -24,7 +24,11 @@ export class MailService {
         },
       });
     } else {
+      const isGmail = host.includes('gmail.com');
       const transportOptions: any = {
+        host: isGmail ? 'smtp.gmail.com' : host,
+        port: isGmail ? 465 : port,
+        secure: isGmail ? true : (port === 465),
         auth: {
           user,
           pass,
@@ -34,14 +38,6 @@ export class MailService {
         },
         family: 4
       };
-
-      if (host.includes('gmail.com')) {
-        transportOptions.service = 'gmail';
-      } else {
-        transportOptions.host = host;
-        transportOptions.port = port;
-        transportOptions.secure = port === 465;
-      }
 
       this.transporter = nodemailer.createTransport(transportOptions);
     }
