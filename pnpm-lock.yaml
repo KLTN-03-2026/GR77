@@ -58,6 +58,9 @@ importers:
       ethers:
         specifier: ^6.16.0
         version: 6.16.0
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
