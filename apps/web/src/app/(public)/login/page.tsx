@@ -67,7 +67,7 @@ export default function LoginPage() {
                 return;
             }
 
-            router.push("/creator/campaigns");
+            router.push("/home");
         } catch (err: any) {
             setError(err.message || "An error occurred. Please try again.");
         } finally {

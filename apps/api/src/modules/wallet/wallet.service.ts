@@ -1,9 +1,11 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { PayOS } from '@payos/node';
 import { Prisma } from '@prisma/client';
 import { TopUpDto } from './dto/top-up.dto';
+import { ethers } from 'ethers';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class WalletService {
@@ -26,7 +28,84 @@ export class WalletService {
             where: { id: userId },
             include: { wallet: true }
         });
+
+        // Ensure wallet exists
+        if (!user.wallet) {
+            await (this.prisma as any).userWallet.create({
+                data: { userId, balance: 0 }
+            });
+            return { balance: 0 };
+        }
+
         return { balance: user?.wallet?.balance || 0 };
+    }
+
+    async getNonce(userId: string) {
+        const nonce = `Kindlink Verification Nonce: ${uuidv4()}`;
+
+        await (this.prisma as any).userWallet.upsert({
+            where: { userId },
+            update: { nonce },
+            create: { userId, nonce, balance: 0 }
+        });
+
+        return { nonce };
+    }
+
+    async linkWallet(userId: string, address: string, signature: string) {
+        const wallet = await (this.prisma as any).userWallet.findUnique({
+            where: { userId }
+        });
+
+        if (!wallet || !wallet.nonce) {
+            throw new BadRequestException('Nonce expired or not found. Please request a new nonce.');
+        }
+
+        this.logger.log(`[LinkWallet] === START ===`);
+        this.logger.log(`[LinkWallet] userId: ${userId}`);
+        this.logger.log(`[LinkWallet] address type: ${typeof address}, value: "${address}"`);
+        this.logger.log(`[LinkWallet] signature type: ${typeof signature}, value: "${signature?.substring(0, 20)}..."`);
+        this.logger.log(`[LinkWallet] nonce type: ${typeof wallet.nonce}, value: "${wallet.nonce}"`);
+
+        if (!address || !signature) {
+            this.logger.error(`[LinkWallet] Missing address or signature!`);
+            throw new BadRequestException('Address and signature are required');
+        }
+
+        try {
+            const recoveredAddress = ethers.verifyMessage(wallet.nonce, signature);
+            this.logger.log(`[LinkWallet] Recovered address: ${recoveredAddress}`);
+
+            if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+                this.logger.error(`[LinkWallet] Address mismatch! Recovered: ${recoveredAddress}, Expected: ${address}`);
+                throw new BadRequestException('Signature verification failed: address mismatch');
+            }
+
+            // Check if this wallet address is already linked to another user
+            const existingWallet = await (this.prisma as any).userWallet.findFirst({
+                where: { walletAddress: address }
+            });
+
+            if (existingWallet && existingWallet.userId !== userId) {
+                throw new BadRequestException('Địa chỉ ví này đã được liên kết với tài khoản khác.');
+            }
+
+            // Update wallet address and clear nonce
+            await (this.prisma as any).userWallet.update({
+                where: { userId },
+                data: {
+                    walletAddress: address,
+                    nonce: null
+                }
+            });
+
+            this.logger.log(`[LinkWallet] === SUCCESS ===`);
+            return { success: true, walletAddress: address };
+        } catch (error: any) {
+            this.logger.error(`[LinkWallet] Error: ${error.message}`);
+            if (error instanceof BadRequestException) throw error;
+            throw new BadRequestException('Invalid signature or verification failed');
+        }
     }
 
     async getTransactions(userId: string) {

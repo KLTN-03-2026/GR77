@@ -15,6 +15,7 @@ import { DonationsModule } from './modules/donations/donations.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CommentsModule } from './modules/comments/comments.module';
+import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CommentsModule } from './modules/comments/comments.module';
     NotificationsModule,
     DonationsModule,
     WalletModule,
+    WithdrawalsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

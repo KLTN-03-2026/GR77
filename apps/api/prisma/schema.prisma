@@ -134,6 +134,7 @@ model Campaign {
   donationCount            Int                   @default(0) @map("donation_count")
   categoryId               String?               @map("category_id")
   fundLedgers              CampaignFundLedger[]
+  images                   CampaignImage[]
   participants             CampaignParticipant[]
   viewHistories            CampaignViewHistory[]
   categoryRel              CampaignCategory?     @relation(fields: [categoryId], references: [id])
@@ -143,12 +144,33 @@ model Campaign {
   donations                Donation[]
   favorites                Favorite[]
   reports                  Report[]
-  images                   CampaignImage[]
+  withdrawalRequests       WithdrawalRequest[]
 
   @@index([status])
   @@index([creatorUserId])
   @@index([category])
   @@map("campaigns")
+}
+
+model WithdrawalRequest {
+  id            String           @id @default(uuid())
+  campaignId    String           @map("campaign_id")
+  amount        Decimal          @db.Decimal(18, 2)
+  reason        String?          @db.VarChar(500)
+  method        WithdrawalMethod @default(WALLET)
+  bankName      String?          @map("bank_name")
+  accountNumber String?          @map("account_number")
+  accountOwner  String?          @map("account_owner")
+  walletAddress String?          @map("wallet_address")
+  status        WithdrawalStatus @default(PENDING)
+  txHash        String?          @map("tx_hash") @db.VarChar(100)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  campaign      Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([status])
+  @@map("withdrawal_requests")
 }
 
 model CampaignImage {
@@ -362,6 +384,17 @@ model UserActionLog {
   @@index([action])
   @@index([userId])
   @@map("user_action_logs")
+}
+
+enum WithdrawalMethod {
+  WALLET
+  BANK
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum WalletTransactionType {

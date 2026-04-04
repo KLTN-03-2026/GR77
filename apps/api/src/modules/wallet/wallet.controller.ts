@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, Req, UseGuards } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { TopUpDto } from './dto/top-up.dto';
+import { LinkWalletDto } from './dto/link-wallet.dto';
 
 @Controller('wallet')
 @UseGuards(JwtAuthGuard)
@@ -26,5 +27,18 @@ export class WalletController {
     @Post('/payos-webhook')
     async payosWebhook(@Body() body: any) {
         return this.walletService.handleWebhook(body.data || body);
+    }
+
+    @Get('/nonce')
+    async getNonce(@Req() req: any) {
+        return this.walletService.getNonce(req.user.id);
+    }
+
+    @Post('/link')
+    async linkWallet(
+        @Req() req: any,
+        @Body() body: LinkWalletDto
+    ) {
+        return this.walletService.linkWallet(req.user.id, body.address, body.signature);
     }
 }

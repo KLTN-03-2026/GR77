@@ -29,6 +29,10 @@ export default function CampaignDetailClient({ id }: { id: string }) {
     const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
     const [withdrawalAmount, setWithdrawalAmount] = useState('');
     const [withdrawalReason, setWithdrawalReason] = useState('');
+    const [withdrawalMethod, setWithdrawalMethod] = useState<'WALLET' | 'BANK'>('WALLET');
+    const [bankName, setBankName] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
+    const [accountOwner, setAccountOwner] = useState('');
     const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
 
     useEffect(() => {
@@ -60,16 +64,40 @@ export default function CampaignDetailClient({ id }: { id: string }) {
             alert('Vui lòng nhập đầy đủ thông tin');
             return;
         }
+
         setIsSubmittingWithdrawal(true);
         try {
-            // Mocking API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            alert('Yêu cầu rút tiền của bạn đã được gửi và đang chờ phê duyệt.');
+            const token = localStorage.getItem('accessToken');
+            const data = {
+                amount: Number(withdrawalAmount),
+                reason: withdrawalReason,
+                method: withdrawalMethod,
+                ...(withdrawalMethod === 'BANK' ? { bankName, accountNumber, accountOwner } : {})
+            };
+
+            const response = await fetch(`http://localhost:3001/withdrawals/campaign/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Gửi yêu cầu thất bại');
+            }
+
+            alert('Gửi yêu cầu rút tiền thành công! Vui lòng chờ phê duyệt.');
             setWithdrawalModalOpen(false);
             setWithdrawalAmount('');
             setWithdrawalReason('');
-        } catch (err) {
-            alert('Có lỗi xảy ra khi gửi yêu cầu');
+            setBankName('');
+            setAccountNumber('');
+            setAccountOwner('');
+        } catch (err: any) {
+            alert(`Lỗi: ${err.message}`);
         } finally {
             setIsSubmittingWithdrawal(false);
         }
@@ -525,6 +553,24 @@ export default function CampaignDetailClient({ id }: { id: string }) {
 
                             {/* Form */}
                             <form onSubmit={handleWithdrawalSubmit} className="p-8 space-y-6">
+                                {/* Tab Picker */}
+                                <div className="flex p-1 bg-gray-100 rounded-2xl">
+                                    <button
+                                        type="button"
+                                        onClick={() => setWithdrawalMethod('WALLET')}
+                                        className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${withdrawalMethod === 'WALLET' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                    >
+                                        Blockchain Wallet
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setWithdrawalMethod('BANK')}
+                                        className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${withdrawalMethod === 'BANK' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                    >
+                                        Ngân hàng (Bank)
+                                    </button>
+                                </div>
+
                                 <div>
                                     <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2.5">
                                         Số tiền muốn rút (VNĐ)
@@ -562,6 +608,61 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                     )}
                                 </div>
 
+                                {withdrawalMethod === 'WALLET' ? (
+                                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-center">
+                                        {campaign.creatorUser?.wallet?.walletAddress ? (
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest text-left">Ví Polygon nhận tiền</p>
+                                                <p className="text-xs font-mono text-blue-900 break-all">{campaign.creatorUser.wallet.walletAddress}</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3 py-2">
+                                                <p className="text-xs font-bold text-blue-900">⚠️ Bạn chưa liên kết ví!</p>
+                                                <p className="text-[10px] text-blue-600 uppercase font-black leading-relaxed">Vui lòng vào trang Wallet để kết nối MetaMask.</p>
+                                                <Link href="/wallet" className="inline-block text-[10px] font-black text-white bg-blue-500 px-6 py-2.5 rounded-xl uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-blue-100">Kết nối ngay</Link>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Tên ngân hàng</label>
+                                                <input
+                                                    type="text"
+                                                    value={bankName}
+                                                    onChange={(e) => setBankName(e.target.value)}
+                                                    placeholder="VD: Vietcombank"
+                                                    className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all"
+                                                    required={withdrawalMethod === 'BANK'}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Số tài khoản</label>
+                                                <input
+                                                    type="text"
+                                                    value={accountNumber}
+                                                    onChange={(e) => setAccountNumber(e.target.value)}
+                                                    placeholder="Nhập số TK"
+                                                    className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all"
+                                                    required={withdrawalMethod === 'BANK'}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Tên chủ tài khoản</label>
+                                            <input
+                                                type="text"
+                                                value={accountOwner}
+                                                onChange={(e) => setAccountOwner(e.target.value)}
+                                                placeholder="VD: NGUYEN VAN A"
+                                                className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all uppercase"
+                                                required={withdrawalMethod === 'BANK'}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2.5">
                                         Lý do rút tiền
@@ -570,7 +671,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                         value={withdrawalReason}
                                         onChange={(e) => setWithdrawalReason(e.target.value)}
                                         placeholder="Vui lòng nêu rõ mục đích sử dụng số tiền này..."
-                                        rows={4}
+                                        rows={3}
                                         className="w-full bg-white border border-gray-300 rounded-2xl py-4 px-6 text-sm font-medium focus:border-black focus:ring-1 focus:ring-black outline-none transition-all placeholder-gray-400 resize-none text-gray-900"
                                         required
                                     ></textarea>
@@ -587,8 +688,8 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={isSubmittingWithdrawal || Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)}
-                                        className={`flex-1 px-4 py-4 text-white text-[11px] font-black rounded-2xl shadow-lg transition-all uppercase tracking-widest active:scale-95 flex items-center justify-center gap-2 ${isSubmittingWithdrawal || Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)
+                                        disabled={isSubmittingWithdrawal || (withdrawalMethod === 'WALLET' && !campaign.creatorUser?.wallet?.walletAddress) || Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)}
+                                        className={`flex-1 px-4 py-4 text-white text-[11px] font-black rounded-2xl shadow-lg transition-all uppercase tracking-widest active:scale-95 flex items-center justify-center gap-2 ${isSubmittingWithdrawal || (withdrawalMethod === 'WALLET' && !campaign.creatorUser?.wallet?.walletAddress) || Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)
                                             ? 'bg-gray-300 shadow-none cursor-not-allowed'
                                             : 'bg-green-500 hover:bg-black shadow-green-100'
                                             }`}
