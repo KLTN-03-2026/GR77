@@ -4,45 +4,51 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MailService {
-    private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter;
 
-    constructor(private configService: ConfigService) {
-        const host = this.configService.get('MAIL_HOST');
-        const port = this.configService.get('MAIL_PORT');
-        const user = this.configService.get('MAIL_USER');
-        const pass = this.configService.get('MAIL_PASS');
+  constructor(private configService: ConfigService) {
+    const host = this.configService.get('MAIL_HOST');
+    const port = this.configService.get('MAIL_PORT');
+    const user = this.configService.get('MAIL_USER');
+    const pass = this.configService.get('MAIL_PASS');
 
-        // For Ethereal testing if credentials aren't provided
-        if (!host || !user || !pass) {
-            console.warn('Mail credentials not provided, using Ethereal fallback');
-            this.transporter = nodemailer.createTransport({
-                host: 'smtp.ethereal.email',
-                port: 587,
-                auth: {
-                    user: 'test.user@ethereal.email',
-                    pass: 'test.password',
-                },
-            });
-        } else {
-            this.transporter = nodemailer.createTransport({
-                host,
-                port,
-                secure: port === 587 || port === 465,
-                auth: {
-                    user,
-                    pass,
-                },
-            });
-        }
+    // For Ethereal testing if credentials aren't provided
+    if (!host || !user || !pass) {
+      console.warn('Mail credentials not provided, using Ethereal fallback');
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        auth: {
+          user: 'test.user@ethereal.email',
+          pass: 'test.password',
+        },
+      });
+    } else {
+      this.transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465, // true for 465, false for 587
+        auth: {
+          user,
+          pass,
+        },
+        // Railway/Cloud specific fixes
+        tls: {
+          rejectUnauthorized: false
+        },
+        // Force IPv4 because IPv6 on Railway often causes ENETUNREACH
+        family: 4
+      } as any);
     }
+  }
 
-    async sendVerificationEmail(email: string, code: string) {
-        const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
-        const info = await this.transporter.sendMail({
-            from: '"Kindlink" <no-reply@kindlink.com>',
-            to: email,
-            subject: 'Verify your Kindlink account',
-            html: `
+  async sendVerificationEmail(email: string, code: string) {
+    const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
+    const info = await this.transporter.sendMail({
+      from: '"Kindlink" <no-reply@kindlink.com>',
+      to: email,
+      subject: 'Verify your Kindlink account',
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: #7598C1;">Welcome to Kindlink!</h2>
           <p>Thank you for joining our community. To complete your registration, please enter the following verification code:</p>
@@ -55,19 +61,19 @@ export class MailService {
           <p style="font-size: 12px; color: #888;">This code will expire in 1 hour. If you did not sign up for this account, please ignore this email.</p>
         </div>
       `,
-        });
+    });
 
-        if (this.configService.get('NODE_ENV') !== 'production') {
-            console.log('Verification Email Sent: ', nodemailer.getTestMessageUrl(info));
-        }
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      console.log('Verification Email Sent: ', nodemailer.getTestMessageUrl(info));
     }
+  }
 
-    async sendPasswordResetEmail(email: string, code: string) {
-        const info = await this.transporter.sendMail({
-            from: '"Kindlink Security" <security@kindlink.com>',
-            to: email,
-            subject: 'Password Reset Code - Kindlink',
-            html: `
+  async sendPasswordResetEmail(email: string, code: string) {
+    const info = await this.transporter.sendMail({
+      from: '"Kindlink Security" <security@kindlink.com>',
+      to: email,
+      subject: 'Password Reset Code - Kindlink',
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: #7598C1;">Password Reset Request</h2>
           <p>We received a request to reset your Kindlink account password. Enter the following code to proceed:</p>
@@ -80,19 +86,19 @@ export class MailService {
           <p style="font-size: 12px; color: #888;">Kindlink Security Team</p>
         </div>
       `,
-        });
+    });
 
-        if (this.configService.get('NODE_ENV') !== 'production') {
-            console.log('Password Reset Email Sent: ', nodemailer.getTestMessageUrl(info));
-        }
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      console.log('Password Reset Email Sent: ', nodemailer.getTestMessageUrl(info));
     }
+  }
 
-    async sendAccountLockEmail(email: string, reason: string) {
-        const info = await this.transporter.sendMail({
-            from: '"Kindlink Security" <security@kindlink.com>',
-            to: email,
-            subject: 'Account Restricted - Kindlink Security',
-            html: `
+  async sendAccountLockEmail(email: string, reason: string) {
+    const info = await this.transporter.sendMail({
+      from: '"Kindlink Security" <security@kindlink.com>',
+      to: email,
+      subject: 'Account Restricted - Kindlink Security',
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: #E56C6C;">Account Restricted</h2>
           <p>This is an automated security notification regarding your Kindlink account.</p>
@@ -106,19 +112,19 @@ export class MailService {
           <p style="font-size: 12px; color: #888;">Kindlink Security Enforcement Division</p>
         </div>
       `,
-        });
+    });
 
-        if (this.configService.get('NODE_ENV') !== 'production') {
-            console.log('Account Lock Email Sent: ', nodemailer.getTestMessageUrl(info));
-        }
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      console.log('Account Lock Email Sent: ', nodemailer.getTestMessageUrl(info));
     }
+  }
 
-    async sendAccountUnlockEmail(email: string) {
-        const info = await this.transporter.sendMail({
-            from: '"Kindlink Security" <security@kindlink.com>',
-            to: email,
-            subject: 'Account Restored - Kindlink Security',
-            html: `
+  async sendAccountUnlockEmail(email: string) {
+    const info = await this.transporter.sendMail({
+      from: '"Kindlink Security" <security@kindlink.com>',
+      to: email,
+      subject: 'Account Restored - Kindlink Security',
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: #7BC712;">Account Restored</h2>
           <p>Good news! Your Kindlink account has been fully restored.</p>
@@ -130,23 +136,23 @@ export class MailService {
           <p style="font-size: 12px; color: #888;">Thank you for being part of our community.<br/>Kindlink Team</p>
         </div>
       `,
-        });
+    });
 
-        if (this.configService.get('NODE_ENV') !== 'production') {
-            console.log('Account Unlock Email Sent: ', nodemailer.getTestMessageUrl(info));
-        }
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      console.log('Account Unlock Email Sent: ', nodemailer.getTestMessageUrl(info));
     }
+  }
 
-    async sendCampaignApprovalRequestToAdmin(campaignTitle: string, creatorName: string, campaignId: string) {
-        // In a real app, you might fetch all admins or send to a specific security alias
-        const adminEmail = this.configService.get('ADMIN_NOTIFICATION_EMAIL') || 'admin@kindlink.com';
-        const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
+  async sendCampaignApprovalRequestToAdmin(campaignTitle: string, creatorName: string, campaignId: string) {
+    // In a real app, you might fetch all admins or send to a specific security alias
+    const adminEmail = this.configService.get('ADMIN_NOTIFICATION_EMAIL') || 'admin@kindlink.com';
+    const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
 
-        const info = await this.transporter.sendMail({
-            from: '"Kindlink System" <system@kindlink.com>',
-            to: adminEmail,
-            subject: 'New Campaign Pending Approval - Kindlink',
-            html: `
+    const info = await this.transporter.sendMail({
+      from: '"Kindlink System" <system@kindlink.com>',
+      to: adminEmail,
+      subject: 'New Campaign Pending Approval - Kindlink',
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: #7598C1;">New Campaign Submission</h2>
           <p>A new campaign has been created and is waiting for your review.</p>
@@ -161,22 +167,22 @@ export class MailService {
           <p style="font-size: 12px; color: #888;">Kindlink Automated Review System</p>
         </div>
       `,
-        });
+    });
 
-        if (this.configService.get('NODE_ENV') !== 'production') {
-            console.log('Campaign Review Request Sent: ', nodemailer.getTestMessageUrl(info));
-        }
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      console.log('Campaign Review Request Sent: ', nodemailer.getTestMessageUrl(info));
     }
+  }
 
-    async sendCampaignStatusUpdateToUser(email: string, campaignTitle: string, status: 'ACTIVE' | 'REJECTED', note?: string) {
-        const isApproved = status === 'ACTIVE';
-        const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
+  async sendCampaignStatusUpdateToUser(email: string, campaignTitle: string, status: 'ACTIVE' | 'REJECTED', note?: string) {
+    const isApproved = status === 'ACTIVE';
+    const webUrl = this.configService.get('WEB_URL') || 'http://localhost:3000';
 
-        const info = await this.transporter.sendMail({
-            from: '"Kindlink Community" <community@kindlink.com>',
-            to: email,
-            subject: isApproved ? 'Campaign Approved!' : 'Updates regarding your campaign submission',
-            html: `
+    const info = await this.transporter.sendMail({
+      from: '"Kindlink Community" <community@kindlink.com>',
+      to: email,
+      subject: isApproved ? 'Campaign Approved!' : 'Updates regarding your campaign submission',
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: ${isApproved ? '#7BC712' : '#E56C6C'};">${isApproved ? 'Congratulations!' : 'Campaign Status Update'}</h2>
           <p>Your campaign <strong>"${campaignTitle}"</strong> has been ${isApproved ? 'approved and is now LIVE' : 'reviewed by our moderation team'}.</p>
@@ -199,19 +205,19 @@ export class MailService {
           <p style="font-size: 12px; color: #888;">Kindlink Community Team</p>
         </div>
       `,
-        });
+    });
 
-        if (this.configService.get('NODE_ENV') !== 'production') {
-            console.log('Campaign Status Update Sent: ', nodemailer.getTestMessageUrl(info));
-        }
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      console.log('Campaign Status Update Sent: ', nodemailer.getTestMessageUrl(info));
     }
+  }
 
-    async sendEmailChangeVerification(newEmail: string, code: string) {
-        const info = await this.transporter.sendMail({
-            from: '"Kindlink Security" <security@kindlink.com>',
-            to: newEmail,
-            subject: 'Verify Your New Email - Kindlink',
-            html: `
+  async sendEmailChangeVerification(newEmail: string, code: string) {
+    const info = await this.transporter.sendMail({
+      from: '"Kindlink Security" <security@kindlink.com>',
+      to: newEmail,
+      subject: 'Verify Your New Email - Kindlink',
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: #7598C1;">Email Change Verification</h2>
           <p>You have requested to change your email address to this email. Please enter the following verification code to confirm:</p>
@@ -224,20 +230,20 @@ export class MailService {
           <p style="font-size: 12px; color: #888;">Kindlink Security Team</p>
         </div>
       `,
-        });
+    });
 
-        if (this.configService.get('NODE_ENV') !== 'production') {
-            console.log('Email Change Verification Sent: ', nodemailer.getTestMessageUrl(info));
-        }
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      console.log('Email Change Verification Sent: ', nodemailer.getTestMessageUrl(info));
     }
+  }
 
-    async sendSecurityAlertEmail(oldEmail: string, newEmail: string, actionToken: string) {
-        const revertUrl = `http://localhost:3000/revert-email?token=${actionToken}`;
-        const info = await this.transporter.sendMail({
-            from: '"Kindlink Security" <security@kindlink.com>',
-            to: oldEmail,
-            subject: 'Security Alert: Email Change Requested',
-            html: `
+  async sendSecurityAlertEmail(oldEmail: string, newEmail: string, actionToken: string) {
+    const revertUrl = `http://localhost:3000/revert-email?token=${actionToken}`;
+    const info = await this.transporter.sendMail({
+      from: '"Kindlink Security" <security@kindlink.com>',
+      to: oldEmail,
+      subject: 'Security Alert: Email Change Requested',
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: #E56C6C;">Security Alert</h2>
           <p>We received a request to change the email address associated with your Kindlink account to <strong>${newEmail}</strong>.</p>
@@ -251,10 +257,10 @@ export class MailService {
           <p style="font-size: 12px; color: #888;">Kindlink Security Team</p>
         </div>
       `,
-        });
+    });
 
-        if (this.configService.get('NODE_ENV') !== 'production') {
-            console.log('Security Alert Email Sent: ', nodemailer.getTestMessageUrl(info));
-        }
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      console.log('Security Alert Email Sent: ', nodemailer.getTestMessageUrl(info));
     }
+  }
 }
