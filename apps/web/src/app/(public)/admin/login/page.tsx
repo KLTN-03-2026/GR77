@@ -97,6 +97,7 @@ function AdminLoginForm() {
                 login({
                     id: data.id || "admin-id", // Backend handles id
                     email: email,
+                    username: displayName,
                     role: role,
                     accessToken: data.accessToken,
                     refreshToken: data.refreshToken
