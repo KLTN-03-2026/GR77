@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { google } from 'googleapis';
 
 @Injectable()
 export class MailService {
-  private transporter: nodemailer.Transporter;
+  private gmail: any;
   private readonly logger = new Logger(MailService.name);
 
   constructor(private configService: ConfigService) {
@@ -14,40 +14,67 @@ export class MailService {
     const refreshToken = this.configService.get('GOOGLE_REFRESH_TOKEN');
 
     if (user && clientId && clientSecret && refreshToken) {
-      this.transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          type: 'OAuth2',
-          user: user,
-          clientId: clientId,
-          clientSecret: clientSecret,
-          refreshToken: refreshToken,
-        },
-      });
-      this.logger.log('Gmail OAuth2 transport initialized');
+      try {
+        const oauth2Client = new google.auth.OAuth2(
+          clientId,
+          clientSecret,
+          'https://developers.google.com/oauthplayground'
+        );
+
+        oauth2Client.setCredentials({
+          refresh_token: refreshToken
+        });
+
+        this.gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+        this.logger.log('Gmail REST API initialized successfully (Bypassing SMTP ports)');
+      } catch (error) {
+        this.logger.error('Failed to initialize Gmail API:', error.message);
+      }
     } else {
       this.logger.warn('Mail configuration is missing. Emails will not be sent.');
     }
   }
 
   async sendMail(to: string, subject: string, html: string): Promise<boolean> {
-    if (!this.transporter) {
-      this.logger.error('Mail transporter not initialized');
+    if (!this.gmail) {
+      this.logger.error('Gmail service not initialized');
       return false;
     }
 
     try {
-      const from = this.configService.get('MAIL_FROM') || this.configService.get('MAIL_USER');
-      await this.transporter.sendMail({
-        from: `"Kindlink Team" <${from}>`,
-        to,
-        subject,
+      const from = this.configService.get('MAIL_USER');
+
+      // Gmail REST API requires the entire email to be base64url encoded
+      const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+      const messageParts = [
+        `From: "Kindlink Team" <${from}>`,
+        `To: ${to}`,
+        `Content-Type: text/html; charset=utf-8`,
+        `MIME-Version: 1.0`,
+        `Subject: ${utf8Subject}`,
+        '',
         html,
+      ];
+      const message = messageParts.join('\n');
+
+      // The message needs to be base64url encoded
+      const encodedMessage = Buffer.from(message)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      await this.gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw: encodedMessage,
+        },
       });
-      this.logger.log(`Email sent successfully to ${to}`);
+
+      this.logger.log(`Email (API) sent successfully to ${to}`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to send email to ${to}:`, error.message);
+      this.logger.error(`Failed to send email (API) to ${to}:`, error.message);
       return false;
     }
   }
@@ -90,8 +117,6 @@ export class MailService {
     `;
     return this.sendMail(email, subject, html);
   }
-
-  // --- Added missing methods for AccountSecurityService and CampaignsService ---
 
   async sendEmailChangeVerification(newEmail: string, code: string): Promise<boolean> {
     const subject = 'Xác thực thay đổi Email - Kindlink';
