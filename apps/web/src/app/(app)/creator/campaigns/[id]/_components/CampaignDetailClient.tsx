@@ -236,7 +236,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                             <ChevronRightIcon className="h-5 w-5 stroke-[3]" />
                                         </button>
                                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                                            {images.map((_, i) => (
+                                            {images.map((_: string, i: number) => (
                                                 <div
                                                     key={i}
                                                     className={`h-1.5 rounded-full transition-all ${i === currentImageIndex ? 'w-6 bg-white shadow-sm' : 'w-1.5 bg-white/50 hover:bg-white'}`}
