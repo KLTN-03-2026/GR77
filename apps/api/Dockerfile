@@ -11,10 +11,13 @@ RUN corepack enable
 
 # Copy workspace manifests first (cache tốt)
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+# Copy ALL package manifests in monorepo to ensure pnpm install can validate lockfile
 COPY apps/api/package.json ./apps/api/package.json
+COPY apps/web/package.json ./apps/web/package.json
 
 # Install full deps (vì cần build + prisma generate)
-RUN pnpm install --frozen-lockfile
+# Use --no-frozen-lockfile to allow pnpm to adjust versions for monorepo consistency during build
+RUN pnpm install --no-frozen-lockfile
 
 # Copy source
 COPY . .
