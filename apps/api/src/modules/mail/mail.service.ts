@@ -90,4 +90,56 @@ export class MailService {
     `;
     return this.sendMail(email, subject, html);
   }
+
+  // --- Added missing methods for AccountSecurityService and CampaignsService ---
+
+  async sendEmailChangeVerification(newEmail: string, code: string): Promise<boolean> {
+    const subject = 'Xác thực thay đổi Email - Kindlink';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2>Xác thực thay đổi Email</h2>
+        <p>Bạn vừa yêu cầu thay đổi email sang địa chỉ này. Vui lòng nhập mã sau để xác nhận:</p>
+        <div style="font-size: 24px; font-weight: bold; background: #f4f4f4; padding: 10px; display: inline-block;">${code}</div>
+        <p>Mã này có hiệu lực trong 5 phút.</p>
+      </div>
+    `;
+    return this.sendMail(newEmail, subject, html);
+  }
+
+  async sendSecurityAlertEmail(email: string, newEmail: string, actionToken: string): Promise<boolean> {
+    const webUrl = this.configService.get('WEB_URL') || 'https://kindlink-web.vercel.app';
+    const revertUrl = `${webUrl}/security/revert-email?token=${actionToken}`;
+
+    const subject = 'Cảnh báo bảo mật: Email tài khoản đã bị thay đổi';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #ff0000; border-radius: 10px;">
+        <h2 style="color: #d32f2f;">Cảnh báo bảo mật!</h2>
+        <p>Email tài khoản Kindlink của bạn vừa được thay đổi sang: <strong>${newEmail}</strong></p>
+        <p>Nếu bạn KHÔNG thực hiện thay đổi này, hãy nhấn ngay vào nút bên dưới để hủy bỏ và khóa tài khoản bảo vệ thông tin:</p>
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${revertUrl}" style="background-color: #d32f2f; color: white; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 5px;">Hủy thay đổi & Khóa tài khoản</a>
+        </div>
+        <p style="color: #666; font-size: 12px;">Link này có hiệu lực trong 7 ngày. Nếu là bạn thực hiện, vui lòng bỏ qua mail này.</p>
+      </div>
+    `;
+    return this.sendMail(email, subject, html);
+  }
+
+  async sendCampaignStatusUpdateToUser(email: string, campaignTitle: string, status: string, reason?: string): Promise<boolean> {
+    const statusText = status === 'ACTIVE' ? 'đã được DUYỆT' : 'đã bị TỪ CHỐI';
+    const color = status === 'ACTIVE' ? '#4CAF50' : '#d32f2f';
+
+    const subject = `Thông báo trạng thái chiến dịch: ${campaignTitle}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2>Cập nhật trạng thái chiến dịch</h2>
+        <p>Chiến dịch <strong>"${campaignTitle}"</strong> của bạn ${statusText}.</p>
+        ${status === 'ACTIVE'
+        ? '<p>Chúc mừng! Chiến dịch của bạn hiện đã được hiển thị công khai để nhận quyên góp.</p>'
+        : `<p style="color: #d32f2f;">Lý do từ chối: ${reason || 'Không cung cấp lý do cụ thể.'}</p>`}
+        <p>Trân trọng,<br/>Kindlink Team</p>
+      </div>
+    `;
+    return this.sendMail(email, subject, html);
+  }
 }
