@@ -96,21 +96,16 @@ export class MailService {
     return this.sendMail(email, subject, html);
   }
 
-  async sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
-    const webUrl = this.configService.get('WEB_URL') || 'https://kindlink-web.vercel.app';
-    const resetUrl = `${webUrl}/reset-password?token=${token}`;
-
+  async sendPasswordResetEmail(email: string, code: string): Promise<boolean> {
     const subject = 'Khôi phục mật khẩu Kindlink';
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px;">
         <h2 style="color: #4CAF50; text-align: center;">Khôi phục mật khẩu</h2>
-        <p>Chúng tôi nhận được yêu cầu khôi phục mật khẩu cho tài khoản Kindlink của bạn.</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" style="background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 5px;">Đặt lại mật khẩu</a>
+        <p>Chúng tôi nhận được yêu cầu khôi phục mật khẩu cho tài khoản Kindlink của bạn. Vui lòng nhập mã có 6 chữ số dưới đây vào ứng dụng để tiếp tục:</p>
+        <div style="background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 28px; font-weight: bold; color: #333; letter-spacing: 8px; border-radius: 5px; margin: 30px 0;">
+          ${code}
         </div>
-        <p>Hoặc copy link sau dán vào trình duyệt:</p>
-        <p style="font-size: 13px; color: #666; word-break: break-all;">${resetUrl}</p>
-        <p>Lưu ý: Link này chỉ có hiệu lực trong 60 phút.</p>
+        <p>Lưu ý: Mã này chỉ có hiệu lực trong 60 phút.</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
         <p style="font-size: 12px; color: #888; text-align: center;">© 2026 Kindlink. All rights reserved.</p>
       </div>
