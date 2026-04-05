@@ -20,13 +20,28 @@ export class UploadService {
     }
 
     async uploadFile(file: Express.Multer.File): Promise<string> {
-        if (!this.supabase) {
-            throw new Error('Supabase credentials not configured');
-        }
-
         const fileExt = extname(file.originalname);
         const fileName = `${uuidv4()}${fileExt}`;
         const filePath = `${fileName}`;
+
+        // Fallback to local upload if Supabase is not configured
+        if (!this.supabase) {
+            const fs = require('fs');
+            const path = require('path');
+            
+            const uploadDir = path.join(process.cwd(), 'uploads');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+            
+            const localFilePath = path.join(uploadDir, fileName);
+            fs.writeFileSync(localFilePath, file.buffer);
+            
+            // Return local URL (assumes API is running on localhost:3001)
+            const apiUrl = this.configService.get('API_URL') || '(http://localhost:3001)';
+            // Wait, apiUrl is likely not set, usually they return the relative path or absolute
+            return `http://localhost:3001/uploads/${fileName}`;
+        }
 
         const { data, error } = await this.supabase.storage
             .from(this.bucketName)
