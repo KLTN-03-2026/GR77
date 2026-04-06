@@ -26,9 +26,9 @@ export function CampaignGoalProgress({
     formatCurrency
 }: CampaignGoalProgressProps) {
     return (
-        <section className="bg-white border border-gray-100 rounded-[3.5rem] p-10 shadow-xl shadow-gray-200/50">
-            <div className="flex flex-col md:flex-row items-center gap-16 justify-between">
-                <div className="relative w-56 h-56 shrink-0">
+        <section className="w-full">
+            <div className="flex flex-col items-center gap-20 justify-between">
+                <div className="relative w-80 h-80 shrink-0">
                     <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                         <path className="text-gray-100" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" />
                         <path className="text-black" strokeDasharray={`${raisedPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
@@ -39,18 +39,19 @@ export function CampaignGoalProgress({
                     </div>
                 </div>
 
-                <div className="flex-1 space-y-6 w-full max-w-md">
-                    <div className="flex justify-between p-4 bg-gray-50 rounded-2xl items-center">
-                        <span className="font-bold text-gray-500">Goal Amount:</span>
-                        <span className="font-black text-gray-900 text-xl">{formatCurrency(fundingGoal)} VNĐ</span>
+                <div className="flex-1 space-y-10 w-full max-w-md">
+                    {/* Progress Stats */}
+                    <div className="flex justify-between p-4 bg-gray-100 border border-gray-200 rounded-xl items-center">
+                        <span className="font-bold text-gray-600">Goal Amount:</span>
+                        <span className="font-black text-gray-900 text-lg">{formatCurrency(fundingGoal)} VNĐ</span>
                     </div>
-                    <div className="flex justify-between p-4 bg-gray-50 rounded-2xl items-center">
-                        <span className="font-bold text-gray-500">Total Raised:</span>
-                        <span className="font-black text-black text-xl">{formatCurrency(totalRaised)} VNĐ</span>
+                    <div className="flex justify-between p-4 bg-gray-100 border border-gray-200 rounded-xl items-center">
+                        <span className="font-bold text-gray-600">Total Raised:</span>
+                        <span className="font-black text-gray-900 text-lg">{formatCurrency(totalRaised)} VNĐ</span>
                     </div>
 
                     {!isCreator ? (
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 pt-2">
                             <button
                                 onClick={() => setDonateOpen(true)}
                                 className="flex-1 py-5 bg-[#FFD700] hover:bg-yellow-400 text-white font-black text-2xl rounded-full shadow-lg shadow-yellow-200/50 transition-all active:scale-95"
@@ -66,10 +67,10 @@ export function CampaignGoalProgress({
                             </button>
                         </div>
                     ) : (
-                        <div className="pt-2">
+                        <div className="pt-4">
                             <a
                                 href={`/creator/campaigns/${campaignId}`}
-                                className="block w-full py-5 bg-blue-500 hover:bg-blue-600 text-white font-black text-xl rounded-full text-center shadow-lg shadow-blue-100 transition-all active:scale-95"
+                                className="block w-full py-5 bg-blue-500 hover:bg-blue-600 text-white font-black text-xl text-center rounded-full shadow-lg shadow-blue-100 transition-all active:scale-95"
                             >
                                 Quản lý chiến dịch
                             </a>

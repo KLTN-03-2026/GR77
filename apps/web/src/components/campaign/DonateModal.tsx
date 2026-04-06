@@ -42,10 +42,10 @@ export function DonateModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-300 relative">
+            <div className="bg-white p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-300 relative">
                 {donated ? (
                     <div className="text-center space-y-4 py-10">
-                        <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full mx-auto flex items-center justify-center">
+                        <div className="w-20 h-20 bg-green-50 text-green-500 mx-auto flex items-center justify-center">
                             <CheckCircle className="w-12 h-12" />
                         </div>
                         <h3 className="text-3xl font-black text-gray-900">Success!</h3>
@@ -59,11 +59,11 @@ export function DonateModal({
                         </div>
 
                         {blockchainError && (
-                            <div className="bg-red-50 border border-red-100 p-4 rounded-2xl">
+                            <div className="bg-red-50 border border-red-100 p-4">
                                 <p className="text-xs text-red-600 leading-relaxed font-bold">{blockchainError}</p>
                                 <div className="flex gap-2 mt-2">
-                                    <button onClick={() => handleBlockchainDonate(Number(donateAmount))} className="flex-1 py-1.5 bg-red-100 text-red-700 text-[10px] font-bold uppercase rounded-lg">Try Again</button>
-                                    <button onClick={() => handleBlockchainDonate(Number(donateAmount), true)} className="flex-1 py-1.5 bg-gray-900 text-white text-[10px] font-bold uppercase rounded-lg">Demo Success</button>
+                                    <button onClick={() => handleBlockchainDonate(Number(donateAmount))} className="flex-1 py-1.5 bg-red-100 text-red-700 text-[10px] font-bold uppercase">Try Again</button>
+                                    <button onClick={() => handleBlockchainDonate(Number(donateAmount), true)} className="flex-1 py-1.5 bg-gray-900 text-white text-[10px] font-bold uppercase">Demo Success</button>
                                 </div>
                             </div>
                         )}
@@ -71,11 +71,11 @@ export function DonateModal({
                         <div className="space-y-4">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Phương thức</p>
                             <div className="grid grid-cols-2 gap-4">
-                                <button onClick={() => { setDonationMethod('PAYOS'); setBlockchainError(null); }} className={`p-4 rounded-3xl border-2 flex items-center gap-3 transition-all ${donationMethod === 'PAYOS' ? 'border-blue-500 bg-blue-50' : 'border-gray-50 bg-gray-50'}`}>
+                                <button onClick={() => { setDonationMethod('PAYOS'); setBlockchainError(null); }} className={`p-4 border-2 flex items-center gap-3 transition-all ${donationMethod === 'PAYOS' ? 'border-blue-500 bg-blue-50' : 'border-gray-50 bg-gray-50'}`}>
                                     <HandHeart className={`w-5 h-5 ${donationMethod === 'PAYOS' ? 'text-blue-500' : 'text-gray-400'}`} />
                                     <span className="text-sm font-bold text-gray-900">Direct Pay</span>
                                 </button>
-                                <button onClick={() => { setDonationMethod('BLOCKCHAIN'); setBlockchainError(null); }} className={`p-4 rounded-3xl border-2 flex items-center gap-3 transition-all ${donationMethod === 'BLOCKCHAIN' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-50 bg-gray-50'}`}>
+                                <button onClick={() => { setDonationMethod('BLOCKCHAIN'); setBlockchainError(null); }} className={`p-4 border-2 flex items-center gap-3 transition-all ${donationMethod === 'BLOCKCHAIN' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-50 bg-gray-50'}`}>
                                     <Wallet className={`w-5 h-5 ${donationMethod === 'BLOCKCHAIN' ? 'text-indigo-500' : 'text-gray-400'}`} />
                                     <span className="text-sm font-bold text-gray-900">Blockchain</span>
                                 </button>
@@ -86,13 +86,13 @@ export function DonateModal({
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Số tiền (VNĐ)</p>
                             <div className="grid grid-cols-4 gap-2">
                                 {QUICK_AMOUNTS.map(amt => (
-                                    <button key={amt} onClick={() => setDonateAmount(String(amt))} className={`py-3 rounded-2xl text-[10px] font-bold border-2 transition-all ${donateAmount === String(amt) ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-100 text-gray-400 hover:border-blue-200'}`}>{(amt / 1000)}K</button>
+                                    <button key={amt} onClick={() => setDonateAmount(String(amt))} className={`py-3 text-[10px] font-bold border-2 transition-all ${donateAmount === String(amt) ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-100 text-gray-400 hover:border-blue-200'}`}>{(amt / 1000)}K</button>
                                 ))}
                             </div>
-                            <input type="number" value={donateAmount} onChange={(e) => setDonateAmount(e.target.value)} placeholder="Nhập số tiền khác..." className="w-full bg-gray-50 border-none focus:ring-2 focus:ring-blue-500 rounded-2xl p-5 text-xl font-black text-gray-900" />
+                            <input type="number" value={donateAmount} onChange={(e) => setDonateAmount(e.target.value)} placeholder="Nhập số tiền khác..." className="w-full bg-gray-50 border-none focus:ring-2 focus:ring-blue-500 p-5 text-xl font-black text-gray-900" />
                         </div>
 
-                        <button onClick={handleDonate} disabled={isDonating || blockchainLoading || !donateAmount} className={`w-full py-6 rounded-full font-black text-xl text-white transition-all shadow-xl disabled:opacity-50 ${donationMethod === 'BLOCKCHAIN' ? 'bg-indigo-600 shadow-indigo-100' : 'bg-blue-600 shadow-blue-100'}`}>
+                        <button onClick={handleDonate} disabled={isDonating || blockchainLoading || !donateAmount} className={`w-full py-6 font-black text-xl text-white transition-all shadow-xl disabled:opacity-50 ${donationMethod === 'BLOCKCHAIN' ? 'bg-indigo-600 shadow-indigo-100' : 'bg-blue-600 shadow-blue-100'}`}>
                             {isDonating || blockchainLoading ? "Processing..." : (donationMethod === 'BLOCKCHAIN' ? "Pay with MetaMask" : "Donate Now")}
                         </button>
                     </div>
