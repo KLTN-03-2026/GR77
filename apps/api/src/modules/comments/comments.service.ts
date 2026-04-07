@@ -57,13 +57,12 @@ export class CommentsService {
     }
 
     async findAllByCampaign(campaignId: string) {
-        return this.prisma.comment.findMany({
+        const allComments = await this.prisma.comment.findMany({
             where: {
                 campaignId,
-                parentId: null, // Get top-level comments
                 deletedAt: null,
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: 'asc' }, // sort by time ascending so we can process replies in order
             include: {
                 user: {
                     select: {
@@ -73,23 +72,49 @@ export class CommentsService {
                             select: { avatarUrl: true, firstName: true, lastName: true }
                         }
                     }
-                },
-                replies: {
-                    where: { deletedAt: null },
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                username: true,
-                                profile: {
-                                    select: { avatarUrl: true, firstName: true, lastName: true }
-                                }
-                            }
-                        }
-                    }
                 }
             }
         });
+
+        const commentMap = new Map();
+        const rootComments: any[] = [];
+
+        allComments.forEach(c => {
+            (c as any).replies = [];
+            commentMap.set(c.id, c);
+        });
+
+        // Helper to find the ultimate root
+        const findRoot = (comment: any): any => {
+            if (!comment.parentId) return comment;
+            const parent = commentMap.get(comment.parentId);
+            if (!parent) return comment;
+            return findRoot(parent);
+        };
+
+        // Build flat 2-level tree
+        allComments.forEach(c => {
+            if (c.parentId) {
+                const root = findRoot(c);
+                if (root && root.id !== c.id) {
+                    root.replies.push(c);
+                } else {
+                    rootComments.push(c);
+                }
+            } else {
+                rootComments.push(c);
+            }
+        });
+
+        // Optional: root comments should usually be sorted new to old
+        rootComments.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+        // We also want to sort each root's replies chronologically
+        rootComments.forEach(r => {
+            r.replies.sort((a: any, b: any) => a.createdAt.getTime() - b.createdAt.getTime());
+        });
+
+        return rootComments;
     }
 
     async remove(userId: string, commentId: string) {

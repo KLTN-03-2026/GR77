@@ -99,8 +99,8 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`relative p-2.5 rounded-2xl transition-all duration-300 transform active:scale-90 ${isAdmin
-                        ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1] shadow-lg shadow-blue-900/10'
-                        : 'bg-[#E0F0FA] text-[#2ba6e1] hover:bg-[#d4ebfc]'
+                    ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1] shadow-lg shadow-blue-900/10'
+                    : 'bg-[#E0F0FA] text-[#2ba6e1] hover:bg-[#d4ebfc]'
                     }`}
             >
                 <BellIcon className="h-6 w-6" strokeWidth={2} />
@@ -115,7 +115,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                 <div className="absolute right-0 mt-4 w-96 bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="px-6 py-5 bg-gray-50/50 border-b flex items-center justify-between">
                         <div>
-                            <h3 className="text-lg font-black text-gray-900 tracking-tight uppercase">Alerts Center</h3>
+                            <h3 className="text-lg font-black text-gray-900 tracking-tight uppercase">Notifications</h3>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Real-time Intel Feed</p>
                         </div>
                         {unreadCount > 0 && (
@@ -136,8 +136,8 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                                         key={n.id}
                                         onClick={() => handleNotificationClick(n)}
                                         className={`px-6 py-5 cursor-pointer transition-all flex gap-4 border-l-4 ${n.isRead
-                                                ? 'opacity-60 border-transparent grayscale-[0.5] hover:bg-gray-50'
-                                                : 'bg-blue-50/30 border-blue-500 hover:bg-blue-50/60'
+                                            ? 'opacity-60 border-transparent grayscale-[0.5] hover:bg-gray-50'
+                                            : 'bg-blue-50/30 border-blue-500 hover:bg-blue-50/60'
                                             }`}
                                     >
                                         <div className={`w-12 h-12 rounded-[1.2rem] shrink-0 flex items-center justify-center shadow-sm ${n.type.includes('CAMPAIGN') ? 'bg-orange-50 text-orange-500' : 'bg-blue-50 text-blue-500'
@@ -171,8 +171,11 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                     </div>
 
                     <div className="p-4 bg-gray-50/50 border-t flex items-center justify-center">
-                        <button className="text-[10px] font-black text-gray-400 uppercase hover:text-gray-900 transition-colors tracking-[0.2em] flex items-center gap-2">
-                            <EllipsisHorizontalIcon className="w-5 h-5" /> View Intel Archive
+                        <button
+                            onClick={() => { setIsOpen(false); router.push('/notifications'); }}
+                            className="text-[10px] font-black text-gray-400 uppercase hover:text-gray-900 transition-colors tracking-[0.2em] flex items-center gap-2"
+                        >
+                            <EllipsisHorizontalIcon className="w-5 h-5" /> See all notifications
                         </button>
                     </div>
                 </div>

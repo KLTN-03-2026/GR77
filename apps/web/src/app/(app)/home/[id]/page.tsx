@@ -1,31 +1,22 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { use } from "react";
 import { useGlobalAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Bookmark } from "lucide-react";
 
-// Sub-components
-import { CampaignHeader } from "@/components/campaign/CampaignHeader";
-import { CampaignMeta } from "@/components/campaign/CampaignMeta";
-import { CampaignGoalProgress } from "@/components/campaign/CampaignGoalProgress";
+// Shared Components
 import { CampaignDiscussion } from "@/components/campaign/CampaignDiscussion";
-import { DonateModal } from "@/components/campaign/DonateModal";
-import { ReportModal } from "@/components/campaign/ReportModal";
 
-function formatCurrency(amount: number | string) {
-    return Number(amount).toLocaleString("vi-VN");
-}
+// Local Sub-components
+import { CampaignHero } from "./_components/CampaignHero";
+import { CampaignDescription } from "./_components/CampaignDescription";
+import { CampaignOverviewBox } from "./_components/CampaignOverviewBox";
+import { CampaignGalleryBox } from "./_components/CampaignGalleryBox";
+import { CampaignSidebar } from "./_components/CampaignSidebar";
+import { CampaignModals } from "./_components/CampaignModals";
 
-function formatDate(dateString?: string) {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
-}
+// Hooks & Utils
+import { useCampaignDetail } from "./_hooks/useCampaignDetail";
+import { formatCurrency, formatDate } from "./_utils/formatters";
 
 declare global {
     interface Window {
@@ -41,7 +32,6 @@ export default function CampaignDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
-    const router = useRouter();
     const { user: currentUser } = useGlobalAuth();
 
     /* ── API fetch ── */
@@ -375,125 +365,92 @@ export default function CampaignDetailPage({
     const totalRaised = Number(campaign?.currentRaisedAmount ?? 0);
     const raisedPercent = fundingGoal > 0 ? Math.min(Math.round((totalRaised / fundingGoal) * 100), 100) : 0;
 
-    const images = campaign?.images?.length
+    const coverImage = campaign?.coverImageUrl || (campaign?.images?.length ? campaign.images[0].url : "");
+    const galleryImages = campaign?.images?.length
         ? campaign.images.map((img: any) => img.url)
         : (campaign?.coverImageUrl ? [campaign.coverImageUrl] : []);
 
     return (
-        <div className="w-full lg:-mt-8">
-            {/* Navigation */}
-            <div className="mb-0 flex items-center justify-between">
-                <Link href="/list" className="inline-flex items-center gap-2 px-0 py-1.5 rounded-full text-gray-400 hover:text-blue-600 transition-all group font-semibold text-sm">
-                    <div className="p-1.5 rounded-full bg-gray-50 group-hover:bg-blue-50 transition-colors">
-                        <ArrowLeft className="w-4 h-4" />
-                    </div>
-                    Back to Campaigns
-                </Link>
-
-                {!isLoading && !fetchError && campaign && (
-                    <button
-                        onClick={handleToggleLike}
-                        className={`p-2 rounded-xl border transition-all ${isLiked ? "border-red-400 bg-red-50 text-red-500 shadow-sm" : "border-gray-50 text-gray-300 hover:border-red-200"}`}
-                    >
-                        <Bookmark className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} />
-                    </button>
-                )}
-            </div>
-
+        <div
+            className="min-h-screen -mx-[34px] -mt-[34px] bg-white pb-20 overflow-x-hidden"
+            style={{ width: 'calc(100% + 68px)' }}
+        >
             {isLoading && (
-                <div className="flex flex-col items-center justify-center py-24 gap-4">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" />
-                    <p className="text-gray-400 font-medium">Loading campaign...</p>
+                <div className="flex flex-col items-center justify-center py-24 gap-4 bg-white">
+                    <div className="animate-spin h-10 w-10 border-b-2 border-blue-500" />
+                    <p className="text-gray-600 font-medium tracking-wide">Loading campaign...</p>
                 </div>
             )}
 
             {fetchError && (
-                <div className="text-center py-24">
+                <div className="text-center py-24 bg-white/30 backdrop-blur-md">
                     <p className="text-red-500 font-bold">{fetchError}</p>
                 </div>
             )}
 
             {!isLoading && !fetchError && campaign && (
-                <div className="space-y-4">
-                    {/* Title at top */}
-                    <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">{campaign.title}</h1>
+                <div className="relative">
+                    <CampaignHero coverImageUrl={coverImage} title={campaign?.title} />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* Left: Image Carousel */}
-                        <div className="lg:col-span-7">
-                            <CampaignHeader
-                                title=""
-                                status={campaign.status}
-                                images={images}
+                    {/* Container 1: Core Campaign Info */}
+                    <div className="relative z-10 px-8 pt-6 pb-8 max-w-7xl mx-auto mt-6">
+
+                        <CampaignDescription description={campaign?.description} />
+
+                        {/* Row 2: Layout tùy chỉnh - Cột trái = Cột phải */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                            {/* CỘT TRÁI */}
+                            <div className="flex flex-col gap-8 h-full">
+                                <CampaignOverviewBox
+                                    campaign={campaign}
+                                    formatDate={formatDate}
+                                />
+                                <CampaignGalleryBox
+                                    campaign={campaign}
+                                    galleryImages={galleryImages}
+                                    currentUser={currentUser}
+                                    isLiked={isLiked}
+                                    handleToggleLike={handleToggleLike}
+                                />
+                            </div>
+
+                            {/* CỘT PHẢI */}
+                            <CampaignSidebar
+                                raisedPercent={raisedPercent}
+                                fundingGoal={fundingGoal}
+                                totalRaised={totalRaised}
+                                isJoined={isJoined}
                                 isCreator={currentUser?.id === campaign?.creatorUserId}
-                                isLiked={isLiked}
-                                onToggleLike={handleToggleLike}
+                                campaignId={campaign?.id}
+                                setDonateOpen={setDonateOpen}
+                                handleJoin={handleJoin}
+                                formatCurrency={formatCurrency}
                             />
                         </div>
-
-                        {/* Right: Campaign Meta Info */}
-                        <div className="lg:col-span-5 bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100/50">
-                            <CampaignMeta campaign={campaign} formatDate={formatDate} />
-                        </div>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-xl shadow-gray-200/40 relative overflow-hidden group">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-1.5 h-6 bg-[#47c9e5] rounded-full"></div>
-                            <h2 className="text-xl font-bold text-gray-900 tracking-tight italic">Mô tả chiến dịch</h2>
-                        </div>
-                        <div className={`text-gray-600 leading-relaxed text-lg font-medium transition-all duration-500 ${!isDescriptionExpanded ? "line-clamp-3" : ""}`}>
-                            {campaign.description}
-                        </div>
-                        {campaign.description?.length > 280 && (
-                            <button
-                                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                                className="mt-4 text-sm font-bold text-[#47c9e5] hover:text-cyan-600 transition-all flex items-center gap-1.5"
-                            >
-                                {isDescriptionExpanded ? "Thu gọn" : "Xem thêm"}
-                                <div className={`w-4 h-4 transition-transform duration-300 ${isDescriptionExpanded ? "rotate-180" : ""}`}>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </div>
-                            </button>
-                        )}
+                    {/* Container 2: Community Discussion */}
+                    <div className="px-8 pb-12 max-w-7xl mx-auto mt-8">
+                        <CampaignDiscussion
+                            comments={comments}
+                            campaign={campaign}
+                            currentUser={currentUser}
+                            newComment={newComment}
+                            setNewComment={setNewComment}
+                            replyingTo={replyingTo}
+                            setReplyingTo={setReplyingTo}
+                            isCommenting={isCommenting}
+                            handleSubmitComment={handleSubmitComment}
+                            handleDeleteComment={handleDeleteComment}
+                            setReportingCommentId={setReportingCommentId}
+                            setReportModalOpen={setReportModalOpen}
+                            getAvatar={getAvatar}
+                        />
                     </div>
-
-                    <hr className="border-gray-100 border-4 rounded-full" />
-
-                    <CampaignGoalProgress
-                        raisedPercent={raisedPercent}
-                        fundingGoal={fundingGoal}
-                        totalRaised={totalRaised}
-                        isJoined={isJoined}
-                        isCreator={currentUser?.id === campaign?.creatorUserId}
-                        campaignId={campaign?.id}
-                        setDonateOpen={setDonateOpen}
-                        handleJoin={handleJoin}
-                        formatCurrency={formatCurrency}
-                    />
-
-                    <CampaignDiscussion
-                        comments={comments}
-                        campaign={campaign}
-                        currentUser={currentUser}
-                        newComment={newComment}
-                        setNewComment={setNewComment}
-                        replyingTo={replyingTo}
-                        setReplyingTo={setReplyingTo}
-                        isCommenting={isCommenting}
-                        handleSubmitComment={handleSubmitComment}
-                        handleDeleteComment={handleDeleteComment}
-                        setReportingCommentId={setReportingCommentId}
-                        setReportModalOpen={setReportModalOpen}
-                        getAvatar={getAvatar}
-                        formatDate={formatDate}
-                    />
                 </div>
             )}
 
-            <DonateModal
+            <CampaignModals
                 donateOpen={donateOpen}
                 setDonateOpen={setDonateOpen}
                 donateAmount={donateAmount}
@@ -509,9 +466,7 @@ export default function CampaignDetailPage({
                 handleDonate={handleDonate}
                 handleBlockchainDonate={handleBlockchainDonate}
                 QUICK_AMOUNTS={QUICK_AMOUNTS}
-            />
 
-            <ReportModal
                 reportModalOpen={reportModalOpen}
                 setReportModalOpen={setReportModalOpen}
                 reportReason={reportReason}

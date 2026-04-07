@@ -13,6 +13,7 @@ import {
   EyeSlashIcon,
   FingerPrintIcon,
 } from '@heroicons/react/24/outline';
+import { useGlobalAuth } from '@/contexts/AuthContext';
 
 export default function SecurityPage() {
   const [resetStep, setResetStep] = useState<'idle' | 'email' | 'otp' | 'newpass' | 'success'>('idle');
@@ -29,32 +30,14 @@ export default function SecurityPage() {
 
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  const { user } = useGlobalAuth();
+
   // Auto-fill email from logged-in user
   useEffect(() => {
-    const fetchUserEmail = async () => {
-      try {
-        const token = localStorage.getItem('accessToken');
-        if (!token) return;
-        // Decode JWT to get user ID
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const userId = payload.sub;
-        if (!userId) return;
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const user = await res.json();
-          if (user.email) {
-            setEmail(user.email);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch user email:', err);
-      }
-    };
-    fetchUserEmail();
-  }, []);
+    if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [user?.email]);
 
   useEffect(() => {
     if (resendTimer > 0) {

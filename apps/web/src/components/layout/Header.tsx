@@ -129,6 +129,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     else if (pathname.includes('/list')) title = 'All Campaigns';
     else if (pathname.includes('/wallet')) title = 'Wallet';
     else if (pathname.includes('/settings')) title = 'Setting';
+    else if (pathname.includes('/notifications')) title = 'Notifications';
 
     return (
       <>
@@ -199,7 +200,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                     </div>
                     <div className="overflow-hidden">
                       <p className="text-base font-bold text-[#1d2951] truncate leading-tight">{userName}</p>
-                      <p className="text-xs font-medium text-[#8ea1c1] truncate mt-0.5">Pro Account</p>
+                      <p className="text-xs font-medium text-[#8ea1c1] truncate mt-0.5">{user?.email}</p>
                     </div>
                   </div>
 

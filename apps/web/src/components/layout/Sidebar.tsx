@@ -112,11 +112,11 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
                     relative flex items-center px-4 py-3 text-base rounded-xl transition-all border
                     ${isActive
                       ? (isAdmin
-                        ? 'bg-[#7598C1] text-gray-900 border-transparent shadow-sm'
-                        : 'bg-[#47c9e5]/10 text-[#47c9e5] font-medium border-transparent')
+                        ? 'bg-[#7598C1]/30 text-gray-900 border border-[#7598C1]/40 backdrop-blur-md'
+                        : 'bg-[#AFF1FF]/30 text-[#47c9e5] font-medium border border-[#AFF1FF]/80 backdrop-blur-md')
                       : (isAdmin
                         ? 'bg-white text-gray-700 border-transparent hover:text-gray-900 hover:border-[#7598C1] hover:shadow-[inset_0_0_12px_rgba(117,152,193,0.3),0_0_15px_rgba(117,152,193,0.4)]'
-                        : 'bg-white text-gray-900 font-medium border-transparent hover:text-[#47c9e5] hover:border-[#47c9e5] hover:shadow-[inset_0_0_12px_rgba(71,201,229,0.3),0_0_15px_rgba(71,201,229,0.4)]')
+                        : 'bg-white text-gray-700 font-medium border-transparent hover:text-[#47c9e5] hover:border-[#47c9e5] hover:shadow-[inset_0_0_12px_rgba(71,201,229,0.3),0_0_15px_rgba(71,201,229,0.4)]')
                     }
                   `}
                 >
