@@ -17,12 +17,13 @@ export class DonationsController {
         return this.donationsService.create(userId, dto);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post('/blockchain')
     async recordBlockchainDonation(
         @Body() dto: { campaignId: string, amount: number, txHash: string, walletAddress: string },
         @Req() req: any
     ) {
-        const userId = req.user?.id || null;
+        const userId = req.user.id;
         return this.donationsService.createBlockchainDonation(userId, dto);
     }
 
