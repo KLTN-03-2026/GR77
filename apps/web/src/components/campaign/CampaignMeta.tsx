@@ -15,10 +15,10 @@ export function CampaignMeta({ campaign, formatDate }: CampaignMetaProps) {
             <div className="absolute left-[7px] top-6 bottom-6 w-[2px] bg-gray-200"></div>
             {/* Timeline Row: Category */}
             <div className="flex items-center gap-4 relative text-base">
-                <div className="w-4 h-4 bg-black rounded-full z-10 shrink-0"></div>
+                <div className="w-4 h-4 bg-black z-10 shrink-0 rounded-full"></div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <span className="font-bold text-gray-400 text-xs uppercase tracking-widest">Category</span>
-                    <span className="font-bold px-4 py-1 rounded-full text-xs bg-black text-white">
+                    <span className="font-bold px-4 py-1 text-xs bg-black text-white rounded-full">
                         {campaign.categoryRel?.name || campaign.category}
                     </span>
                 </div>
@@ -26,10 +26,10 @@ export function CampaignMeta({ campaign, formatDate }: CampaignMetaProps) {
 
             {/* Timeline Row: Status */}
             <div className="flex items-center gap-4 relative text-base">
-                <div className="w-4 h-4 bg-black rounded-full z-10 shrink-0"></div>
+                <div className="w-4 h-4 bg-black z-10 shrink-0 rounded-full"></div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <span className="font-bold text-gray-400 text-xs uppercase tracking-widest">Status</span>
-                    <span className={`font-bold px-4 py-1 rounded-full text-xs ${campaign.status === "ACTIVE" ? "bg-green-500 text-white" : "bg-yellow-500 text-white"}`}>
+                    <span className={`font-bold px-4 py-1 text-xs rounded-full ${campaign.status === "ACTIVE" ? "bg-green-500 text-white" : "bg-yellow-500 text-white"}`}>
                         {campaign.status}
                     </span>
                 </div>
@@ -37,7 +37,7 @@ export function CampaignMeta({ campaign, formatDate }: CampaignMetaProps) {
 
             {/* Timeline Row: Timeline */}
             <div className="flex items-center gap-4 relative text-base">
-                <div className="w-4 h-4 bg-black rounded-full z-10 shrink-0"></div>
+                <div className="w-4 h-4 bg-black z-10 shrink-0 rounded-full"></div>
                 <div className="flex flex-col gap-1">
                     <span className="font-bold text-gray-400 text-xs uppercase tracking-widest">Timeline</span>
                     <div className="flex items-center gap-2 font-bold text-gray-900">
@@ -50,7 +50,7 @@ export function CampaignMeta({ campaign, formatDate }: CampaignMetaProps) {
 
             {/* Timeline Row: Location */}
             <div className="flex items-center gap-4 relative text-base">
-                <div className="w-4 h-4 bg-black rounded-full z-10 shrink-0"></div>
+                <div className="w-4 h-4 bg-black z-10 shrink-0 rounded-full"></div>
                 <div className="flex flex-col gap-1">
                     <span className="font-bold text-gray-400 text-xs uppercase tracking-widest">Location</span>
                     <span className="font-bold text-gray-900 uppercase tracking-wide">{campaign.locationText || '—'}</span>
