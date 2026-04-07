@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CalendarIcon, MagnifyingGlassIcon, Bars3CenterLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { HeartIcon } from '@heroicons/react/24/solid';
 import FavoriteButton from '@/components/campaign/FavoriteButton';
+import styles from '@/components/campaign/CampaignCard.module.css';
 
 // Pagination helper
 function getPageNumbers(current: number, total: number) {
@@ -234,77 +235,78 @@ export default function ListCampaignsPage() {
                 </div>
             ) : paginated.length > 0 ? (
                 <>
-                    <div className="space-y-6 mb-8">
+                    <div className="space-y-[2vw] mb-[2vw]">
                         {paginated.map((campaign) => {
-                            const progress = getProgress(0, Number(campaign.fundingGoalAmount));
                             return (
                                 <Link
                                     key={campaign.id}
                                     href={`/home/${campaign.id}`}
-                                    className="flex flex-col md:flex-row bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:border-cyan-400 hover:ring-2 hover:ring-cyan-100 transition-all group block shadow-sm"
+                                    className={`${styles.hCard} block`}
                                 >
-                                    <div className="w-full md:w-[35%] p-4 h-56 md:h-auto relative">
-                                        <div className="relative h-full w-full overflow-hidden rounded-[2rem]">
-                                            {campaign.coverImageUrl ? (
-                                                <img
-                                                    src={campaign.coverImageUrl}
-                                                    alt={campaign.title}
-                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    <div className={`${styles.hInner} flex w-full h-full overflow-hidden bg-white`}>
+                                        <div className={`${styles.hImgWrap} h-full shrink-0 flex items-center`}>
+                                            <div className={`${styles.hImgFrame} relative w-full overflow-hidden`}>
+                                                {campaign.coverImageUrl ? (
+                                                    <img
+                                                        src={campaign.coverImageUrl}
+                                                        alt={campaign.title}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className={`${styles.hImgPlaceholder} w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-100 to-blue-100`}>
+                                                        <Bars3CenterLeftIcon />
+                                                    </div>
+                                                )}
+                                                <span className={`${styles.hBadge} ${styles.hBadgeTl} absolute font-bold bg-white/90 text-black shadow-sm`}>
+                                                    {campaign.categoryRel?.name || campaign.category}
+                                                </span>
+                                                <span className={`${styles.hBadge} ${styles.hBadgeTr} absolute font-bold uppercase shadow-sm ${campaign.status === 'ACTIVE' ? 'bg-green-100/90 text-green-600' : 'bg-yellow-100/90 text-yellow-600'}`}>
+                                                    {campaign.status}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className={`${styles.hContent} flex-1 flex flex-col justify-between min-w-0 overflow-hidden`}>
+                                            <div>
+                                                <h2 className={`${styles.hTitle} font-extrabold text-gray-900 overflow-hidden text-ellipsis`} style={{ display: '-webkit-box' }}>
+                                                    {campaign.title}
+                                                </h2>
+                                                {campaign.locationText && (
+                                                    <div className={`${styles.hLocation} flex items-center text-gray-400`}>
+                                                        <MapPinIcon className="shrink-0" />
+                                                        <span>{campaign.locationText}</span>
+                                                    </div>
+                                                )}
+                                                <p className={`${styles.hGoalLabel} font-bold text-slate-700`}>
+                                                    Goal: <span className="font-black text-black">{formatCurrency(campaign.fundingGoalAmount)} VND</span>
+                                                </p>
+                                                <p className={`${styles.hSubText} font-bold text-gray-400 uppercase`}>
+                                                    Min: {formatCurrency(campaign.minimumDonationAmount)} VND
+                                                </p>
+                                                <div className={`${styles.hMetaRow} flex flex-wrap items-center`}>
+                                                    <div className={`${styles.hMetaPill} inline-flex items-center text-gray-500 bg-gray-50 border border-gray-100`}>
+                                                        <CalendarIcon className="text-gray-400 shrink-0" />
+                                                        <span className="font-bold">{formatDate(campaign.startAt)}</span>
+                                                        <span className={`${styles.metaSep} text-gray-300`}>→</span>
+                                                        <span className="font-bold">{formatDate(campaign.endAt)}</span>
+                                                    </div>
+                                                </div>
+                                                <div className={`${styles.hFavRow} flex items-center text-gray-400`}>
+                                                    <HeartIcon className="text-pink-400 shrink-0" />
+                                                    <span className="font-bold">{campaign.favoritesCount || 0} favorites</span>
+                                                </div>
+                                            </div>
+
+                                            <div className={`${styles.hActions} flex items-center`}>
+                                                <span className={`${styles.hBtnPrimary} font-bold border-2 border-[#496D96] bg-transparent text-[#496D96] cursor-pointer text-center whitespace-nowrap hover:bg-[#B2CDEB]`}>
+                                                    View Details
+                                                </span>
+                                                <FavoriteButton
+                                                    campaignId={campaign.id}
+                                                    initialFavorited={favoriteIds.has(campaign.id)}
+                                                    onToggle={handleFavoriteToggle}
                                                 />
-                                            ) : (
-                                                <div className="h-full w-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-                                                    <Bars3CenterLeftIcon className="w-16 h-16 text-cyan-300" />
-                                                </div>
-                                            )}
-                                            <span className="absolute top-3 left-3 bg-white/90 text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-                                                {campaign.categoryRel?.name || campaign.category}
-                                            </span>
-                                            <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${campaign.status === 'ACTIVE' ? 'bg-green-100/90 text-green-600' : 'bg-yellow-100/90 text-yellow-600'}`}>
-                                                {campaign.status}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
-                                        <div>
-                                            <h2 className="text-xl md:text-2xl font-black text-gray-900 mb-2 leading-tight group-hover:text-black transition-colors uppercase tracking-tight">
-                                                {campaign.title}
-                                            </h2>
-                                            {campaign.locationText && (
-                                                <div className="flex items-center gap-1.5 text-gray-400 text-sm mb-3">
-                                                    <MapPinIcon className="w-4 h-4" />
-                                                    <span>{campaign.locationText}</span>
-                                                </div>
-                                            )}
-                                            <p className="text-lg font-bold text-slate-700 mb-1">
-                                                Goal: <span className="text-black font-black">{formatCurrency(campaign.fundingGoalAmount)} VND</span>
-                                            </p>
-                                            <p className="text-xs text-gray-400 mb-4 font-bold uppercase tracking-widest">
-                                                Min: {formatCurrency(campaign.minimumDonationAmount)} VND
-                                            </p>
-                                            <div className="flex flex-wrap items-center gap-4 mb-4">
-                                                <div className="flex items-center gap-1.5 text-sm text-gray-500 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-                                                    <CalendarIcon className="w-4 h-4 text-gray-400" />
-                                                    <span className="font-bold">{formatDate(campaign.startAt)}</span>
-                                                    <span className="text-gray-300 mx-1">→</span>
-                                                    <span className="font-bold">{formatDate(campaign.endAt)}</span>
-                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-1.5 text-sm text-gray-400">
-                                                <HeartIcon className="w-4 h-4 text-pink-400" />
-                                                <span className="font-bold">{campaign.favoritesCount || 0} favorites</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-4 items-center mt-6">
-                                            <span className="flex-1 md:flex-none px-12 py-3 bg-black text-white font-black uppercase tracking-widest rounded-full shadow-lg shadow-gray-100 text-center text-xs hover:bg-gray-900 transition-all">
-                                                View Details
-                                            </span>
-                                            <FavoriteButton
-                                                campaignId={campaign.id}
-                                                initialFavorited={favoriteIds.has(campaign.id)}
-                                                onToggle={handleFavoriteToggle}
-                                            />
                                         </div>
                                     </div>
                                 </Link>

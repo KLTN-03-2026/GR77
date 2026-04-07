@@ -66,7 +66,7 @@ export default function FavoriteButton({
                     }
                 } else {
                     // Not favorited → favorite
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/favorites`, {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -109,8 +109,9 @@ export default function FavoriteButton({
             disabled={loading}
             aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
             className={`
-                inline-flex items-center justify-center gap-2
-                px-8 py-3 rounded-full text-sm font-bold
+                hcard-fav-btn
+                inline-flex items-center justify-center
+                rounded-full font-bold
                 border-2 border-pink-400
                 transition-all duration-200 select-none
                 ${loading ? 'opacity-60 cursor-wait' : 'cursor-pointer'}
@@ -121,9 +122,9 @@ export default function FavoriteButton({
             `}
         >
             {favorited ? (
-                <HeartIcon className="w-4 h-4" />
+                <HeartIcon className="hcard-fav-btn-icon" />
             ) : (
-                <HeartOutline className="w-4 h-4" />
+                <HeartOutline className="hcard-fav-btn-icon" />
             )}
             {favorited ? 'Saved' : 'Save'}
         </button>
