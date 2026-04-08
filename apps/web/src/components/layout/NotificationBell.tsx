@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { BellIcon, CheckIcon, ArchiveBoxArrowDownIcon, EllipsisHorizontalIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/lib/constants/endpoints';
 
 interface Notification {
     id: string;
@@ -25,7 +26,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
             const token = isAdmin ? localStorage.getItem('adminAccessToken') : localStorage.getItem('accessToken');
             if (!token) return;
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/notifications`, {
+            const res = await fetch(`${API_BASE_URL}/notifications`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -58,7 +59,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
     const markAsRead = async (id: string) => {
         try {
             const token = isAdmin ? localStorage.getItem('adminAccessToken') : localStorage.getItem('accessToken');
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/notifications/${id}/read`, {
+            await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -71,7 +72,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
     const markAllAsRead = async () => {
         try {
             const token = isAdmin ? localStorage.getItem('adminAccessToken') : localStorage.getItem('accessToken');
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/notifications/read-all`, {
+            await fetch(`${API_BASE_URL}/notifications/read-all`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -98,14 +99,14 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`relative p-2.5 rounded-2xl transition-all duration-300 transform active:scale-90 ${isAdmin
+                className={`relative p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 transform active:scale-90 aspect-square flex items-center justify-center ${isAdmin
                     ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1] shadow-lg shadow-blue-900/10'
                     : 'bg-[#E0F0FA] text-[#2ba6e1] hover:bg-[#d4ebfc]'
                     }`}
             >
-                <BellIcon className="h-6 w-6" strokeWidth={2} />
+                <BellIcon className="h-4 w-4 sm:h-6 sm:w-6" strokeWidth={2} />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border-[3px] border-white bg-red-500 px-1 text-[10px] font-black text-white leading-none animate-pulse">
+                    <span className="absolute -top-1 -right-1 flex h-4 sm:h-[22px] min-w-[16px] sm:min-w-[22px] items-center justify-center rounded-full border-2 sm:border-[3px] border-white bg-red-500 px-0.5 sm:px-1 text-[8px] sm:text-[10px] font-black text-white leading-none animate-pulse">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}

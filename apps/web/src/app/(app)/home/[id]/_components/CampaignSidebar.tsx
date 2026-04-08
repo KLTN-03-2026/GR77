@@ -5,10 +5,12 @@ interface CampaignSidebarProps {
     fundingGoal: number;
     totalRaised: number;
     isJoined: boolean;
+    isLiked: boolean;
     isCreator: boolean;
     campaignId: string;
     setDonateOpen: (open: boolean) => void;
     handleJoin: () => void;
+    handleToggleLike: (id: string, isFavorited: boolean) => void;
     formatCurrency: (amount: number | string) => string;
 }
 
@@ -17,10 +19,12 @@ export function CampaignSidebar({
     fundingGoal,
     totalRaised,
     isJoined,
+    isLiked,
     isCreator,
     campaignId,
     setDonateOpen,
     handleJoin,
+    handleToggleLike,
     formatCurrency,
 }: CampaignSidebarProps) {
     return (
@@ -30,16 +34,18 @@ export function CampaignSidebar({
                 <h2 className="text-[1.25rem] italic font-black text-gray-900 tracking-tight">Tiến độ gây quỹ</h2>
             </div>
 
-            <div className="flex-1 flex flex-col justify-center">
+            <div className="flex-1 flex flex-col justify-between">
                 <CampaignGoalProgress
                     raisedPercent={raisedPercent}
                     fundingGoal={fundingGoal}
                     totalRaised={totalRaised}
                     isJoined={isJoined}
+                    isLiked={isLiked}
                     isCreator={isCreator}
                     campaignId={campaignId}
                     setDonateOpen={setDonateOpen}
                     handleJoin={handleJoin}
+                    handleToggleLike={handleToggleLike}
                     formatCurrency={formatCurrency}
                 />
             </div>

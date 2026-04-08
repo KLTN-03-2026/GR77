@@ -19,6 +19,7 @@ import {
 import NotificationBell from './NotificationBell';
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 import { useGlobalAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/lib/constants/endpoints';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -61,7 +62,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     try {
       const refreshToken = localStorage.getItem(isAdminLogout ? 'adminRefreshToken' : 'refreshToken');
       if (refreshToken) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/logout`, {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -141,8 +142,9 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
 
   return (
     <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 transition-all duration-300">
-      <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3 lg:gap-2">
+      <div className="px-2 sm:px-6 lg:px-8 py-1.5 sm:py-3 flex items-center justify-between gap-1 sm:gap-4">
+        {/* Left Area: Toggle & Logo & Welcome */}
+        <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-2 shrink-0 min-w-0 flex-1">
           {/* Toggle sidebar button */}
           <button
             onClick={onToggleSidebar}
@@ -152,32 +154,28 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
           </button>
 
           {/* Logo */}
-          <Link href={isAdmin ? "/admin/dashboard" : "/home"} className="transition-transform hover:scale-102">
+          <Link href={isAdmin ? "/admin/dashboard" : "/home"} className="transition-transform hover:scale-102 shrink-0 flex items-center justify-start w-[75px] sm:w-[168px] h-[24px] sm:h-[72px]">
             <Logo
               variant={isAdmin ? 'admin' : 'default'}
-              height={isAdmin ? 56 : 56}
-              className={isAdmin ? 'sm:h-16' : 'sm:h-16'}
+              className="object-contain w-auto h-full max-h-full max-w-full"
             />
           </Link>
-
-          <div className={`hidden md:flex items-center gap-3 ${roleLabel ? 'lg:ml-6' : ''}`}>
-            {/* Welcome message */}
-            <p className="text-gray-800 text-xl sm:text-2xl lg:text-3xl ml-2 truncate" style={{ fontFamily: 'Allura, cursive' }}>
-              {isAdmin ? translate('header.welcome') : 'Welcome back,'}{' '}
-              <span
-                style={{
-                  color: roleLabel === 'ADMIN' ? '#24305E' : '#F6349B',
-                  fontWeight: 'bold'
-                }}
-              >
-                {userName}
-              </span>
-              {isAdmin ? translate('header.ready') : '. Ready to create impact today?'}
-            </p>
-          </div>
+          {/* Welcome message - shifted to align with content */}
+          <p className="text-gray-800 text-[11px] sm:text-lg md:text-2xl lg:text-3xl truncate min-w-0 flex-1 ml-2 sm:ml-4 lg:ml-2 xl:ml-4" style={{ fontFamily: 'Allura, cursive' }}>
+            {isAdmin ? translate('header.welcome') : 'Welcome back,'}{' '}
+            <span
+              style={{
+                color: roleLabel === 'ADMIN' ? '#24305E' : '#F6349B',
+                fontWeight: 'bold'
+              }}
+            >
+              {userName}
+            </span>
+            <span className="hidden md:inline">{isAdmin ? translate('header.ready') : '. Ready to create impact today?'}</span>
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
           {/* Notification icon */}
           <NotificationBell isAdmin={isAdmin} />
 
@@ -188,7 +186,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center justify-center p-0.5 rounded-full border-2 border-[#47c9e5] hover:shadow-md transition-all overflow-hidden"
               >
-                <img src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName || 'User'}`} alt="Avatar" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover bg-white" />
+                <img src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName || 'User'}`} alt="Avatar" className="h-6 w-6 sm:h-10 sm:w-10 rounded-full object-cover bg-white aspect-square" />
               </button>
 
               {isProfileOpen && (
@@ -255,9 +253,10 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
         </div>
       </div>
 
+
       {/* Breadcrumb - full width */}
-      <div className={`bg-blue-50 px-4 sm:px-6 lg:px-8 py-2 transition-all duration-300 ${isOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
-        <div className="flex items-center text-sm text-gray-700 font-medium">
+      <div className={`bg-blue-50 px-3 sm:px-6 lg:px-8 py-1 sm:py-2 transition-all duration-300 ${isOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+        <div className="flex items-center text-xs sm:text-sm text-gray-700 font-medium">
           {renderBreadcrumbs()}
         </div>
       </div>

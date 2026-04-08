@@ -70,7 +70,7 @@ export default function CreatorCampaignsPage() {
                     return;
                 }
 
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/campaigns/me/list`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/me/list`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -103,12 +103,12 @@ export default function CreatorCampaignsPage() {
     return (
         <div className="w-full pb-10">
             {/* Header section */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <DocumentTextIcon className="w-7 h-7 text-cyan-500" />
+            <div className="mb-2 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+                    <DocumentTextIcon className="w-5 h-5 sm:w-7 sm:h-7 text-cyan-500" />
                     My Campaigns
                 </h1>
-                <p className="text-sm text-gray-400 mt-1 ml-9">Quản lý các chiến dịch của bạn</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-9">Quản lý các chiến dịch của bạn</p>
             </div>
 
             {/* Search + Table Card */}
@@ -217,135 +217,129 @@ export default function CreatorCampaignsPage() {
                 )}
             </div>
 
-            {/* Main Content Areas Wrapper */}
-            <div className="flex flex-col w-full px-2 sm:px-6 mb-10">
+            {/* Chart Donate Box */}
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-200 mt-6">
+                <div className="flex justify-between items-start mb-8">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900 leading-none">Chart Donate</h2>
+                        <p className="text-xs text-gray-400 mt-2 font-medium">Lorem ipsum dolor sit amet, consectetur adip</p>
+                    </div>
+                    <button className="flex items-center gap-2 px-4 py-2 border border-[#9fd3f2] text-[#6bbceb] rounded-[10px] text-xs font-bold hover:bg-blue-50 transition-colors">
+                        <ArrowDownTrayIcon className="h-4 w-4" strokeWidth={2.5} />
+                        Save Report
+                    </button>
+                </div>
 
-                {/* Chart Donate Box */}
-                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 mb-8 w-full max-w-4xl mx-auto">
-                    <div className="flex justify-between items-start mb-8">
-                        <div>
-                            <h2 className="text-lg font-bold text-gray-900 leading-none">Chart Donate</h2>
-                            <p className="text-xs text-gray-400 mt-2 font-medium">Lorem ipsum dolor sit amet, consectetur adip</p>
+                <div className="h-[240px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={areaData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#81cbf1" stopOpacity={0.4} />
+                                    <stop offset="95%" stopColor="#81cbf1" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                            <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
+                                dy={15}
+                            />
+                            <YAxis hide domain={['dataMin - 100', 'dataMax + 100']} />
+                            <Tooltip content={<AreaTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                            <Area
+                                type="monotone"
+                                dataKey="value"
+                                stroke="#81cbf1"
+                                strokeWidth={3}
+                                fillOpacity={1}
+                                fill="url(#colorValue)"
+                                activeDot={{ r: 6, fill: '#81cbf1', stroke: '#ffffff', strokeWidth: 3 }}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Bottom Row Box */}
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-200 mt-6 flex flex-col lg:flex-row items-stretch gap-8 lg:gap-0">
+
+                {/* Campaigns Map Section */}
+                <div className="flex-1 flex flex-col pb-4 lg:pb-0 lg:pr-10 border-b lg:border-b-0 lg:border-r border-gray-100">
+                    <div className="flex justify-between items-center mb-10 mt-2">
+                        <h2 className="text-base font-bold text-gray-900">Campaigns Map</h2>
+                        <div className="flex items-center gap-3">
+                            <button className="flex items-center gap-1.5 text-[10px] font-bold border border-gray-200 rounded-full px-3 py-1 text-gray-600 hover:bg-gray-50">
+                                Weekly
+                                <ChevronDownIcon className="h-2.5 w-2.5 text-red-400 stroke-[3]" />
+                            </button>
+                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <EllipsisVerticalIcon className="h-5 w-5" />
+                            </button>
                         </div>
-                        <button className="flex items-center gap-2 px-4 py-2 border border-[#9fd3f2] text-[#6bbceb] rounded-[10px] text-xs font-bold hover:bg-blue-50 transition-colors">
-                            <ArrowDownTrayIcon className="h-4 w-4" strokeWidth={2.5} />
-                            Save Report
-                        </button>
                     </div>
 
-                    <div className="h-[240px] w-full">
+                    <div className="h-[200px] w-full mt-auto">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={areaData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#81cbf1" stopOpacity={0.4} />
-                                        <stop offset="95%" stopColor="#81cbf1" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
+                            <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barGap={0} barCategoryGap="30%">
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                                 <XAxis
                                     dataKey="name"
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                                    dy={15}
+                                    dy={10}
                                 />
-                                <YAxis hide domain={['dataMin - 100', 'dataMax + 100']} />
-                                <Tooltip content={<AreaTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                                <Area
-                                    type="monotone"
-                                    dataKey="value"
-                                    stroke="#81cbf1"
-                                    strokeWidth={3}
-                                    fillOpacity={1}
-                                    fill="url(#colorValue)"
-                                    activeDot={{ r: 6, fill: '#81cbf1', stroke: '#ffffff', strokeWidth: 3 }}
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
+                                    ticks={[0, 20, 40, 60, 80]}
                                 />
-                            </AreaChart>
+                                <Tooltip cursor={{ fill: '#f8fafc' }} />
+                                <Bar dataKey="value" radius={[6, 6, 6, 6]} barSize={8}>
+                                    {barData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.isRed ? '#ff545e' : '#ffc42e'} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Bottom Row Box */}
-                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col lg:flex-row items-stretch w-full max-w-4xl mx-auto gap-8 lg:gap-0">
+                {/* Total Raised Section */}
+                <div className="flex-1 flex flex-col justify-center items-center lg:pl-10 pt-4 lg:pt-0">
+                    <div className="relative w-40 h-40 sm:w-[180px] sm:h-[180px]">
+                        {/* Inner custom shadows layer for the donut could reside under the SVG */}
+                        <div className="absolute inset-0 rounded-full bg-blue-50/20 blur-xl"></div>
 
-                    {/* Campaigns Map Section */}
-                    <div className="flex-1 flex flex-col pb-4 lg:pb-0 lg:pr-10 border-b lg:border-b-0 lg:border-r border-gray-100">
-                        <div className="flex justify-between items-center mb-10 mt-2">
-                            <h2 className="text-base font-bold text-gray-900">Campaigns Map</h2>
-                            <div className="flex items-center gap-3">
-                                <button className="flex items-center gap-1.5 text-[10px] font-bold border border-gray-200 rounded-full px-3 py-1 text-gray-600 hover:bg-gray-50">
-                                    Weekly
-                                    <ChevronDownIcon className="h-2.5 w-2.5 text-red-400 stroke-[3]" />
-                                </button>
-                                <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                                    <EllipsisVerticalIcon className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={donutData}
+                                    innerRadius={window?.innerWidth < 640 ? 55 : 68}
+                                    outerRadius={window?.innerWidth < 640 ? 75 : 90}
+                                    startAngle={90}
+                                    endAngle={-270}
+                                    dataKey="value"
+                                    stroke="none"
+                                    cornerRadius={40} // gives a rounded effect to the pie ends if any
+                                >
+                                    <Cell fill="#dff0fa" />
+                                    <Cell fill="#f6f9fc" />
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
 
-                        <div className="h-[200px] w-full mt-auto">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barGap={0} barCategoryGap="30%">
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                    <XAxis
-                                        dataKey="name"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                                        dy={10}
-                                    />
-                                    <YAxis
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                                        ticks={[0, 20, 40, 60, 80]}
-                                    />
-                                    <Tooltip cursor={{ fill: '#f8fafc' }} />
-                                    <Bar dataKey="value" radius={[6, 6, 6, 6]} barSize={8}>
-                                        {barData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.isRed ? '#ff545e' : '#ffc42e'} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-xl sm:text-3xl font-black text-[#fed13f] drop-shadow-sm tracking-wide">80M $</span>
                         </div>
                     </div>
-
-                    {/* Total Raised Section */}
-                    <div className="flex-1 flex flex-col justify-center items-center lg:pl-10 pt-4 lg:pt-0">
-                        <div className="relative w-[180px] h-[180px]">
-                            {/* Inner custom shadows layer for the donut could reside under the SVG */}
-                            <div className="absolute inset-0 rounded-full bg-blue-50/20 blur-xl"></div>
-
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={donutData}
-                                        innerRadius={68}
-                                        outerRadius={90}
-                                        startAngle={90}
-                                        endAngle={-270}
-                                        dataKey="value"
-                                        stroke="none"
-                                        cornerRadius={40} // gives a rounded effect to the pie ends if any
-                                    >
-                                        <Cell fill="#dff0fa" />
-                                        <Cell fill="#f6f9fc" />
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-3xl font-black text-[#fed13f] drop-shadow-sm tracking-wide">80M $</span>
-                            </div>
-                        </div>
-                        <h3 className="text-gray-900 font-extrabold text-xs tracking-wide uppercase mt-6">Total Raised</h3>
-                    </div>
-
+                    <h3 className="text-gray-900 font-extrabold text-xs tracking-wide uppercase mt-6">Total Raised</h3>
                 </div>
             </div>
-
         </div>
     );
 }

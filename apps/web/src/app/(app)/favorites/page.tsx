@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { HeartIcon } from '@heroicons/react/24/solid';
 import { Bars3CenterLeftIcon, MapPinIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import FavoriteButton from '@/components/campaign/FavoriteButton';
+import styles from '@/components/campaign/CampaignCard.module.css';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -106,12 +107,12 @@ export default function FavoritesPage() {
 
     return (
         <div className="w-full">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <HeartIcon className="w-7 h-7 text-pink-500" />
-                    Favorite Campaigns
+            <div className="mb-2 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+                    <HeartIcon className="w-5 h-5 sm:w-8 sm:h-8 text-pink-500" />
+                    My Favorites
                 </h1>
-                <p className="text-sm text-gray-400 mt-1 ml-9">
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-9">
                     Chiến dịch bạn đã lưu
                 </p>
             </div>
@@ -130,87 +131,80 @@ export default function FavoritesPage() {
                 </div>
             ) : campaigns.length > 0 ? (
                 <>
-                    <div className="space-y-6 mb-8">
+                    <div className="space-y-[2vw] mb-[2vw]">
                         {campaigns.map((campaign) => (
                             <Link
                                 key={campaign.id}
                                 href={`/home/${campaign.id}`}
-                                className="flex flex-col md:flex-row bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:border-pink-300 hover:shadow-md transition-all group block"
+                                className={`${styles.hCard} block`}
                             >
-                                {/* Image */}
-                                <div className="w-full md:w-[35%] p-4 h-56 md:h-auto relative">
-                                    <div className="relative h-full w-full overflow-hidden rounded-[2rem]">
-                                        {campaign.coverImageUrl ? (
-                                            <img
-                                                src={campaign.coverImageUrl}
-                                                alt={campaign.title}
-                                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                            />
-                                        ) : (
-                                            <div className="h-full w-full bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center">
-                                                <Bars3CenterLeftIcon className="w-16 h-16 text-pink-300" />
-                                            </div>
-                                        )}
-                                        {/* Status badge */}
-                                        <span className={`absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm uppercase ${campaign.status === 'ACTIVE'
-                                            ? 'bg-green-100/90 text-green-700'
-                                            : 'bg-yellow-100/90 text-yellow-700'
-                                            }`}>
-                                            {campaign.status}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Content */}
-                                <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <h2 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors">
-                                                {campaign.title}
-                                            </h2>
-                                        </div>
-
-                                        {/* Location & Category */}
-                                        <div className="flex items-center gap-3 text-sm text-gray-500 mb-4 flex-wrap">
-                                            <span className="capitalize bg-gray-100 px-3 py-1 rounded-full font-medium text-gray-700">
+                                <div className={`${styles.hInner} flex w-full h-full overflow-hidden bg-white`}>
+                                    {/* Image */}
+                                    <div className={`${styles.hImgWrap} h-full shrink-0 flex items-center`}>
+                                        <div className={`${styles.hImgFrame} relative w-full overflow-hidden`}>
+                                            {campaign.coverImageUrl ? (
+                                                <img
+                                                    src={campaign.coverImageUrl}
+                                                    alt={campaign.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className={`${styles.hImgPlaceholder} w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100`}>
+                                                    <Bars3CenterLeftIcon />
+                                                </div>
+                                            )}
+                                            <span className={`${styles.hBadge} ${styles.hBadgeTl} absolute font-bold bg-white/90 text-black shadow-sm capitalize`}>
                                                 {campaign.category}
                                             </span>
+                                            <span className={`${styles.hBadge} ${styles.hBadgeTr} absolute font-bold uppercase shadow-sm ${campaign.status === 'ACTIVE'
+                                                ? 'bg-green-100/90 text-green-700'
+                                                : 'bg-yellow-100/90 text-yellow-700'
+                                                }`}>
+                                                {campaign.status}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className={`${styles.hContent} flex-1 flex flex-col justify-between min-w-0 overflow-hidden`}>
+                                        <div>
+                                            <h2 className={`${styles.hTitle} font-extrabold text-gray-900 overflow-hidden text-ellipsis`} style={{ display: '-webkit-box' }}>
+                                                {campaign.title}
+                                            </h2>
+
                                             {campaign.locationText && (
-                                                <div className="flex items-center gap-1">
-                                                    <MapPinIcon className="w-4 h-4 text-gray-400" />
+                                                <div className={`${styles.hLocation} flex items-center text-gray-400`}>
+                                                    <MapPinIcon className="shrink-0" />
                                                     <span>{campaign.locationText}</span>
                                                 </div>
                                             )}
+
+                                            <p className={`${styles.hGoalLabel} font-bold text-slate-700`}>
+                                                Mục tiêu{' '}
+                                                <span className="text-pink-500 font-black">
+                                                    {formatCurrency(campaign.fundingGoalAmount)} VND
+                                                </span>
+                                            </p>
+                                            <p className={`${styles.hSubText} font-bold text-gray-400 uppercase`}>
+                                                Ủng hộ tối thiểu: <span className="font-bold text-gray-600">{formatCurrency(campaign.minimumDonationAmount)} VND</span>
+                                            </p>
+
+                                            <div className={`${styles.hDateInfo} flex items-center text-gray-500`}>
+                                                <CalendarIcon className="text-gray-400 shrink-0" />
+                                                <span>Ngày lưu: <span className="font-medium text-gray-700">{formatDate(campaign.favoritedAt)}</span></span>
+                                            </div>
                                         </div>
 
-                                        {/* Goals */}
-                                        <p className="text-lg font-bold text-slate-700 mb-1">
-                                            Mục tiêu{' '}
-                                            <span className="text-pink-500 font-extrabold">
-                                                {formatCurrency(campaign.fundingGoalAmount)} VND
+                                        <div className={`${styles.hActions} flex items-center`}>
+                                            <FavoriteButton
+                                                campaignId={campaign.id}
+                                                initialFavorited={true}
+                                                onToggle={handleToggleFavorite}
+                                            />
+                                            <span className={`${styles.hBtnOutline} font-bold border-2 border-yellow-400 bg-white text-yellow-600 cursor-pointer text-center inline-flex items-center justify-center whitespace-nowrap hover:bg-[#FFF9E0]`}>
+                                                Xem &amp; Ủng Hộ
                                             </span>
-                                        </p>
-                                        <p className="text-xs text-gray-400 mb-4">
-                                            Ủng hộ tối thiểu: <span className="font-bold text-gray-600">{formatCurrency(campaign.minimumDonationAmount)} VND</span>
-                                        </p>
-
-                                        {/* Date info */}
-                                        <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
-                                            <CalendarIcon className="w-4 h-4 text-gray-400" />
-                                            <span>Ngày lưu: <span className="font-medium text-gray-700">{formatDate(campaign.favoritedAt)}</span></span>
                                         </div>
-                                    </div>
-
-                                    {/* Action buttons */}
-                                    <div className="flex gap-4 items-center mt-6">
-                                        <FavoriteButton
-                                            campaignId={campaign.id}
-                                            initialFavorited={true}
-                                            onToggle={handleToggleFavorite}
-                                        />
-                                        <span className="flex-1 md:flex-none px-8 py-3 bg-white border-2 border-[#FFD700] text-yellow-600 font-bold rounded-full text-center text-sm shadow-sm transition-all flex items-center justify-center gap-2">
-                                            Xem & Ủng Hộ
-                                        </span>
                                     </div>
                                 </div>
                             </Link>

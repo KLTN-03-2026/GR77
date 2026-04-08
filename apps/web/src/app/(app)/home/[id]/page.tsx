@@ -1,7 +1,9 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useGlobalAuth } from "@/contexts/AuthContext";
+import { API_BASE_URL } from "@/lib/constants/endpoints";
 
 // Shared Components
 import { CampaignDiscussion } from "@/components/campaign/CampaignDiscussion";
@@ -32,6 +34,7 @@ export default function CampaignDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
+    const router = useRouter();
     const { user: currentUser } = useGlobalAuth();
 
     /* ── API fetch ── */
@@ -51,7 +54,7 @@ export default function CampaignDetailPage({
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}`, {
+                const res = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
                     headers,
                 });
                 if (!res.ok) throw new Error("Campaign not found");
@@ -71,7 +74,7 @@ export default function CampaignDetailPage({
         if (!campaign) return;
         const token = localStorage.getItem("accessToken");
         if (!token) return;
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/view-histories/${id}`, {
+        fetch(`${API_BASE_URL}/view-histories/${id}`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
         }).catch(() => { });
@@ -100,7 +103,7 @@ export default function CampaignDetailPage({
 
     const fetchComments = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/comments/campaign/${id}`);
+            const res = await fetch(`${API_BASE_URL}/comments/campaign/${id}`);
             if (res.ok) {
                 const data = await res.json();
                 setComments(data);
@@ -117,7 +120,7 @@ export default function CampaignDetailPage({
 
         const token = localStorage.getItem("accessToken");
         if (token) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/participants/${id}/status`, {
+            fetch(`${API_BASE_URL}/participants/${id}/status`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -126,7 +129,7 @@ export default function CampaignDetailPage({
                 })
                 .catch(() => { });
 
-            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${id}/status`, {
+            fetch(`${API_BASE_URL}/favorites/${id}/status`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -148,7 +151,7 @@ export default function CampaignDetailPage({
 
         try {
             const method = isLiked ? "DELETE" : "POST";
-            const url = isLiked ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites`;
+            const url = isLiked ? `${API_BASE_URL}/favorites/${id}` : `${API_BASE_URL}/favorites`;
             const body = isLiked ? undefined : JSON.stringify({ campaignId: id });
 
             const res = await fetch(url, {
@@ -372,8 +375,7 @@ export default function CampaignDetailPage({
 
     return (
         <div
-            className="min-h-screen -mx-[34px] -mt-[34px] bg-white pb-20 overflow-x-hidden"
-            style={{ width: 'calc(100% + 68px)' }}
+            className="min-h-screen -mx-3 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 bg-white pb-20 overflow-x-hidden"
         >
             {isLoading && (
                 <div className="flex flex-col items-center justify-center py-24 gap-4 bg-white">
@@ -393,7 +395,7 @@ export default function CampaignDetailPage({
                     <CampaignHero coverImageUrl={coverImage} title={campaign?.title} />
 
                     {/* Container 1: Core Campaign Info */}
-                    <div className="relative z-10 px-8 pt-6 pb-8 max-w-7xl mx-auto mt-6">
+                    <div className="relative z-10 px-4 sm:px-8 pt-6 pb-8 max-w-7xl mx-auto mt-2 sm:mt-6">
 
                         <CampaignDescription description={campaign?.description} />
 
@@ -414,23 +416,27 @@ export default function CampaignDetailPage({
                                 />
                             </div>
 
-                            {/* CỘT PHẢI */}
-                            <CampaignSidebar
-                                raisedPercent={raisedPercent}
-                                fundingGoal={fundingGoal}
-                                totalRaised={totalRaised}
-                                isJoined={isJoined}
-                                isCreator={currentUser?.id === campaign?.creatorUserId}
-                                campaignId={campaign?.id}
-                                setDonateOpen={setDonateOpen}
-                                handleJoin={handleJoin}
-                                formatCurrency={formatCurrency}
-                            />
+                            {/* CỘT PHẢI - Equal Height with Left Column */}
+                            <div className="lg:col-span-1 h-full">
+                                <CampaignSidebar
+                                    raisedPercent={raisedPercent}
+                                    fundingGoal={fundingGoal}
+                                    totalRaised={totalRaised}
+                                    isJoined={isJoined}
+                                    isLiked={isLiked}
+                                    isCreator={currentUser?.id === campaign?.creatorUserId}
+                                    campaignId={campaign?.id}
+                                    setDonateOpen={setDonateOpen}
+                                    handleJoin={handleJoin}
+                                    handleToggleLike={handleToggleLike}
+                                    formatCurrency={formatCurrency}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Container 2: Community Discussion */}
-                    <div className="px-8 pb-12 max-w-7xl mx-auto mt-8">
+                    <div className="px-4 sm:px-8 pb-12 max-w-7xl mx-auto mt-8">
                         <CampaignDiscussion
                             comments={comments}
                             campaign={campaign}
