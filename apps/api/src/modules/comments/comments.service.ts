@@ -38,12 +38,32 @@ export class CommentsService {
             }
         });
 
-        // Notify campaign owner if not the same user
-        if (comment.campaign.creatorUserId !== userId) {
-            const commenterName = comment.user.profile?.firstName
-                ? `${comment.user.profile.firstName} ${comment.user.profile.lastName || ''}`.trim()
-                : comment.user.username;
+        const commenterName = comment.user.profile?.firstName
+            ? `${comment.user.profile.firstName} ${comment.user.profile.lastName || ''}`.trim()
+            : comment.user.username;
 
+        // 1. Notify parent comment author if it's a reply
+        if (dto.parentId) {
+            const parentComment = await this.prisma.comment.findUnique({
+                where: { id: dto.parentId },
+                select: { userId: true }
+            });
+
+            if (parentComment && parentComment.userId !== userId) {
+                await this.notificationsService.create({
+                    userId: parentComment.userId,
+                    title: 'Phản hồi mới',
+                    message: `${commenterName} đã trả lời bình luận của bạn trong "${comment.campaign.title}"`,
+                    type: 'COMMENT',
+                    link: `/home/${dto.campaignId}`,
+                });
+            }
+        }
+
+        // 2. Notify campaign owner if not the same user AND not already notified as parent author
+        const parentAuthorId = dto.parentId ? (await this.prisma.comment.findUnique({ where: { id: dto.parentId }, select: { userId: true } }))?.userId : null;
+
+        if (comment.campaign.creatorUserId !== userId && comment.campaign.creatorUserId !== parentAuthorId) {
             await this.notificationsService.create({
                 userId: comment.campaign.creatorUserId,
                 title: 'Bình luận mới',

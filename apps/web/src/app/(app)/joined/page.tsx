@@ -71,12 +71,12 @@ export default function KindlinkJoinedPage() {
 
   return (
     <div className="w-full">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <UserPlus className="w-7 h-7 text-cyan-500" />
+      <div className="mb-2 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+          <UserPlus className="w-5 h-5 sm:w-7 sm:h-7 text-cyan-500" />
           Joined Campaigns
         </h1>
-        <p className="text-sm text-gray-400 mt-1 ml-9">Chiến dịch bạn đã tham gia</p>
+        <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-[22px] sm:ml-9">Chiến dịch bạn đã tham gia</p>
       </div>
 
       {isLoading ? (

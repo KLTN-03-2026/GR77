@@ -94,3 +94,60 @@
 .infoValue       { margin-left: 0.2cqi; }
 .hFooterLink     { gap: 0.2cqi; font-size: 1.4cqi; }
 .hFooterLink svg { width: 1.6cqi; height: 1.6cqi; }
+
+/* ---- Responsive: Convert Horizontal to Vertical on Mobile ---- */
+@media (max-width: 767px) {
+  .hCard { aspect-ratio: auto; }
+  .hInner { flex-direction: column; border-radius: 5cqi; }
+  
+  /* Image takes full width */
+  .hImgWrap { width: 100%; min-width: 100%; padding: 0; }
+  .hImgFrame { aspect-ratio: 3 / 2; border-radius: 5cqi 5cqi 0 0; }
+  
+  /* Badges */
+  .hBadge { font-size: 3.5cqi; padding: 1.5cqi 3cqi; }
+  .hBadgeTl { top: 3cqi; left: 3cqi; }
+  .hBadgeTr { top: 3cqi; right: 3cqi; }
+  
+  /* Content formatting */
+  .hContent { padding: 4.5cqi; }
+  
+  .hTitle { font-size: 6cqi; margin-bottom: 2.5cqi; }
+  .hLocation { font-size: 4cqi; margin-bottom: 2.5cqi; gap: 1.5cqi; }
+  .hLocation svg { width: 4.5cqi; height: 4.5cqi; }
+  
+  .hGoalLabel { font-size: 5.5cqi; margin-top: 2.5cqi; }
+  .hSubText { font-size: 4cqi; margin-top: 1cqi; }
+  
+  .hMetaRow { gap: 2cqi; margin-top: 3.5cqi; flex-wrap: wrap; }
+  .hMetaPill { font-size: 4cqi; padding: 1.5cqi 3cqi; border-radius: 2.5cqi; gap: 1.5cqi; }
+  .hMetaPill svg { width: 4.5cqi; height: 4.5cqi; }
+  .metaSep { margin: 0 1.5cqi; }
+
+  .hFavRow { font-size: 4cqi; margin-top: 2cqi; gap: 1.5cqi; }
+  .hFavRow svg { width: 4.5cqi; height: 4.5cqi; }
+  
+  /* Actions */
+  .hActions { gap: 3cqi; margin-top: 5cqi; flex-wrap: wrap; }
+  .hBtnPrimary { padding: 2.5cqi 5cqi; font-size: 4cqi; flex: 1; text-align: center; justify-content: center; }
+  .hBtnOutline { padding: 2.5cqi 4cqi; font-size: 4cqi; gap: 1.5cqi; flex: 1; justify-content: center; text-align: center; }
+  
+  .hCard :global(.hcard-fav-btn) { padding: 2.5cqi 4cqi; font-size: 4cqi; gap: 1.5cqi; flex: 1; justify-content: center; text-align: center; }
+  .hCard :global(.hcard-fav-btn-icon) { width: 4.5cqi; height: 4.5cqi; }
+
+  /* Extras (Joined / Activity) */
+  .hDateInfo { font-size: 4cqi; margin-top: 3cqi; gap: 1.5cqi; }
+  .hDateInfo svg { width: 4.5cqi; height: 4.5cqi; }
+  
+  .hDateInputWrap { max-width: 100%; margin-top: 3.5cqi; }
+  .hDateInput { padding: 3cqi 9cqi 3cqi 4cqi; border-radius: 3cqi; font-size: 4.5cqi; }
+  .hDateInputIcon { right: 3.5cqi; }
+  .hDateInputIcon svg { width: 5cqi; height: 5cqi; }
+  
+  .hFooter { gap: 3cqi; padding-top: 3.5cqi; margin-top: 3.5cqi; flex-direction: column; align-items: flex-start; }
+  .hFooterInfo { font-size: 4.5cqi; gap: 1.5cqi; display: flex; align-items: center; white-space: nowrap; }
+  .hFooterInfo svg { width: 4.5cqi; height: 4.5cqi; }
+  .infoValue { margin-left: 0.5cqi; display: inline-block; margin-top: 0; }
+  .hFooterLink { font-size: 4cqi; gap: 1cqi; }
+  .hFooterLink svg { width: 4.5cqi; height: 4.5cqi; }
+}

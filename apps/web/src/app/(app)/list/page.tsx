@@ -168,48 +168,48 @@ export default function ListCampaignsPage() {
     return (
         <div className="w-full">
             {/* Page header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Bars3CenterLeftIcon className="w-7 h-7 text-cyan-500" />
+            <div className="mb-2 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+                    <Bars3CenterLeftIcon className="w-5 h-5 sm:w-8 sm:h-8 text-cyan-500" />
                     List Campaigns
                 </h1>
-                <p className="text-sm text-gray-400 mt-1 ml-9">Explore and support active campaigns</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-10">Explore and support active campaigns</p>
             </div>
 
             {/* Search + filter bar */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-1.5 sm:mb-6">
                 <div className="relative flex-1">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <MagnifyingGlassIcon className="absolute left-3 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                     <input
                         type="text"
                         placeholder="Search campaigns..."
                         value={search}
                         onChange={(e) => handleSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-2xl text-sm font-medium text-gray-900 placeholder-gray-500 bg-gray-50 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all"
+                        className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2.5 border border-gray-200 rounded-xl sm:rounded-2xl text-[11px] sm:text-sm font-medium text-gray-900 placeholder-gray-500 bg-gray-50 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all"
                     />
                 </div>
 
-                <div className="flex gap-2 relative overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-                    <div className="flex items-center bg-white border border-gray-200 rounded-full px-2 py-1 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-200 transition-all">
+                <div className="flex flex-row gap-1.5 sm:gap-2 w-full sm:w-auto flex-nowrap items-center">
+                    <div className="flex-1 sm:flex-none flex items-center justify-between bg-white border border-gray-200 rounded-full px-1.5 sm:px-2 py-1 sm:py-1 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-200 transition-all min-w-0">
                         <input
                             type="date"
                             value={startDateFilter}
                             onChange={(e) => { setStartDateFilter(e.target.value); setCurrentPage(1); }}
-                            className="px-2 py-1 text-sm font-medium text-gray-600 outline-none bg-transparent cursor-pointer"
+                            className="flex-1 sm:flex-none w-0 sm:w-auto px-0.5 sm:px-2 py-0.5 text-[10px] sm:text-sm font-medium text-gray-600 outline-none bg-transparent cursor-pointer text-center min-w-0"
                         />
-                        <span className="text-gray-400 text-xs px-1">-</span>
+                        <span className="text-gray-300 text-[9px] sm:text-xs shrink-0 mx-0.5">-</span>
                         <input
                             type="date"
                             value={endDateFilter}
                             onChange={(e) => { setEndDateFilter(e.target.value); setCurrentPage(1); }}
-                            className="px-2 py-1 text-sm font-medium text-gray-600 outline-none bg-transparent cursor-pointer"
+                            className="flex-1 sm:flex-none w-0 sm:w-auto px-0.5 sm:px-2 py-0.5 text-[10px] sm:text-sm font-medium text-gray-600 outline-none bg-transparent cursor-pointer text-center min-w-0"
                         />
                     </div>
                     <select
                         value={selectedCategory}
                         onChange={(e) => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
-                        className="px-6 py-2.5 rounded-full text-sm font-bold bg-white text-gray-800 border-2 border-gray-100 hover:border-gray-200 hover:text-black transition-all min-w-[160px] outline-none cursor-pointer appearance-none shadow-sm"
-                        style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%23000000\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right .8rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em 1.2em', paddingRight: '2.5rem' }}
+                        className="shrink-0 w-[100px] sm:w-auto px-2 sm:px-6 py-1.5 sm:py-2.5 rounded-full text-[10px] sm:text-sm font-bold bg-white text-gray-800 border-2 border-gray-100 hover:border-gray-200 hover:text-black transition-all outline-none cursor-pointer appearance-none shadow-sm text-center"
+                        style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%23000000\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right .3rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em 1em', paddingRight: '1.2rem' }}
                     >
                         <option value="All">All Categories</option>
                         {categories.map(cat => (
@@ -219,7 +219,7 @@ export default function ListCampaignsPage() {
                 </div>
             </div>
 
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-[10px] sm:text-sm text-gray-500 mb-2 sm:mb-4">
                 Showing {filtered.length} campaign{filtered.length !== 1 ? 's' : ''}
                 {search ? ` matching "${search}"` : ''}
             </p>

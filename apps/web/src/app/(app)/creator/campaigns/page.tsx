@@ -103,12 +103,12 @@ export default function CreatorCampaignsPage() {
     return (
         <div className="w-full pb-10">
             {/* Header section */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <DocumentTextIcon className="w-7 h-7 text-cyan-500" />
+            <div className="mb-2 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+                    <DocumentTextIcon className="w-5 h-5 sm:w-7 sm:h-7 text-cyan-500" />
                     My Campaigns
                 </h1>
-                <p className="text-sm text-gray-400 mt-1 ml-9">Quản lý các chiến dịch của bạn</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-9">Quản lý các chiến dịch của bạn</p>
             </div>
 
             {/* Search + Table Card */}
@@ -311,7 +311,7 @@ export default function CreatorCampaignsPage() {
 
                 {/* Total Raised Section */}
                 <div className="flex-1 flex flex-col justify-center items-center lg:pl-10 pt-4 lg:pt-0">
-                    <div className="relative w-[180px] h-[180px]">
+                    <div className="relative w-40 h-40 sm:w-[180px] sm:h-[180px]">
                         {/* Inner custom shadows layer for the donut could reside under the SVG */}
                         <div className="absolute inset-0 rounded-full bg-blue-50/20 blur-xl"></div>
 
@@ -319,8 +319,8 @@ export default function CreatorCampaignsPage() {
                             <PieChart>
                                 <Pie
                                     data={donutData}
-                                    innerRadius={68}
-                                    outerRadius={90}
+                                    innerRadius={window?.innerWidth < 640 ? 55 : 68}
+                                    outerRadius={window?.innerWidth < 640 ? 75 : 90}
                                     startAngle={90}
                                     endAngle={-270}
                                     dataKey="value"
@@ -334,7 +334,7 @@ export default function CreatorCampaignsPage() {
                         </ResponsiveContainer>
 
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-3xl font-black text-[#fed13f] drop-shadow-sm tracking-wide">80M $</span>
+                            <span className="text-xl sm:text-3xl font-black text-[#fed13f] drop-shadow-sm tracking-wide">80M $</span>
                         </div>
                     </div>
                     <h3 className="text-gray-900 font-extrabold text-xs tracking-wide uppercase mt-6">Total Raised</h3>

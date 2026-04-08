@@ -268,7 +268,7 @@ export default function JoinedCampaignDetailPage({ params }: { params: Promise<{
               <div className="flex items-center justify-between border-b-2 border-gray-100 pb-4">
                 <div className="flex items-center gap-3">
                   <MessageSquare className="w-7 h-7 text-blue-500" />
-                  <h3 className="text-2xl font-bold text-gray-900">Community Discussion</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">Comments</h3>
                 </div>
                 <span className="text-sm font-bold text-gray-400 bg-gray-100 px-4 py-1 rounded-full">248 Comments</span>
               </div>

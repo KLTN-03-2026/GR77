@@ -16,7 +16,7 @@ export default function CampaignsPage() {
     {
       title: 'Favorite Campaigns',
       icon: (
-        <svg className="w-7 h-7 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <svg className="w-5 h-5 sm:w-7 sm:h-7 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
         </svg>
       ),
@@ -31,7 +31,7 @@ export default function CampaignsPage() {
     {
       title: 'Activity History',
       icon: (
-        <svg className="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <svg className="w-5 h-5 sm:w-7 sm:h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
@@ -46,7 +46,7 @@ export default function CampaignsPage() {
     {
       title: 'Joined Campaigns',
       icon: (
-        <svg className="w-7 h-7 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <svg className="w-5 h-5 sm:w-7 sm:h-7 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
@@ -61,7 +61,7 @@ export default function CampaignsPage() {
     {
       title: 'My Campaigns',
       icon: (
-        <svg className="w-7 h-7 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <svg className="w-5 h-5 sm:w-7 sm:h-7 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
@@ -80,14 +80,14 @@ export default function CampaignsPage() {
       {sections.map((section, idx) => (
         <div key={idx} className="mb-20">
           {/* Section Title */}
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-1.5 sm:gap-3 mb-3 sm:mb-5 pl-2 sm:pl-0">
             {section.icon}
-            <h2 className="text-2xl font-bold text-gray-900">{section.title}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{section.title}</h2>
           </div>
 
           {/* Card Container */}
           <div
-            className="px-8 pt-9 pb-3"
+            className="px-4 sm:px-8 pt-6 sm:pt-9 pb-3"
             style={{
               borderTop: `2px solid ${section.borderColor}`,
               borderLeft: `2px solid ${section.borderColor}`,
@@ -97,11 +97,11 @@ export default function CampaignsPage() {
               background: section.bgColor,
             }}
           >
-            {/* Cards — responsive grid with proportional scaling */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-[3%] mb-[2%]">
+            {/* Cards — responsive carousel on mobile, grid on desktop */}
+            <div className="flex sm:grid overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none flex-nowrap sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-[3%] mb-0 sm:mb-[2%] pb-2 sm:pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {section.campaigns.map((campaign) => (
-                <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className={`${styles.vCard} block`}>
-                  <div className={`${styles.vInner} overflow-hidden shadow-sm hover:shadow-xl transition-all duration-200 hover:scale-[1.02]`} style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgba(255, 255, 255, 0.73)' }}>
+                <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className={`${styles.vCard} block shrink-0 w-[70vw] sm:w-auto snap-center sm:snap-align-none`}>
+                  <div className={`${styles.vInner} overflow-hidden shadow-sm hover:shadow-xl transition-all duration-200 hover:scale-[1.02]`} style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255, 255, 255, 0.73)' }}>
                     <div className={`${styles.vImg} relative w-full`}>
                       <Image
                         src={campaign.image}
@@ -138,7 +138,7 @@ export default function CampaignsPage() {
             </div>
 
             {/* View link */}
-            <div className="text-right mt-4 pb-2">
+            <div className="text-right mt-1 sm:mt-4 pb-1 sm:pb-2">
               <Link
                 href={section.linkHref}
                 className={`${section.linkColor} font-medium inline-flex items-center gap-2 text-sm`}

@@ -372,8 +372,7 @@ export default function CampaignDetailPage({
 
     return (
         <div
-            className="min-h-screen -mx-[34px] -mt-[34px] bg-white pb-20 overflow-x-hidden"
-            style={{ width: 'calc(100% + 68px)' }}
+            className="min-h-screen -mx-3 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 bg-white pb-20 overflow-x-hidden"
         >
             {isLoading && (
                 <div className="flex flex-col items-center justify-center py-24 gap-4 bg-white">
@@ -393,7 +392,7 @@ export default function CampaignDetailPage({
                     <CampaignHero coverImageUrl={coverImage} title={campaign?.title} />
 
                     {/* Container 1: Core Campaign Info */}
-                    <div className="relative z-10 px-8 pt-6 pb-8 max-w-7xl mx-auto mt-6">
+                    <div className="relative z-10 px-4 sm:px-8 pt-6 pb-8 max-w-7xl mx-auto mt-2 sm:mt-6">
 
                         <CampaignDescription description={campaign?.description} />
 
@@ -414,23 +413,27 @@ export default function CampaignDetailPage({
                                 />
                             </div>
 
-                            {/* CỘT PHẢI */}
-                            <CampaignSidebar
-                                raisedPercent={raisedPercent}
-                                fundingGoal={fundingGoal}
-                                totalRaised={totalRaised}
-                                isJoined={isJoined}
-                                isCreator={currentUser?.id === campaign?.creatorUserId}
-                                campaignId={campaign?.id}
-                                setDonateOpen={setDonateOpen}
-                                handleJoin={handleJoin}
-                                formatCurrency={formatCurrency}
-                            />
+                            {/* CỘT PHẢI - Equal Height with Left Column */}
+                            <div className="lg:col-span-1 h-full">
+                                <CampaignSidebar
+                                    raisedPercent={raisedPercent}
+                                    fundingGoal={fundingGoal}
+                                    totalRaised={totalRaised}
+                                    isJoined={isJoined}
+                                    isLiked={isLiked}
+                                    isCreator={currentUser?.id === campaign?.creatorUserId}
+                                    campaignId={campaign?.id}
+                                    setDonateOpen={setDonateOpen}
+                                    handleJoin={handleJoin}
+                                    handleToggleLike={handleToggleLike}
+                                    formatCurrency={formatCurrency}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Container 2: Community Discussion */}
-                    <div className="px-8 pb-12 max-w-7xl mx-auto mt-8">
+                    <div className="px-4 sm:px-8 pb-12 max-w-7xl mx-auto mt-8">
                         <CampaignDiscussion
                             comments={comments}
                             campaign={campaign}
