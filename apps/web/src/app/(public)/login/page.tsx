@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useGlobalAuth } from "@/contexts/AuthContext";
+import { API_BASE_URL } from "@/lib/constants/endpoints";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -21,7 +22,7 @@ export default function LoginPage() {
         setError("");
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/login`, {
+            const res = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -43,7 +44,7 @@ export default function LoginPage() {
             // Fetch real profile for display name
             let userProfile = {};
             try {
-                const meRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/me`, {
+                const meRes = await fetch(`${API_BASE_URL}/auth/me`, {
                     headers: { Authorization: `Bearer ${data.accessToken}` },
                 });
                 if (meRes.ok) {

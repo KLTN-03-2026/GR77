@@ -19,6 +19,7 @@ import {
 import NotificationBell from './NotificationBell';
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 import { useGlobalAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/lib/constants/endpoints';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -61,7 +62,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     try {
       const refreshToken = localStorage.getItem(isAdminLogout ? 'adminRefreshToken' : 'refreshToken');
       if (refreshToken) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/logout`, {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

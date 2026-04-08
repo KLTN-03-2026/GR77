@@ -1,7 +1,9 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useGlobalAuth } from "@/contexts/AuthContext";
+import { API_BASE_URL } from "@/lib/constants/endpoints";
 
 // Shared Components
 import { CampaignDiscussion } from "@/components/campaign/CampaignDiscussion";
@@ -32,6 +34,7 @@ export default function CampaignDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
+    const router = useRouter();
     const { user: currentUser } = useGlobalAuth();
 
     /* ── API fetch ── */
@@ -51,7 +54,7 @@ export default function CampaignDetailPage({
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}`, {
+                const res = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
                     headers,
                 });
                 if (!res.ok) throw new Error("Campaign not found");
@@ -71,7 +74,7 @@ export default function CampaignDetailPage({
         if (!campaign) return;
         const token = localStorage.getItem("accessToken");
         if (!token) return;
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/view-histories/${id}`, {
+        fetch(`${API_BASE_URL}/view-histories/${id}`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
         }).catch(() => { });
@@ -100,7 +103,7 @@ export default function CampaignDetailPage({
 
     const fetchComments = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/comments/campaign/${id}`);
+            const res = await fetch(`${API_BASE_URL}/comments/campaign/${id}`);
             if (res.ok) {
                 const data = await res.json();
                 setComments(data);
@@ -117,7 +120,7 @@ export default function CampaignDetailPage({
 
         const token = localStorage.getItem("accessToken");
         if (token) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/participants/${id}/status`, {
+            fetch(`${API_BASE_URL}/participants/${id}/status`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -126,7 +129,7 @@ export default function CampaignDetailPage({
                 })
                 .catch(() => { });
 
-            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${id}/status`, {
+            fetch(`${API_BASE_URL}/favorites/${id}/status`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -148,7 +151,7 @@ export default function CampaignDetailPage({
 
         try {
             const method = isLiked ? "DELETE" : "POST";
-            const url = isLiked ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites`;
+            const url = isLiked ? `${API_BASE_URL}/favorites/${id}` : `${API_BASE_URL}/favorites`;
             const body = isLiked ? undefined : JSON.stringify({ campaignId: id });
 
             const res = await fetch(url, {

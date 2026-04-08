@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { API_BASE_URL } from "@/lib/constants/endpoints";
 
 interface User {
   id: string;
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({ ...JSON.parse(storedUser), accessToken, refreshToken: refreshToken ?? undefined });
 
           // Fetch dữ liệu mới nhất từ DB (bao gồm avatarUrl mới nhất)
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/me`, {
+          const res = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
           if (res.ok) {

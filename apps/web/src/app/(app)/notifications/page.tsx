@@ -13,14 +13,16 @@ import {
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 
+import { API_BASE_URL } from '@/lib/constants/endpoints';
+
 interface Notification {
-    id: string;
-    title: string;
-    message: string;
-    type: string;
-    link?: string;
-    isRead: boolean;
-    createdAt: string;
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
 type SortOrder = 'newest' | 'oldest';
@@ -92,7 +94,7 @@ export default function NotificationsPage() {
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) return;
-            const res = await fetch('http://localhost:3001/notifications', {
+            const res = await fetch(`${API_BASE_URL}/notifications`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
@@ -116,7 +118,7 @@ export default function NotificationsPage() {
         );
         try {
             const token = localStorage.getItem('accessToken');
-            await fetch(`http://localhost:3001/notifications/${id}/read`, {
+            await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -129,7 +131,7 @@ export default function NotificationsPage() {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         try {
             const token = localStorage.getItem('accessToken');
-            await fetch('http://localhost:3001/notifications/read-all', {
+            await fetch(`${API_BASE_URL}/notifications/read-all`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
             });

@@ -15,6 +15,7 @@ import {
   Bars3BottomLeftIcon,
 } from '@heroicons/react/24/outline';
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
+import { API_BASE_URL } from '@/lib/constants/endpoints';
 
 export interface MenuItem {
   name: string;
@@ -63,7 +64,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel, topSpac
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/auth/logout`, {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

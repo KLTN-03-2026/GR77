@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { BellIcon, CheckIcon, ArchiveBoxArrowDownIcon, EllipsisHorizontalIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/lib/constants/endpoints';
 
 interface Notification {
     id: string;
@@ -25,7 +26,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
             const token = isAdmin ? localStorage.getItem('adminAccessToken') : localStorage.getItem('accessToken');
             if (!token) return;
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/notifications`, {
+            const res = await fetch(`${API_BASE_URL}/notifications`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -58,7 +59,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
     const markAsRead = async (id: string) => {
         try {
             const token = isAdmin ? localStorage.getItem('adminAccessToken') : localStorage.getItem('accessToken');
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/notifications/${id}/read`, {
+            await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -71,7 +72,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
     const markAllAsRead = async () => {
         try {
             const token = isAdmin ? localStorage.getItem('adminAccessToken') : localStorage.getItem('accessToken');
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/notifications/read-all`, {
+            await fetch(`${API_BASE_URL}/notifications/read-all`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

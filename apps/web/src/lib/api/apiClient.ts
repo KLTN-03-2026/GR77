@@ -1,6 +1,6 @@
 "use client";
 
-
+import { API_BASE_URL as BASE_URL } from '@/lib/constants/endpoints';
 
 // Interface for API responses
 interface ApiResponse<T = any> {
@@ -10,7 +10,7 @@ interface ApiResponse<T = any> {
     statusCode?: number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
+const API_BASE_URL = BASE_URL;
 
 // Queue system for refresh token requests
 let isRefreshing = false;
