@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { Prisma } from '@prisma/client';
+import { AUTH_ERRORS } from '../../common/constants/error-codes'
 
 @Injectable()
 export class RegistrationService {
@@ -17,7 +18,7 @@ export class RegistrationService {
         // Check if user already exists in DB
         const existingUser = await this.prisma.user.findUnique({ where: { email } });
         if (existingUser) {
-            throw new ConflictException('Email already exists');
+            throw new ConflictException(AUTH_ERRORS.EMAIL_ALREADY_EXISTS);
         }
 
         const hashed = await bcrypt.hash(password, 10);
@@ -63,7 +64,7 @@ export class RegistrationService {
         const existing = await this.prisma.user.findUnique({ where: { email } });
         if (existing) {
             this.pendingUsers.delete(email);
-            throw new ConflictException('Email already exists');
+            throw new ConflictException(AUTH_ERRORS.EMAIL_ALREADY_EXISTS);
         }
 
         // Verify successful, create user in DB!
@@ -97,7 +98,7 @@ export class RegistrationService {
 
     async resendVerification(email: string) {
         const pending = this.pendingUsers.get(email);
-        
+
         if (!pending) {
             const existingUser = await this.prisma.user.findUnique({ where: { email } });
             if (existingUser) {

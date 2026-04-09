@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
@@ -318,6 +318,9 @@ export class CampaignsService {
   }
 
   async create(userId: string, dto: CreateCampaignDto) {
+    if (dto.minimumDonationAmount > dto.fundingGoalAmount) {
+      throw new BadRequestException('Minimum donation amount cannot be greater than the funding goal amount');
+    }
     const { galleryUrls, ...rest } = dto;
     const campaign = await (this.prisma as any).campaign.create({
       data: {
@@ -354,6 +357,14 @@ export class CampaignsService {
 
     if (campaign.creatorUserId !== userId) {
       throw new ForbiddenException('You do not have permission to update this campaign');
+    }
+
+    // Validation for amounts if both are present or if only one is updated
+    const finalGoal = dto.fundingGoalAmount ?? Number(campaign.fundingGoalAmount);
+    const finalMin = dto.minimumDonationAmount ?? Number(campaign.minimumDonationAmount);
+
+    if (finalMin > finalGoal) {
+      throw new BadRequestException('Minimum donation amount cannot be greater than the funding goal amount');
     }
 
     return (this.prisma as any).campaign.update({

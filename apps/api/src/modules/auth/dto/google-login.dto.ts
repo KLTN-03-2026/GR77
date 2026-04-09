@@ -1,19 +1,20 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsOptional, IsUrl } from 'class-validator';
+import { AUTH_ERRORS } from '../../../common/constants/error-codes';
 
 export class GoogleLoginDto {
-    @IsEmail()
-    @IsNotEmpty()
+    @IsNotEmpty({ message: AUTH_ERRORS.REQUIRED_FIELD })
+    @IsEmail({}, { message: AUTH_ERRORS.EMAIL_INVALID })
     email: string;
 
+    @IsNotEmpty({ message: AUTH_ERRORS.REQUIRED_FIELD })
     @IsString()
-    @IsNotEmpty()
     googleId: string;
 
+    @IsNotEmpty({ message: AUTH_ERRORS.REQUIRED_FIELD })
     @IsString()
-    @IsNotEmpty()
     name: string;
 
-    @IsString()
     @IsOptional()
+    @IsString()
     avatarUrl?: string;
 }

@@ -23,6 +23,14 @@ export default function NewCampaignPage() {
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const [categories, setCategories] = useState<CategoryOption[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [locationText, setLocationText] = useState('');
+    const [fundingGoal, setFundingGoal] = useState('');
+    const [minDonation, setMinDonation] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`)
@@ -96,8 +104,55 @@ export default function NewCampaignPage() {
         setIsLoading(true);
         setError('');
 
+
         const formData = new FormData(e.currentTarget);
         const token = localStorage.getItem('accessToken');
+
+        const goalNum = Number(fundingGoal);
+        const minNum = Number(minDonation);
+
+        if (!fundingGoal || goalNum < 1000000) {
+            setFieldErrors(prev => ({ ...prev, fundingGoal: 'Mục tiêu chiến dịch phải từ 1.000.000 VND trở lên' }));
+            setIsLoading(false);
+            return;
+        }
+
+        if (!minDonation || minNum <= 0) {
+            setFieldErrors(prev => ({ ...prev, minDonation: 'Vui lòng nhập số tiền ủng hộ tối thiểu' }));
+            setIsLoading(false);
+            return;
+        }
+
+        if (minNum > goalNum) {
+            setFieldErrors(prev => ({ ...prev, minDonation: 'Số tiền ủng hộ tối thiểu không được lớn hơn mục tiêu chiến dịch' }));
+            setIsLoading(false);
+            return;
+        }
+
+        if (!imageFile) {
+            setFieldErrors(prev => ({ ...prev, imageFile: 'Vui lòng chọn ảnh đại diện cho chiến dịch' }));
+            setIsLoading(false);
+            return;
+        }
+
+        // 3. Date validation
+        const todayAtZero = new Date();
+        todayAtZero.setHours(0, 0, 0, 0);
+        const startVal = new Date(startDate);
+        const endVal = new Date(endDate);
+
+        if (startVal < todayAtZero) {
+            setFieldErrors(prev => ({ ...prev, startDate: 'Ngày bắt đầu không thể ở quá khứ' }));
+            setIsLoading(false);
+            return;
+        }
+
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        if (endVal.getTime() - startVal.getTime() < oneDayMs) {
+            setFieldErrors(prev => ({ ...prev, endDate: 'Ngày kết thúc phải sau ngày bắt đầu ít nhất 1 ngày' }));
+            setIsLoading(false);
+            return;
+        }
 
         let coverImageUrl = '';
         const galleryUrls: string[] = [];
@@ -150,8 +205,8 @@ export default function NewCampaignPage() {
                 locationText: formData.get('locationText') as string,
                 coverImageUrl: coverImageUrl,
                 galleryUrls: galleryUrls,
-                fundingGoalAmount: Number(formData.get('fundingGoalAmount')),
-                minimumDonationAmount: Number(formData.get('minimumDonationAmount')),
+                fundingGoalAmount: Number(fundingGoal),
+                minimumDonationAmount: Number(minDonation),
                 startAt: new Date(formData.get('startAt') as string).toISOString(),
                 endAt: new Date(formData.get('endAt') as string).toISOString(),
                 autoCloseWhenGoalReached: formData.get('autoCloseWhenGoalReached') === 'on',
@@ -207,8 +262,8 @@ export default function NewCampaignPage() {
                 <form className="space-y-6" onSubmit={handleSubmit}>
 
                     {/* Campaign Title */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2.5">
                             Campaign Title
                             <span className="bg-[#ff3b30] text-white text-[9px] px-1.5 py-0.5 rounded leading-none">required</span>
                         </label>
@@ -216,14 +271,30 @@ export default function NewCampaignPage() {
                             <input
                                 type="text"
                                 name="title"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                value={title}
+                                onChange={(e) => {
+                                    setTitle(e.target.value);
+                                    if (!e.target.value.trim()) {
+                                        setFieldErrors(prev => ({ ...prev, title: 'Tiêu đề không được để trống' }));
+                                    } else {
+                                        setFieldErrors(prev => {
+                                            const newErrors = { ...prev };
+                                            delete newErrors.title;
+                                            return newErrors;
+                                        });
+                                    }
+                                }}
+                                className={`w-full bg-gray-50 border ${fieldErrors.title ? 'border-red-700' : 'border-gray-200'} rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
                             />
+                            {fieldErrors.title && (
+                                <p className="text-red-700 text-[11px] mt-1.5 font-medium ml-1">{fieldErrors.title}</p>
+                            )}
                         </div>
                     </div>
 
                     {/* Description */}
                     <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
-                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2.5">
                             Description
                             <span className="bg-[#ff3b30] text-white text-[9px] px-1.5 py-0.5 rounded leading-none">required</span>
                         </label>
@@ -231,8 +302,24 @@ export default function NewCampaignPage() {
                             <textarea
                                 name="description"
                                 rows={4}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
+                                value={description}
+                                onChange={(e) => {
+                                    setDescription(e.target.value);
+                                    if (e.target.value.trim().length < 20) {
+                                        setFieldErrors(prev => ({ ...prev, description: 'Mô tả phải có ít nhất 20 ký tự' }));
+                                    } else {
+                                        setFieldErrors(prev => {
+                                            const newErrors = { ...prev };
+                                            delete newErrors.description;
+                                            return newErrors;
+                                        });
+                                    }
+                                }}
+                                className={`w-full bg-gray-50 border ${fieldErrors.description ? 'border-red-700' : 'border-gray-200'} rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none`}
                             ></textarea>
+                            {fieldErrors.description && (
+                                <p className="text-red-700 text-[11px] mt-1.5 font-medium ml-1">{fieldErrors.description}</p>
+                            )}
                         </div>
                     </div>
 
@@ -259,8 +346,8 @@ export default function NewCampaignPage() {
                     </div>
 
                     {/* Location */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2.5">
                             Location
                             <span className="bg-[#ff3b30] text-white text-[9px] px-1.5 py-0.5 rounded leading-none">required</span>
                         </label>
@@ -268,15 +355,32 @@ export default function NewCampaignPage() {
                             <input
                                 type="text"
                                 name="locationText"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                value={locationText}
+                                onChange={(e) => {
+                                    setLocationText(e.target.value);
+                                    if (!e.target.value.trim()) {
+                                        setFieldErrors(prev => ({ ...prev, locationText: 'Địa điểm không được để trống' }));
+                                    } else {
+                                        setFieldErrors(prev => {
+                                            const newErrors = { ...prev };
+                                            delete newErrors.locationText;
+                                            return newErrors;
+                                        });
+                                    }
+                                }}
+                                className={`w-full bg-gray-50 border ${fieldErrors.locationText ? 'border-red-700' : 'border-gray-200'} rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
                             />
+                            {fieldErrors.locationText && (
+                                <p className="text-red-700 text-[11px] mt-1.5 font-medium ml-1">{fieldErrors.locationText}</p>
+                            )}
                         </div>
                     </div>
 
                     {/* Cover Image */}
                     <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
-                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2.5">
                             Cover Image
+                            <span className="bg-[#ff3b30] text-white text-[9px] px-1.5 py-0.5 rounded leading-none">required</span>
                         </label>
                         <div className="sm:w-3/4">
                             <div className="flex flex-col gap-4">
@@ -293,22 +397,37 @@ export default function NewCampaignPage() {
                                         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-all pointer-events-none" />
                                     </div>
                                 ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-full max-w-md aspect-video bg-[#f4f4f4] hover:bg-[#e8e8e8] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-3 transition-all text-gray-500 hover:text-gray-700 hover:border-blue-300 group"
-                                    >
-                                        <div className="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                                            <PhotoIcon className="h-6 w-6 text-blue-500" />
-                                        </div>
-                                        <span className="text-[13px] font-bold">Click upload cover image</span>
-                                        <span className="text-[11px] font-medium opacity-60">PNG, JPG up to 5MB</span>
-                                    </button>
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className={`w-full max-w-md aspect-video ${fieldErrors.imageFile ? 'bg-red-50 border-red-400' : 'bg-[#f4f4f4] border-gray-300'} hover:bg-[#e8e8e8] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 transition-all text-gray-500 hover:text-gray-700 hover:border-blue-300 group`}
+                                        >
+                                            <div className="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                                                <PhotoIcon className={`h-6 w-6 ${fieldErrors.imageFile ? 'text-red-700' : 'text-blue-500'}`} />
+                                            </div>
+                                            <span className="text-[13px] font-bold">Click upload cover image</span>
+                                            <span className="text-[11px] font-medium opacity-60">PNG, JPG up to 5MB</span>
+                                        </button>
+                                        {fieldErrors.imageFile && (
+                                            <p className="text-red-700 text-[11px] mt-1.5 font-medium ml-1">{fieldErrors.imageFile}</p>
+                                        )}
+                                    </>
                                 )}
                                 <input
                                     type="file"
                                     ref={fileInputRef}
-                                    onChange={handleImageChange}
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            handleImageChange(e);
+                                            setFieldErrors(prev => {
+                                                const newErrors = { ...prev };
+                                                delete newErrors.imageFile;
+                                                return newErrors;
+                                            });
+                                        }
+                                    }}
                                     accept="image/*"
                                     className="hidden"
                                 />
@@ -359,64 +478,185 @@ export default function NewCampaignPage() {
                     </div>
 
                     {/* Funding Goal Amount */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2.5">
                             Funding Goal Amount
                             <span className="bg-[#ff3b30] text-white text-[9px] px-1.5 py-0.5 rounded leading-none">required</span>
                         </label>
-                        <div className="sm:w-3/4 flex items-center gap-3">
-                            <input
-                                type="number"
-                                name="fundingGoalAmount"
-                                className="w-48 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                            />
-                            <span className="text-[13px] font-bold text-gray-900">VND</span>
+                        <div className="sm:w-3/4">
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="text"
+                                    name="fundingGoalAmount"
+                                    value={fundingGoal}
+                                    onChange={(e) => {
+                                        const valStr = e.target.value.replace(/[^\d]/g, '');
+                                        setFundingGoal(valStr);
+
+                                        const val = Number(valStr);
+                                        if (valStr && val < 1000000) {
+                                            setFieldErrors(prev => ({ ...prev, fundingGoal: 'Mục tiêu phải từ 1.000.000 VND' }));
+                                        } else {
+                                            setFieldErrors(prev => {
+                                                const newErrors = { ...prev };
+                                                delete newErrors.fundingGoal;
+                                                return newErrors;
+                                            });
+                                        }
+                                        const minVal = Number(minDonation);
+
+                                        if (minDonation && /^\d+$/.test(minDonation) && minVal > val) {
+                                            setFieldErrors(prev => ({ ...prev, minDonation: 'Số tiền ủng hộ tối thiểu không được lớn hơn mục tiêu chiến dịch' }));
+                                        } else {
+                                            setFieldErrors(prev => {
+                                                const newErrors = { ...prev };
+                                                delete newErrors.minDonation;
+                                                return newErrors;
+                                            });
+                                        }
+                                    }}
+                                    className={`w-48 bg-gray-50 border ${fieldErrors.fundingGoal ? 'border-red-700' : 'border-gray-200'} rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                                />
+                                <span className="text-[13px] font-bold text-gray-900">VND</span>
+                            </div>
+                            {fieldErrors.fundingGoal && (
+                                <p className="text-red-700 text-[11px] mt-1.5 font-medium ml-1">{fieldErrors.fundingGoal}</p>
+                            )}
                         </div>
                     </div>
 
                     {/* Minimum Donation Amount */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                        <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2.5">
                             Minimum Donation Amount
                             <span className="bg-[#ff3b30] text-white text-[9px] px-1.5 py-0.5 rounded leading-none">required</span>
                         </label>
-                        <div className="sm:w-3/4 flex items-center gap-3">
-                            <input
-                                type="number"
-                                name="minimumDonationAmount"
-                                className="w-48 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                            />
-                            <span className="text-[13px] font-bold text-gray-900">VND</span>
+                        <div className="sm:w-3/4">
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="text"
+                                    name="minimumDonationAmount"
+                                    value={minDonation}
+                                    onChange={(e) => {
+                                        const valStr = e.target.value.replace(/[^\d]/g, '');
+                                        // Chỉ chấp nhận số
+                                        setMinDonation(valStr);
+
+                                        const val = Number(valStr);
+                                        const goalVal = Number(fundingGoal);
+
+                                        if (valStr && val <= 0) {
+                                            setFieldErrors(prev => ({ ...prev, minDonation: 'Số tiền tối thiểu phải lớn hơn 0' }));
+                                        } else if (fundingGoal && /^\d+$/.test(fundingGoal) && val > goalVal) {
+                                            setFieldErrors(prev => ({ ...prev, minDonation: 'Số tiền ủng hộ tối thiểu không được lớn hơn mục tiêu chiến dịch' }));
+                                        } else {
+                                            setFieldErrors(prev => {
+                                                const newErrors = { ...prev };
+                                                delete newErrors.minDonation;
+                                                return newErrors;
+                                            });
+                                        }
+                                    }}
+                                    className={`w-48 bg-gray-50 border ${fieldErrors.minDonation ? 'border-red-700' : 'border-gray-200'} rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                                />
+                                <span className="text-[13px] font-bold text-gray-900">VND</span>
+                            </div>
+                            {fieldErrors.minDonation && (
+                                <p className="text-red-700 text-[11px] mt-1.5 font-medium ml-1">{fieldErrors.minDonation}</p>
+                            )}
                         </div>
                     </div>
 
                     {/* Timeline (Start Date & End Date) & Auto-close checkbox */}
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6 py-2">
-                        <label className="lg:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-6 py-2">
+                        <label className="lg:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2.5">
                             Timeline
                             <span className="bg-[#ff3b30] text-white text-[9px] px-1.5 py-0.5 rounded leading-none">required</span>
                         </label>
-                        <div className="lg:w-3/4 flex flex-wrap items-center gap-4">
-                            <input
-                                type="date"
-                                name="startAt"
-                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                            />
-                            <span className="text-gray-400 font-bold">--</span>
-                            <input
-                                type="date"
-                                name="endAt"
-                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                            />
-
-                            <label className="flex items-center gap-2 ml-4 cursor-pointer">
+                        <div className="lg:w-3/4">
+                            <div className="flex flex-wrap items-center gap-4">
                                 <input
-                                    type="checkbox"
-                                    name="autoCloseWhenGoalReached"
-                                    className="w-4 h-4 rounded text-blue-500 border-gray-300 focus:ring-blue-400 focus:ring-offset-0 bg-[#e5e5e5]"
+                                    type="date"
+                                    name="startAt"
+                                    value={startDate}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    onChange={(e) => {
+                                        const newStart = e.target.value;
+                                        setStartDate(newStart);
+
+                                        // Real-time validation
+                                        const today = new Date().toISOString().split('T')[0];
+                                        if (newStart < today) {
+                                            setFieldErrors(prev => ({ ...prev, startDate: 'Ngày bắt đầu không thể ở quá khứ' }));
+                                        } else {
+                                            setFieldErrors(prev => {
+                                                const newErrors = { ...prev };
+                                                delete newErrors.startDate;
+                                                return newErrors;
+                                            });
+                                        }
+
+                                        // Cross-validate with end date
+                                        if (endDate) {
+                                            const start = new Date(newStart);
+                                            const end = new Date(endDate);
+                                            const oneDayMs = 24 * 60 * 60 * 1000;
+                                            if (end.getTime() - start.getTime() < oneDayMs) {
+                                                setFieldErrors(prev => ({ ...prev, endDate: 'Ngày kết thúc phải sau bắt đầu ít nhất 1 ngày' }));
+                                            } else {
+                                                setFieldErrors(prev => {
+                                                    const newErrors = { ...prev };
+                                                    delete newErrors.endDate;
+                                                    return newErrors;
+                                                });
+                                            }
+                                        }
+                                    }}
+                                    className={`w-40 bg-gray-50 border ${fieldErrors.startDate ? 'border-red-700' : 'border-gray-200'} rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
                                 />
-                                <span className="text-[12px] font-bold text-gray-900">Auto-close When Goal Reached?</span>
-                            </label>
+                                <span className="text-gray-400 font-bold">--</span>
+                                <input
+                                    type="date"
+                                    name="endAt"
+                                    value={endDate}
+                                    min={startDate ? new Date(new Date(startDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                                    onChange={(e) => {
+                                        const newEnd = e.target.value;
+                                        setEndDate(newEnd);
+
+                                        if (startDate) {
+                                            const start = new Date(startDate);
+                                            const end = new Date(newEnd);
+                                            const oneDayMs = 24 * 60 * 60 * 1000;
+                                            if (end.getTime() - start.getTime() < oneDayMs) {
+                                                setFieldErrors(prev => ({ ...prev, endDate: 'Ngày kết thúc phải sau bắt đầu ít nhất 1 ngày' }));
+                                            } else {
+                                                setFieldErrors(prev => {
+                                                    const newErrors = { ...prev };
+                                                    delete newErrors.endDate;
+                                                    return newErrors;
+                                                });
+                                            }
+                                        }
+                                    }}
+                                    className={`w-40 bg-gray-50 border ${fieldErrors.endDate ? 'border-red-700' : 'border-gray-200'} rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                                />
+
+                                <label className="flex items-center gap-2 ml-4 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="autoCloseWhenGoalReached"
+                                        className="w-4 h-4 rounded text-blue-500 border-gray-300 focus:ring-blue-400 focus:ring-offset-0 bg-[#e5e5e5]"
+                                    />
+                                    <span className="text-[12px] font-bold text-gray-900">Auto-close When Goal Reached?</span>
+                                </label>
+                            </div>
+                            {(fieldErrors.startDate || fieldErrors.endDate) && (
+                                <div className="flex flex-col gap-1 mt-1.5 ml-1">
+                                    {fieldErrors.startDate && <p className="text-red-700 text-[11px] font-medium">{fieldErrors.startDate}</p>}
+                                    {fieldErrors.endDate && <p className="text-red-700 text-[11px] font-medium">{fieldErrors.endDate}</p>}
+                                </div>
+                            )}
                         </div>
                     </div>
 

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useGlobalAuth } from "@/contexts/AuthContext";
 import { API_BASE_URL } from "@/lib/constants/endpoints";
 import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
+import { validateEmail, AUTH_ERRORS_MAP } from "@/lib/validation/auth";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -16,11 +17,20 @@ export default function LoginPage() {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError("");
+        setFieldErrors({});
+
+        const emailErr = validateEmail(email);
+        if (emailErr) {
+            setFieldErrors({ email: emailErr });
+            setIsLoading(false);
+            return;
+        }
 
         try {
             const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -32,11 +42,13 @@ export default function LoginPage() {
             });
 
             if (!res.ok) {
+                const data = await res.json();
                 let errorMsg = "Invalid email or password.";
-                try {
-                    const data = await res.json();
+                if (data.message && AUTH_ERRORS_MAP[data.message]) {
+                    errorMsg = AUTH_ERRORS_MAP[data.message];
+                } else {
                     errorMsg = data.message || errorMsg;
-                } catch (e) { }
+                }
                 throw new Error(errorMsg);
             }
 
@@ -207,26 +219,30 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        {/* Email */}
                         <div className="anim-up-2">
-                            <label htmlFor="login-email" className="block text-sm font-semibold text-white mb-2">
+                            <label htmlFor="login-email" className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
                                 Email Address
                             </label>
                             <input
                                 id="login-email"
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEmail(val);
+                                    const err = validateEmail(val);
+                                    setFieldErrors(prev => ({ ...prev, email: err || undefined }));
+                                }}
                                 placeholder="your@email.com"
                                 required
                                 autoComplete="email"
-                                className="field-input w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-800 outline-none text-[15px] placeholder-gray-400 shadow-sm"
+                                className={`field-input w-full px-4 py-3.5 bg-white border ${fieldErrors.email ? 'border-red-700 bg-red-50' : 'border-gray-200'} rounded-xl text-gray-800 outline-none text-[15px] placeholder-gray-400 shadow-sm`}
                             />
+                            {fieldErrors.email && <p className="text-red-700 text-xs mt-1.5 ml-1 font-bold">{fieldErrors.email}</p>}
                         </div>
 
-                        {/* Password */}
                         <div className="mb-4 anim-up-3">
-                            <label htmlFor="login-password" className="block text-sm font-semibold text-white mb-2">
+                            <label htmlFor="login-password" className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
                                 Password
                             </label>
                             <div className="relative">
@@ -234,11 +250,23 @@ export default function LoginPage() {
                                     id="login-password"
                                     type={showPassword ? "text" : "password"}
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setPassword(val);
+                                        if (!val) {
+                                            setFieldErrors(prev => ({ ...prev, password: "Password is required" }));
+                                        } else {
+                                            setFieldErrors(prev => {
+                                                const next = { ...prev };
+                                                delete next.password;
+                                                return next;
+                                            });
+                                        }
+                                    }}
                                     placeholder="••••••••"
                                     required
                                     autoComplete="current-password"
-                                    className="field-input w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-800 outline-none pr-11 text-[15px] placeholder-gray-400 shadow-sm"
+                                    className={`field-input w-full px-4 py-3.5 bg-white border ${fieldErrors.password ? 'border-red-700 bg-red-50' : 'border-gray-200'} rounded-xl text-gray-800 outline-none pr-11 text-[15px] placeholder-gray-400 shadow-sm`}
                                 />
                                 <button
                                     type="button"
@@ -259,6 +287,7 @@ export default function LoginPage() {
                                     )}
                                 </button>
                             </div>
+                            {fieldErrors.password && <p className="text-red-700 text-xs mt-1.5 ml-1 font-bold">{fieldErrors.password}</p>}
                         </div>
 
                         {/* Remember me & Forgot password */}
