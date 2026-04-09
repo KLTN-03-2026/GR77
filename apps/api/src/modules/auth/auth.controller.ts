@@ -6,6 +6,7 @@ import { AccountSecurityService } from './account-security.service'
 import { UsersService } from '../users/users.service'
 import { AuthGuard } from '@nestjs/passport'
 import { LogoutDto } from './dto/logout.dto'
+import { GoogleLoginDto } from './dto/google-login.dto'
 import { PrismaService } from '../../prisma/prisma.service'
 
 
@@ -28,6 +29,11 @@ export class AuthController {
   @Post('login')
   login(@Body() body: any) {
     return this.authService.login(body.email, body.password)
+  }
+
+  @Post('google-login')
+  googleLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.googleLogin(dto)
   }
 
   @UseGuards(AuthGuard('jwt'))

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/constants/endpoints";
+import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -268,7 +269,7 @@ export default function RegisterPage() {
                                 <p className="text-white/90 text-base mb-8 leading-relaxed">
                                     We've sent a 6-digit verification code to{" "}
                                     <span className="font-bold text-white underline decoration-white/30">{email}</span>.
-                                    <br/>
+                                    <br />
                                     Please check your inbox and enter the code below.
                                 </p>
 
@@ -288,7 +289,7 @@ export default function RegisterPage() {
                                             disabled={isVerifying}
                                             className="otp-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold bg-white/20 border-2 border-white/30 rounded-xl text-white outline-none backdrop-blur-sm placeholder-white/30 disabled:opacity-50"
                                             placeholder="·"
-                                            
+
                                         />
                                     ))}
                                 </div>
@@ -493,6 +494,18 @@ export default function RegisterPage() {
                                 Login
                             </Link>
                         </p>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="flex items-center gap-4 my-6 anim-up-5">
+                        <div className="flex-1 h-px bg-white/30" />
+                        <span className="text-sm text-white/70 font-medium">or</span>
+                        <div className="flex-1 h-px bg-white/30" />
+                    </div>
+
+                    {/* Continue with Google */}
+                    <div className="anim-up-5">
+                        <GoogleLoginButton />
                     </div>
                 </div>
             </div>
