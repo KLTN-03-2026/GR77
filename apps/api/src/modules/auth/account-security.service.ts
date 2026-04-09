@@ -16,7 +16,7 @@ export class AccountSecurityService {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new UnauthorizedException('User not found');
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = user.password ? await bcrypt.compare(password, user.password) : false;
         if (!isMatch) throw new UnauthorizedException('Mật khẩu không đúng.');
 
         if (user.email === newEmail) throw new ConflictException('Email mới trùng với email hiện tại.');
@@ -104,7 +104,7 @@ export class AccountSecurityService {
                 throw new ConflictException('Tài khoản không bị khóa.');
             }
 
-            const isMatch = await bcrypt.compare(oldPassword, user.password);
+            const isMatch = user.password ? await bcrypt.compare(oldPassword, user.password) : false;
             if (!isMatch) {
                 throw new UnauthorizedException('Mật khẩu hiện tại không đúng.');
             }
