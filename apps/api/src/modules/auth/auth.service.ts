@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { AuthProvider } from '@prisma/client'
+import { AUTH_ERRORS } from '../../common/constants/error-codes'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from '../../prisma/prisma.service'
 import { v4 as uuidv4 } from 'uuid'
@@ -24,7 +25,7 @@ export class AuthService {
 
     // Chỉ cho phép login bằng mật khẩu nếu account là LOCAL
     if (user.provider !== AuthProvider.LOCAL || !user.password) {
-      throw new UnauthorizedException('PLEASE_LOGIN_WITH_GOOGLE');
+      throw new UnauthorizedException(AUTH_ERRORS.PLEASE_LOGIN_WITH_GOOGLE);
     }
 
     const isMatch = await bcrypt.compare(password, user.password)
@@ -36,7 +37,7 @@ export class AuthService {
     }
 
     if (user.security?.isLocked) {
-      throw new UnauthorizedException(`ACCOUNT_LOCKED|${user.security.lockReason || 'No reason provided'}`);
+      throw new UnauthorizedException(`${AUTH_ERRORS.ACCOUNT_LOCKED}|${user.security.lockReason || 'No reason provided'}`);
     }
 
     return this.generateTokens(user);
@@ -59,7 +60,7 @@ export class AuthService {
 
       // 3. Nếu là account LOCAL chưa liên kết -> Báo lỗi yêu cầu đăng nhập trước
       if (existingUser.provider === AuthProvider.LOCAL) {
-        throw new ConflictException('EMAIL_ALREADY_REGISTERED_LOCAL');
+        throw new ConflictException(AUTH_ERRORS.EMAIL_ALREADY_REGISTERED_LOCAL);
       }
 
       // Trường hợp Google ID khác nhưng email trùng (hiếm gặp vì googleId unique)

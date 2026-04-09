@@ -1,0 +1,22 @@
+/**
+ * Unified Error Codes for Kindlink Authentication
+ * Format: AUTH_XXX
+ */
+export const AUTH_ERRORS = {
+    // Input Errors
+    EMAIL_INVALID: 'AUTH_001',
+    PASSWORD_TOO_WEAK: 'AUTH_002',
+    REQUIRED_FIELD: 'AUTH_003',
+
+    // Logic Errors
+    EMAIL_ALREADY_EXISTS: 'AUTH_101',
+    INVALID_CREDENTIALS: 'AUTH_102',
+    EMAIL_NOT_VERIFIED: 'AUTH_103',
+    ACCOUNT_LOCKED: 'AUTH_104',
+    PLEASE_LOGIN_WITH_GOOGLE: 'AUTH_105',
+    EMAIL_ALREADY_REGISTERED_LOCAL: 'AUTH_106',
+
+    // Token Errors
+    REFRESH_TOKEN_INVALID: 'AUTH_201',
+    TOKEN_EXPIRED: 'AUTH_202',
+};

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/constants/endpoints";
 import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
+import { validateEmail, validatePassword, AUTH_ERRORS_MAP } from "@/lib/validation/auth";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -18,6 +19,7 @@ export default function RegisterPage() {
     const [timeLeft, setTimeLeft] = useState(300);
     const [cooldown, setCooldown] = useState(0);
     const [attemptsUsed, setAttemptsUsed] = useState(0);
+    const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
 
     const [timer, setTimer] = useState<any>(null);
 
@@ -44,10 +46,18 @@ export default function RegisterPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setError("");
+        setFieldErrors({});
 
+        // FE Validation
+        const emailErr = validateEmail(email);
+        const passErr = validatePassword(password);
+        let confirmErr = "";
         if (password !== confirmPassword) {
-            setError("Passwords do not match.");
+            confirmErr = "Passwords do not match.";
+        }
+
+        if (emailErr || passErr || confirmErr) {
+            setFieldErrors({ email: emailErr, password: passErr, confirmPassword: confirmErr });
             setIsLoading(false);
             return;
         }
@@ -62,11 +72,13 @@ export default function RegisterPage() {
             });
 
             if (!res.ok) {
+                const data = await res.json();
                 let errorMsg = "Registration failed.";
-                try {
-                    const data = await res.json();
+                if (data.message && AUTH_ERRORS_MAP[data.message]) {
+                    errorMsg = AUTH_ERRORS_MAP[data.message];
+                } else {
                     errorMsg = data.message || errorMsg;
-                } catch (e) { }
+                }
                 throw new Error(errorMsg);
             }
 
@@ -432,48 +444,92 @@ export default function RegisterPage() {
                         )}
 
                         <div className="anim-up-2">
-                            <label className="block text-sm font-semibold text-white mb-2">Email Address</label>
+                            <label className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                                Email Address
+                            </label>
                             <input
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEmail(val);
+                                    const err = validateEmail(val);
+                                    setFieldErrors(prev => ({ ...prev, email: err || undefined }));
+                                }}
                                 placeholder="your@email.com"
                                 required
-                                className="field-input w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-800 outline-none text-[15px] shadow-sm"
+                                className={`field-input w-full px-4 py-3.5 bg-white border ${fieldErrors.email ? 'border-red-700 bg-red-50' : 'border-gray-200'} rounded-xl text-gray-800 outline-none text-[15px] shadow-sm`}
                             />
+                            {fieldErrors.email && <p className="text-red-700 text-xs mt-1.5 ml-1 font-bold">{fieldErrors.email}</p>}
                         </div>
 
                         <div className="anim-up-3">
-                            <label className="block text-sm font-semibold text-white mb-2">Password</label>
+                            <label className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                                Password
+                            </label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setPassword(val);
+                                        const err = validatePassword(val);
+                                        setFieldErrors(prev => ({ ...prev, password: err || undefined }));
+
+                                        // Also cross-validate confirm password if it's already filled
+                                        if (confirmPassword) {
+                                            if (val !== confirmPassword) {
+                                                setFieldErrors(prev => ({ ...prev, confirmPassword: "Passwords do not match." }));
+                                            } else {
+                                                setFieldErrors(prev => {
+                                                    const next = { ...prev };
+                                                    delete next.confirmPassword;
+                                                    return next;
+                                                });
+                                            }
+                                        }
+                                    }}
                                     placeholder="••••••••"
                                     required
-                                    className="field-input w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-800 outline-none pr-11 text-[15px] shadow-sm"
+                                    className={`field-input w-full px-4 py-3.5 bg-white border ${fieldErrors.password ? 'border-red-700 bg-red-50' : 'border-gray-200'} rounded-xl text-gray-800 outline-none pr-11 text-[15px] shadow-sm`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs"
                                 >
-                                    {showPassword ? "Hide" : "Show"}
+                                    {showPassword ? "HIDE" : "SHOW"}
                                 </button>
                             </div>
+                            {fieldErrors.password && <p className="text-red-700 text-xs mt-1.5 ml-1 font-bold">{fieldErrors.password}</p>}
                         </div>
 
                         <div className="anim-up-3">
-                            <label className="block text-sm font-semibold text-white mb-2">Confirm Password</label>
+                            <label className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                                Confirm Password
+                            </label>
                             <input
                                 type={showPassword ? "text" : "password"}
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setConfirmPassword(val);
+                                    if (val !== password) {
+                                        setFieldErrors(prev => ({ ...prev, confirmPassword: "Passwords do not match." }));
+                                    } else {
+                                        setFieldErrors(prev => {
+                                            const next = { ...prev };
+                                            delete next.confirmPassword;
+                                            return next;
+                                        });
+                                    }
+                                }}
                                 placeholder="••••••••"
                                 required
-                                className="field-input w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-800 outline-none text-[15px] shadow-sm"
+                                className={`field-input w-full px-4 py-3.5 bg-white border ${fieldErrors.confirmPassword ? 'border-red-700 bg-red-50' : 'border-gray-200'} rounded-xl text-gray-800 outline-none text-[15px] shadow-sm`}
                             />
+                            {fieldErrors.confirmPassword && <p className="text-red-700 text-xs mt-1.5 ml-1 font-bold">{fieldErrors.confirmPassword}</p>}
                         </div>
 
                         <div className="anim-up-4 pt-2">

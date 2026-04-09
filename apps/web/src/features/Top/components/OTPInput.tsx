@@ -13,12 +13,12 @@ interface OTPInputProps {
   attemptsUsed: number;
 }
 
-export default function OTPInput({ 
-  email, 
-  onResend, 
-  isLoadingResend, 
-  cooldown, 
-  attemptsUsed 
+export default function OTPInput({
+  email,
+  onResend,
+  isLoadingResend,
+  cooldown,
+  attemptsUsed
 }: OTPInputProps) {
   const router = useRouter();
 
@@ -119,7 +119,7 @@ export default function OTPInput({
         </div>
 
         {verifyError && (
-          <div className="mb-4 p-3 bg-red-500/20 border border-red-400/40 rounded-xl text-white text-sm w-full max-w-md mx-auto">
+          <div className="mb-4 p-3 bg-red-800/20 border border-red-700/80 rounded-xl text-white text-sm w-full max-w-md mx-auto">
             {verifyError}
           </div>
         )}
