@@ -20,6 +20,7 @@ export default function RegisterPage() {
     const [cooldown, setCooldown] = useState(0);
     const [attemptsUsed, setAttemptsUsed] = useState(0);
     const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+    const [agreed, setAgreed] = useState(false);
 
     const [timer, setTimer] = useState<any>(null);
 
@@ -532,11 +533,26 @@ export default function RegisterPage() {
                             {fieldErrors.confirmPassword && <p className="text-red-700 text-xs mt-1.5 ml-1 font-bold">{fieldErrors.confirmPassword}</p>}
                         </div>
 
+                        <div className="anim-up-4 pt-2 pb-2">
+                            <div className="flex items-center gap-3">
+                                <input 
+                                    type="checkbox" 
+                                    id="terms-check" 
+                                    checked={agreed} 
+                                    onChange={(e) => setAgreed(e.target.checked)} 
+                                    className="w-5 h-5 accent-[#00AEEF] rounded border-none cursor-pointer" 
+                                />
+                                <label htmlFor="terms-check" className="text-sm cursor-pointer opacity-95 text-white">
+                                    I agree to the <Link href="/policies" target="_blank" className="underline hover:text-white/80 transition-colors">Terms of Service and Privacy Policy</Link>.
+                                </label>
+                            </div>
+                        </div>
+
                         <div className="anim-up-4 pt-2">
                             <button
                                 type="submit"
-                                disabled={isLoading}
-                                className="btn-register w-full py-3.5 bg-white text-[#00AEEF] font-bold text-[15px] rounded-full shadow-lg disabled:opacity-60"
+                                disabled={isLoading || !agreed}
+                                className={`btn-register w-full py-3.5 bg-white text-[#00AEEF] font-bold text-[15px] rounded-full shadow-lg ${isLoading || !agreed ? 'opacity-60 cursor-not-allowed' : ''}`}
                             >
                                 {isLoading ? "Creating Account..." : "Register"}
                             </button>

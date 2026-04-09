@@ -127,7 +127,7 @@ export default function RegisterForm({
           <div className="flex items-center gap-3">
             <input type="checkbox" id="terms-check" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-6 h-6 accent-green-500 rounded border-none cursor-pointer" />
             <label htmlFor="terms-check" className="text-xs lg:text-sm cursor-pointer opacity-95">
-              I agree to the Terms of Service and Privacy Policy. <a href="/login" className="underline ml-2 hover:text-white/80 transition-colors">Login</a>
+              I agree to the <a href="/policies" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/80 transition-colors">Terms of Service and Privacy Policy</a>. <a href="/login" className="underline ml-2 hover:text-white/80 transition-colors">Login</a>
             </label>
           </div>
 
