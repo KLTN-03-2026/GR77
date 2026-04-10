@@ -123,8 +123,7 @@ export default function GoogleLoginButton() {
 
                             <p className="text-gray-500 text-base leading-relaxed mb-10">
                                 To provide the best experience and protect your data, please confirm that you agree to Kindlink's
-                                <span className="text-[#00AEEF] font-bold mx-1">Terms of Service</span> and
-                                <span className="text-[#00AEEF] font-bold mx-1">Privacy Policy</span>.
+                                <a href="/policies" target="_blank" rel="noopener noreferrer" className="text-[#00AEEF] font-bold mx-1 hover:underline">Terms of Service and Privacy Policy</a>.
                             </p>
 
                             <div className="flex flex-col gap-4">
