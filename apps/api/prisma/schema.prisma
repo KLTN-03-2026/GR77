@@ -32,6 +32,7 @@ model User {
   profile            UserProfile?
   security           UserSecurity?
   wallet             UserWallet?
+  ekyc               UserEkyc?
   walletTransactions WalletTransaction[]
 
   @@map("users")
@@ -476,4 +477,30 @@ enum ReportStatus {
 enum AuthProvider {
   LOCAL
   GOOGLE
+}
+
+enum EkycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model UserEkyc {
+  id              String     @id @default(uuid())
+  userId          String     @unique @map("user_id")
+  status          EkycStatus @default(PENDING)
+  idNumber        String?    @map("id_number") @db.VarChar(20)
+  fullName        String?    @map("full_name") @db.VarChar(255)
+  dob             String?    @map("dob") @db.VarChar(20)
+  gender          String?    @db.VarChar(10)
+  address         String?    @db.VarChar(500)
+  frontImageUrl   String?    @map("front_image_url") @db.VarChar(500)
+  backImageUrl    String?    @map("back_image_url") @db.VarChar(500)
+  selfieImageUrl  String?    @map("selfie_image_url") @db.VarChar(500)
+  rejectionReason String?    @map("rejection_reason") @db.VarChar(500)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_ekyc")
 }

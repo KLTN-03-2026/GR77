@@ -55,7 +55,8 @@ export class AuthController {
             isLocked: true,
             lockReason: true
           }
-        }
+        },
+        ekyc: true
       }
     });
     return user;
