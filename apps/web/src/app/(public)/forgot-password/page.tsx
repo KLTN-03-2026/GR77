@@ -181,6 +181,24 @@ export default function ForgotPasswordPage() {
             return;
         }
 
+        if (!/[A-Z]/.test(newPassword)) {
+            setError("Password must contain at least one uppercase letter");
+            setIsLoading(false);
+            return;
+        }
+
+        if (!/[a-z]/.test(newPassword)) {
+            setError("Password must contain at least one lowercase letter");
+            setIsLoading(false);
+            return;
+        }
+
+        if (!/[0-9]/.test(newPassword)) {
+            setError("Password must contain at least one number");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const res = await fetch(`${apiUrl}/auth/reset-password`, {
                 method: "POST",
@@ -593,7 +611,7 @@ export default function ForgotPasswordPage() {
                                             )}
                                         </button>
                                     </div>
-                                    <p className="text-white/50 text-xs mt-1.5 ml-1">At least 8 characters</p>
+                                    <p className="text-white/50 text-xs mt-1.5 ml-1">At least 8 characters, including uppercase, lowercase, and a number</p>
                                 </div>
 
                                 {/* Confirm Password */}
