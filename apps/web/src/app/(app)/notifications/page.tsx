@@ -243,7 +243,7 @@ export default function NotificationsPage() {
                         placeholder="Search notifications…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2ba6e1]/30 focus:border-[#2ba6e1] transition-all"
+                        className="w-full h-[25px] sm:h-[35px] pl-10 pr-4 rounded-2xl border border-gray-200 bg-white text-[11px] sm:text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2ba6e1]/30 focus:border-[#2ba6e1] transition-all"
                     />
                 </div>
 

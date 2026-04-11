@@ -54,17 +54,20 @@ export default function LoginPage() {
 
             const data = await res.json();
 
-            // Fetch real profile for display name
-            let userProfile = {};
+            // Use basic user info from login response first
+            let userProfile = data.user || {};
+
+            // Fetch real profile for extra details (avatar, etc.)
             try {
                 const meRes = await fetch(`${API_BASE_URL}/auth/me`, {
                     headers: { Authorization: `Bearer ${data.accessToken}` },
                 });
                 if (meRes.ok) {
-                    userProfile = await meRes.json();
+                    const freshProfile = await meRes.json();
+                    userProfile = { ...userProfile, ...freshProfile };
                 }
             } catch (err) {
-                console.error("Failed to fetch profile:", err);
+                console.error("Failed to fetch fresh profile:", err);
             }
 
             // Sync with global auth context

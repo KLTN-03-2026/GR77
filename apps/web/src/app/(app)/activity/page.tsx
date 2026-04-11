@@ -136,26 +136,28 @@ export default function ActivityPage() {
                             <Link
                                 key={campaign.id}
                                 href={`/home/${campaign.id}`}
-                                className={`${styles.hCard} block`}
+                                className="block group [container-type:inline-size] [container-name:hcard] md:aspect-[3.5/1] aspect-auto overflow-hidden"
                             >
-                                <div className={`${styles.hInner} flex w-full h-full overflow-hidden bg-white`}>
-                                    <div className={`${styles.hImgWrap} h-full shrink-0 flex items-center`}>
-                                        <div className={`${styles.hImgFrame} relative w-full overflow-hidden`}>
+                                <div className="flex w-full h-full overflow-hidden bg-white rounded-[5cqi] md:rounded-[3.5cqi] border-[1.5px] border-[#e3e9f1] transition-all hover:border-cyan-400 hover:shadow-[0_8px_30px_rgba(65,203,238,0.15)] md:flex-row flex-col">
+                                    {/* Image Section */}
+                                    <div className="h-full shrink-0 flex items-center md:w-[28cqi] md:min-w-[28cqi] md:p-[1.5cqi] w-full p-0">
+                                        <div className="relative w-full overflow-hidden md:aspect-square aspect-[3/2] md:rounded-[2cqi] rounded-t-[5cqi] rounded-b-0">
                                             {campaign.coverImageUrl ? (
                                                 <img
                                                     src={campaign.coverImageUrl}
                                                     alt={campaign.title}
-                                                    className="w-full h-full object-cover"
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                 />
                                             ) : (
-                                                <div className={`${styles.hImgPlaceholder} w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-50 to-cyan-100`}>
-                                                    <Bars3CenterLeftIcon />
+                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-50 to-cyan-100">
+                                                    <Bars3CenterLeftIcon className="md:w-[8cqi] md:h-[8cqi] w-[12cqi] h-[12cqi] text-cyan-300" />
                                                 </div>
                                             )}
-                                            <span className={`${styles.hBadge} ${styles.hBadgeTl} absolute font-bold bg-white/90 text-black shadow-sm capitalize`}>
+                                            {/* Badges */}
+                                            <span className="absolute md:top-[1cqi] md:left-[1cqi] top-[3cqi] left-[3cqi] md:px-[1.4cqi] md:py-[0.4cqi] px-[3cqi] py-[1.5cqi] md:text-[1.3cqi] text-[3.5cqi] font-bold bg-white/90 text-black shadow-sm capitalize rounded-full">
                                                 {campaign.category}
                                             </span>
-                                            <span className={`${styles.hBadge} ${styles.hBadgeTr} absolute font-bold uppercase shadow-sm ${campaign.status === 'ACTIVE'
+                                            <span className={`absolute md:top-[1cqi] md:right-[1cqi] top-[3cqi] right-[3cqi] md:px-[1.4cqi] md:py-[0.4cqi] px-[3cqi] py-[1.5cqi] md:text-[1.3cqi] text-[3.5cqi] font-bold uppercase shadow-sm rounded-full ${campaign.status === 'ACTIVE'
                                                 ? 'bg-green-100/90 text-green-700'
                                                 : 'bg-yellow-100/90 text-yellow-700'
                                                 }`}>
@@ -164,41 +166,40 @@ export default function ActivityPage() {
                                         </div>
                                     </div>
 
-                                    <div className={`${styles.hContent} flex-1 flex flex-col justify-between min-w-0 overflow-hidden`}>
+                                    {/* Content Section */}
+                                    <div className="flex-1 flex flex-col justify-between min-w-0 overflow-hidden md:p-[1.8cqi_3cqi_2cqi] p-[4.5cqi]">
                                         <div>
-                                            <h2 className={`${styles.hTitle} font-extrabold text-gray-900 overflow-hidden text-ellipsis`} style={{ display: '-webkit-box' }}>
+                                            <h2 className="font-extrabold text-gray-900 overflow-hidden text-ellipsis md:text-[2.4cqi] text-[6.8cqi] md:mb-[0.5cqi] mb-[2.5cqi] leading-[1.3]" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                                                 {campaign.title}
                                             </h2>
 
                                             {campaign.locationText && (
-                                                <div className={`${styles.hLocation} flex items-center text-gray-400`}>
-                                                    <MapPinIcon className="shrink-0" />
+                                                <div className="flex items-center text-gray-400 gap-[1.5cqi] md:gap-[0.5cqi] md:text-[1.4cqi] text-[4cqi] md:mb-[0.5cqi] mb-[2.5cqi]">
+                                                    <MapPinIcon className="shrink-0 md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
                                                     <span>{campaign.locationText}</span>
                                                 </div>
                                             )}
 
-                                            <p className={`${styles.hGoalLabel} font-bold text-slate-700`}>
-                                                Mục tiêu{' '}
-                                                <span className="text-cyan-500 font-black">
-                                                    {formatCurrency(campaign.fundingGoalAmount)} VND
-                                                </span>
+                                            <p className="font-bold text-slate-700 md:text-[1.8cqi] text-[6cqi] md:mt-[0.5cqi] mt-[2.5cqi] leading-[1.5]">
+                                                Goal: <span className="font-black text-[#14ABD1]">{formatCurrency(campaign.fundingGoalAmount)} VND</span>
                                             </p>
-                                            <p className={`${styles.hSubText} font-bold text-gray-400 uppercase`}>
-                                                Ủng hộ tối thiểu: <span className="font-bold text-gray-600">{formatCurrency(campaign.minimumDonationAmount)} VND</span>
+                                            <p className="font-bold text-gray-400 uppercase md:text-[1.2cqi] text-[4cqi] md:mt-[0.2cqi] mt-[1cqi]">
+                                                Min Donation: <span className="font-bold text-gray-600">{formatCurrency(campaign.minimumDonationAmount)} VND</span>
                                             </p>
 
-                                            <div className={`${styles.hDateInfo} flex items-center text-gray-500`}>
-                                                <CalendarIcon className="text-gray-400 shrink-0" />
+                                            <div className="flex items-center text-gray-400 gap-[1.5cqi] md:gap-[0.5cqi] md:text-[1.4cqi] text-[4cqi] md:mt-[0.8cqi] mt-[3cqi]">
+                                                <CalendarIcon className="text-gray-400 shrink-0 md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
                                                 <span>Đã xem: <span className="font-medium text-gray-700">{formatRelativeTime(campaign.lastViewedAt)}</span></span>
                                             </div>
                                         </div>
 
-                                        <div className={`${styles.hActions} flex items-center`}>
+                                        <div className="flex items-center gap-[1.5cqi] md:gap-[1cqi] md:mt-[1cqi] mt-[5cqi] flex-wrap">
                                             <FavoriteButton
                                                 campaignId={campaign.id}
                                                 initialFavorited={campaign.isFavorited || false}
+                                                className="md:min-w-[14cqi] flex-1 md:flex-none px-[3cqi] py-[2.2cqi] md:px-[1cqi] md:py-[0.7cqi] md:text-[1.3cqi] text-[4cqi]"
                                             />
-                                            <span className={`${styles.hBtnOutline} font-bold border-2 border-yellow-400 bg-white text-yellow-600 cursor-pointer text-center inline-flex items-center justify-center whitespace-nowrap hover:bg-[#FFF9E0]`}>
+                                            <span className="md:min-w-[14cqi] flex-1 md:flex-none px-[3cqi] py-[2.2cqi] md:px-[1cqi] md:py-[0.7cqi] md:text-[1.3cqi] text-[4cqi] font-bold border-2 border-yellow-400 bg-white text-yellow-600 cursor-pointer text-center inline-flex items-center justify-center whitespace-nowrap hover:bg-[#FFF9E0] rounded-full transition-all">
                                                 Xem &amp; Ủng Hộ
                                             </span>
                                         </div>

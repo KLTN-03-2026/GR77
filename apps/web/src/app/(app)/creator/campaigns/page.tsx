@@ -118,7 +118,7 @@ export default function CreatorCampaignsPage() {
                         <div className="relative w-full max-w-lg">
                             <input
                                 type="text"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-full py-2.5 pl-6 pr-12 text-sm focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder-gray-400 font-medium"
+                                className="w-full h-[25px] sm:h-[35px] bg-gray-50 border border-gray-200 rounded-full pl-6 pr-12 text-[11px] sm:text-sm focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder-gray-400 font-medium"
                                 placeholder="Search campaigns..."
                             />
                             <MagnifyingGlassIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 font-bold" strokeWidth={2.5} />

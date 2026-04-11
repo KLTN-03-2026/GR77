@@ -100,9 +100,9 @@ export default function CampaignsPage() {
             {/* Cards — responsive carousel on mobile, grid on desktop */}
             <div className="flex sm:grid overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none flex-nowrap sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-[3%] mb-0 sm:mb-[2%] pb-2 sm:pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {section.campaigns.map((campaign) => (
-                <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className={`${styles.vCard} block shrink-0 w-[70vw] sm:w-auto snap-center sm:snap-align-none`}>
-                  <div className={`${styles.vInner} overflow-hidden shadow-sm hover:shadow-xl transition-all duration-200 hover:scale-[1.02]`} style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255, 255, 255, 0.73)' }}>
-                    <div className={`${styles.vImg} relative w-full`}>
+                <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className="block shrink-0 w-[70vw] sm:w-auto snap-center sm:snap-align-none [container-type:inline-size] [container-name:vcard]">
+                  <div className="overflow-hidden shadow-sm hover:shadow-xl transition-all duration-200 hover:scale-[1.02] rounded-[5cqi]" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255, 255, 255, 0.73)' }}>
+                    <div className="relative w-full aspect-[3/2]">
                       <Image
                         src={campaign.image}
                         alt={campaign.title}
@@ -111,22 +111,22 @@ export default function CampaignsPage() {
                       />
                     </div>
 
-                    <div className={`${styles.vBody} text-center flex flex-col`}>
-                      <h3 className={`${styles.vTitle} font-bold text-black overflow-hidden text-ellipsis whitespace-nowrap`}>
+                    <div className="text-center flex flex-col p-[5cqi] gap-[3cqi]">
+                      <h3 className="font-extrabold text-black overflow-hidden text-ellipsis whitespace-nowrap text-[7.5cqi] leading-[1.3]">
                         {campaign.title}
                       </h3>
 
                       <div>
-                        <div className="flex items-center justify-center" style={{ gap: '1.5cqi' }}>
-                          <span className={`${styles.vLabel} text-black/60`}>Amount Raised</span>
-                          <span className={`${styles.vAmount} font-bold text-black`}>
+                        <div className="flex items-center justify-center gap-[1.5cqi]">
+                          <span className="text-slate-700 font-bold text-[5.5cqi]">Goal:</span>
+                          <span className="font-black text-[#14ABD1] text-[7cqi]">
                             ${campaign.amountRaised.toLocaleString()}
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-center" style={{ marginTop: '5cqi' }}>
-                          <div className={`${styles.vDateBadge} inline-flex items-center bg-black/[0.08] border border-black/15 text-black/70`}>
-                            <CalendarIcon />
+                        <div className="flex items-center justify-center mt-[4cqi]">
+                          <div className="inline-flex items-center bg-black/[0.08] border border-black/15 text-black/70 gap-[2cqi] rounded-full p-[2cqi_4cqi] text-[5cqi]">
+                            <CalendarIcon className="w-[5cqi] h-[5cqi]" />
                             <span>{campaign.startDate ? new Date(campaign.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}</span>
                           </div>
                         </div>
