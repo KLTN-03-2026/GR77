@@ -1,4 +1,6 @@
-import { CameraIcon, UserIcon, EnvelopeIcon, MapPinIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { CameraIcon, UserIcon, EnvelopeIcon, MapPinIcon, ExclamationCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 import React from 'react';
 
 interface ProfileHeaderProps {
@@ -89,6 +91,26 @@ export function ProfileHeader({
           </p>
 
           <div className="border-t border-gray-200 my-2" />
+
+          {/* eKYC Status */}
+          <div className="mb-4">
+            {profile?.ekyc?.status === 'APPROVED' ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest border border-green-100">
+                <CheckCircle2 className="w-3 h-3" />
+                Verified Account
+              </div>
+            ) : profile?.ekyc?.status === 'PENDING' ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold uppercase tracking-widest border border-blue-100">
+                <ClockIcon className="w-3 h-3" />
+                KYC Pending
+              </div>
+            ) : (
+              <Link href="/profile/ekyc" className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded-full text-[10px] font-bold uppercase tracking-widest border border-red-100 transition-all">
+                <ShieldCheck className="w-3 h-3" />
+                Verify Identity
+              </Link>
+            )}
+          </div>
 
           <div className="space-y-3 text-left">
             <div className="flex items-center gap-3 text-sm text-gray-600">

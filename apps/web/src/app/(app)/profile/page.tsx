@@ -31,6 +31,10 @@ export interface UserProfile {
     avatarUrl: string | null;
     coverImageUrl: string | null;
   };
+  ekyc?: {
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectionReason?: string;
+  };
 }
 
 const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
