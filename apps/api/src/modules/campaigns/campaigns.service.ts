@@ -367,9 +367,19 @@ export class CampaignsService {
       throw new BadRequestException('Minimum donation amount cannot be greater than the funding goal amount');
     }
 
+    const { galleryUrls, ...restDto } = dto;
+
     return (this.prisma as any).campaign.update({
       where: { id },
-      data: dto,
+      data: {
+        ...restDto,
+        ...(galleryUrls ? {
+          images: {
+            deleteMany: {},
+            create: galleryUrls.map((url, index) => ({ url, order: index }))
+          }
+        } : {})
+      },
     });
   }
 }

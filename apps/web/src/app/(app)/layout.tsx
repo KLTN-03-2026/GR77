@@ -65,9 +65,9 @@ export default function AppLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Open sidebar by default only on desktop (lg = 1024px)
+  // Open sidebar by default only on desktop (md = 768px)
   useEffect(() => {
-    const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
     setSidebarOpen(isDesktop);
   }, []);
 
@@ -77,11 +77,11 @@ export default function AppLayout({
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
 
-        <div className={`flex flex-col min-h-dvh transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
+        <div className={`flex flex-col min-h-dvh transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-0'}`}>
 
           <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isOpen={sidebarOpen} />
 
-          <main className="pb-24 lg:pb-4 flex-1" style={{ paddingTop: 'var(--header-h)' }}>
+          <main className="pb-24 md:pb-4 flex-1" style={{ paddingTop: 'var(--header-h)' }}>
 
             <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
               {children}

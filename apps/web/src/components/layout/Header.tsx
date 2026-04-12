@@ -5,7 +5,7 @@ import { BellIcon, Bars3Icon, ChevronRightIcon } from '@heroicons/react/24/outli
 import Logo from '@/components/common/logo';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import {
   UserCircleIcon,
   GlobeAltIcon,
@@ -29,6 +29,7 @@ interface HeaderProps {
 
 export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { translate } = useAdminLanguage();
   const { user, logout } = useGlobalAuth();
@@ -109,6 +110,29 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
       );
     }
 
+    if (pathname.includes('/creator/campaigns') && pathname.includes('/edit')) {
+      return (
+        <>
+          <Link href="/creator/campaigns" className="hover:text-blue-600">My Campaigns</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+          <span className="text-gray-900 font-medium">Edit</span>
+        </>
+      );
+    }
+
+    if (pathname.startsWith('/creator/campaigns/') && !pathname.includes('/new')) {
+      const parts = pathname.split('/');
+      const campaignId = parts[parts.length - 1];
+      const idx = searchParams.get('idx');
+      return (
+        <>
+          <Link href="/creator/campaigns" className="hover:text-blue-600">My Campaigns</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+          <span className="text-gray-900 font-medium">{idx ? `#${idx}` : `#${campaignId.length > 8 ? campaignId.slice(-4) : campaignId}`}</span>
+        </>
+      );
+    }
+
     // Admin breadcrumbs
     if (pathname.includes('/admin/dashboard')) return <><span>{translate('menu.dashboard')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
     if (pathname.includes('/admin/users')) return <><span>{translate('menu.users')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
@@ -145,7 +169,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
       {/* Top Row: Logo & Welcome area */}
       <div className="flex items-center justify-between" style={{ height: 'var(--header-row-h)' }}>
         {/* Logo Area: Always at the left, fixed width on lg to match Sidebar */}
-        <div className="flex items-center pl-0 pr-2 sm:px-6 shrink-0 lg:w-64 border-r border-gray-50 h-full">
+        <div className="flex items-center pl-0 pr-2 sm:px-6 shrink-0 md:w-64 border-r border-gray-50 h-full">
           <button
             onClick={onToggleSidebar}
             className="p-1 sm:p-2 -ml-0 sm:-ml-2 text-gray-900 hover:bg-gray-100 rounded-lg transition-colors mr-1 sm:mr-1 lg:mr-2 flex-shrink-0"

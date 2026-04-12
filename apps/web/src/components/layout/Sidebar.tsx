@@ -142,12 +142,12 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: Sideb
 
   return (
     <>
-      {/* ── Desktop Sidebar ── */}
+      {/* ── Desktop/Laptop Sidebar ── */}
       <aside
         className={`
-          hidden lg:fixed lg:bottom-0 lg:left-0 lg:flex lg:w-64 lg:flex-col
+          hidden md:fixed md:bottom-0 md:left-0 md:flex md:w-64 md:flex-col
           transition-all duration-300 z-30 bg-white border-r border-gray-200
-          ${isOpen ? 'lg:translate-x-0' : 'lg:-translate-x-full'}
+          ${isOpen ? 'md:translate-x-0' : 'md:-translate-x-full'}
         `}
         style={{ top: 'var(--header-h)' }}
       >
@@ -159,14 +159,14 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: Sideb
       {/* ── Mobile Sidebar Drawer ── */}
       {/* Overlay */}
       <div
-        className={`lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
 
       {/* Drawer */}
       <aside
         className={`
-          lg:hidden fixed top-0 left-0 bottom-0 w-[280px] max-w-[80vw]
+          md:hidden fixed top-0 left-0 bottom-0 w-[280px] max-w-[80vw]
           bg-white shadow-2xl z-50 flex flex-col
           transition-transform duration-300 ease-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
