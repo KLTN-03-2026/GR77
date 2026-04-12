@@ -63,17 +63,26 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Open sidebar by default only on desktop (lg = 1024px)
+  useEffect(() => {
+    const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+    setSidebarOpen(isDesktop);
+  }, []);
 
   return (
     <UserGuard>
-      <div className="min-h-screen bg-white flex flex-col">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} topSpacerClass="h-[128px]" />
+      <div className="min-h-dvh bg-white flex flex-col">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
+
+        <div className={`flex flex-col min-h-dvh transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
+
           <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isOpen={sidebarOpen} />
 
-          <main className="pt-[56px] sm:pt-[128px] pb-24 lg:pb-4 flex-1">
+          <main className="pb-24 lg:pb-4 flex-1" style={{ paddingTop: 'var(--header-h)' }}>
+
             <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
               {children}
             </div>

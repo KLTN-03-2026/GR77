@@ -86,7 +86,7 @@ export function CampaignDiscussion({
                                     const name = target.user?.profile?.firstName
                                         ? `${target.user.profile.firstName} ${target.user.profile.lastName ?? ""}`.trim()
                                         : target.user?.username;
-                                    setNewComment(`@${name} `);
+                                    setNewComment(`@[${name}] `);
                                 }}
                                 onDelete={handleDeleteComment}
                                 onReport={handleReport}

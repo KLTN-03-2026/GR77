@@ -136,9 +136,9 @@ export default function FavoritesPage() {
                             <Link
                                 key={campaign.id}
                                 href={`/home/${campaign.id}`}
-                                className="block group [container-type:inline-size] [container-name:hcard] md:aspect-[3.5/1] aspect-auto overflow-hidden"
+                                className="block group [container-type:inline-size] [container-name:hcard] md:aspect-[3.5/1] aspect-auto"
                             >
-                                <div className="flex w-full h-full overflow-hidden bg-white rounded-[5cqi] md:rounded-[3.5cqi] border-[1.5px] border-[#e3e9f1] transition-all hover:border-cyan-400 hover:shadow-[0_8px_30px_rgba(65,203,238,0.15)] md:flex-row flex-col">
+                                <div className="flex w-full h-full overflow-hidden bg-white rounded-[5cqi] md:rounded-[3.5cqi] border-[1.5px] border-[#e3e9f1] transition-all hover:border-cyan-400 md:flex-row flex-col">
                                     {/* Image Section */}
                                     <div className="h-full shrink-0 flex items-center md:w-[28cqi] md:min-w-[28cqi] md:p-[1.5cqi] w-full p-0">
                                         <div className="relative w-full overflow-hidden md:aspect-square aspect-[3/2] md:rounded-[2cqi] rounded-t-[5cqi] rounded-b-0">

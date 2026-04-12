@@ -67,7 +67,7 @@ export function CampaignGoalProgress({
                             <button
                                 onClick={handleJoin}
                                 disabled={isJoined}
-                                className={`flex-1 py-3.5 sm:py-4.5 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg shadow-pink-100/50 ${
+                                className={`flex-1 py-2.5 sm:py-3 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg shadow-pink-100/50 ${
                                     isJoined 
                                     ? "bg-gray-400 border-gray-400 text-white cursor-default" 
                                     : "bg-white border-pink-500 text-pink-500 hover:bg-pink-50"
@@ -77,7 +77,7 @@ export function CampaignGoalProgress({
                             </button>
                             <button
                                 onClick={() => setDonateOpen(true)}
-                                className="flex-1 py-3.5 sm:py-4.5 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full shadow-lg shadow-yellow-100/50 transition-all active:scale-95"
+                                className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full shadow-lg shadow-yellow-100/50 transition-all active:scale-95"
                             >
                                 Donate
                             </button>
@@ -87,12 +87,13 @@ export function CampaignGoalProgress({
                     <div className="w-full shrink-0 pt-6">
                         <a
                             href={`/creator/campaigns/${campaignId}`}
-                            className="block w-full py-4.5 bg-blue-500 hover:bg-blue-600 text-white font-black text-lg text-center rounded-full shadow-xl shadow-blue-100 transition-all active:scale-95"
+                            className="block w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-black text-base text-center rounded-full shadow-xl shadow-blue-100 transition-all active:scale-95"
                         >
                             Quản lý chiến dịch
                         </a>
                     </div>
                 )}
+
             </div>
         </section>
     );

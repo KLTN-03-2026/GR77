@@ -395,7 +395,7 @@ export default function CampaignDetailPage({
                     <CampaignHero coverImageUrl={coverImage} title={campaign?.title} />
 
                     {/* Container 1: Core Campaign Info */}
-                    <div className="relative z-10 px-4 sm:px-8 pt-6 pb-8 max-w-7xl mx-auto mt-2 sm:mt-6">
+                    <div className="relative z-10 px-4 sm:px-8 pt-6 pb-8 max-w-7xl mx-auto mt-4 sm:mt-10">
 
                         <CampaignDescription description={campaign?.description} />
 

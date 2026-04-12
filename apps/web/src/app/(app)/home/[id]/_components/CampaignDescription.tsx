@@ -11,9 +11,9 @@ export function CampaignDescription({ description = "" }: CampaignDescriptionPro
 
     return (
         <div className="bg-white border border-gray-300 shadow-md rounded-[24px] p-6 lg:p-8 mb-8">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-1.5 h-6 bg-[#47c9e5] rounded-full"></div>
-                <h2 className="text-[1.25rem] italic font-black text-gray-900 tracking-tight">Mô tả chiến dịch</h2>
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-1.5 h-5 bg-[#47c9e5] rounded-full"></div>
+                <h2 className="text-base italic font-black text-gray-900 tracking-tight">Mô tả chiến dịch</h2>
             </div>
             <div className={`text-gray-700 leading-relaxed text-[15px] font-medium transition-all duration-300 ${!isExpanded ? "line-clamp-4" : ""}`}>
                 {description}
