@@ -318,6 +318,20 @@ export class CampaignsService {
   }
 
   async create(userId: string, dto: CreateCampaignDto) {
+    // Check if user is KYC verified
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isKycVerified: true }
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.isKycVerified) {
+      throw new ForbiddenException('You must complete eKYC verification to create a campaign');
+    }
+
     const { galleryUrls, ...rest } = dto;
     const campaign = await (this.prisma as any).campaign.create({
       data: {

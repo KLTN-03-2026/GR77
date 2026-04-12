@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronRightIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, PhotoIcon, XMarkIcon, ExclamationIcon } from '@heroicons/react/24/outline';
 
 interface CategoryOption {
     id: string;
@@ -23,12 +23,34 @@ export default function NewCampaignPage() {
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const [categories, setCategories] = useState<CategoryOption[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
+    const [isKycVerified, setIsKycVerified] = useState(false);
+    const [isKycCheckLoading, setIsKycCheckLoading] = useState(true);
 
     useEffect(() => {
+        // Load categories
         fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`)
             .then((res) => res.json())
             .then((data) => setCategories(data))
             .catch((err) => console.error('Failed to load categories:', err));
+
+        // Check eKYC verification status
+        const token = localStorage.getItem('accessToken');
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/me`, {
+            headers: {
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                setIsKycVerified(data.isKycVerified || false);
+            })
+            .catch((err) => {
+                console.error('Failed to load user data:', err);
+                setIsKycVerified(false);
+            })
+            .finally(() => {
+                setIsKycCheckLoading(false);
+            });
     }, []);
 
     const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -197,14 +219,34 @@ export default function NewCampaignPage() {
                 <p className="text-sm text-gray-400 mt-1 ml-9">Fill in the details to create a new campaign.</p>
             </div>
 
+            {/* eKYC Verification Warning Banner */}
+            {!isKycCheckLoading && !isKycVerified && (
+                <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg flex gap-4 items-start">
+                    <ExclamationIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <h3 className="font-bold text-yellow-900 text-sm mb-1">eKYC Verification Required</h3>
+                        <p className="text-yellow-800 text-sm mb-3">
+                            To create and manage campaigns, you must complete eKYC (electronic Know Your Customer) verification with your ID card/passport first.
+                        </p>
+                        <button
+                            onClick={() => router.push('/creator/verify-kyc')}
+                            className="text-yellow-700 hover:text-yellow-900 font-bold text-sm underline"
+                        >
+                            Complete eKYC Verification →
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Form Container */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8">
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
-                        {error}
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex gap-3 items-start">
+                        <ExclamationIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <span>{error}</span>
                     </div>
                 )}
-                <form className="space-y-6" onSubmit={handleSubmit}>
+                <form className="space-y-6" onSubmit={handleSubmit} disabled={!isKycVerified || isKycCheckLoading}>
 
                     {/* Campaign Title */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
@@ -216,7 +258,8 @@ export default function NewCampaignPage() {
                             <input
                                 type="text"
                                 name="title"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                disabled={!isKycVerified || isKycCheckLoading}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -230,8 +273,9 @@ export default function NewCampaignPage() {
                         <div className="sm:w-3/4">
                             <textarea
                                 name="description"
+                                disabled={!isKycVerified || isKycCheckLoading}
                                 rows={4}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                             ></textarea>
                         </div>
                     </div>
@@ -245,7 +289,8 @@ export default function NewCampaignPage() {
                             <select
                                 value={selectedCategoryId}
                                 onChange={handleCategoryChange}
-                                className="w-52 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
+                                disabled={!isKycVerified || isKycCheckLoading}
+                                className="w-52 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236b7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em 1em' }}
                             >
                                 <option value="">Choose</option>
@@ -268,7 +313,8 @@ export default function NewCampaignPage() {
                             <input
                                 type="text"
                                 name="locationText"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                disabled={!isKycVerified || isKycCheckLoading}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -296,7 +342,8 @@ export default function NewCampaignPage() {
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="w-full max-w-md aspect-video bg-[#f4f4f4] hover:bg-[#e8e8e8] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-3 transition-all text-gray-500 hover:text-gray-700 hover:border-blue-300 group"
+                                        disabled={!isKycVerified || isKycCheckLoading}
+                                        className="w-full max-w-md aspect-video bg-[#f4f4f4] hover:bg-[#e8e8e8] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-3 transition-all text-gray-500 hover:text-gray-700 hover:border-blue-300 group disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <div className="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
                                             <PhotoIcon className="h-6 w-6 text-blue-500" />
@@ -340,7 +387,8 @@ export default function NewCampaignPage() {
                                     <button
                                         type="button"
                                         onClick={() => galleryInputRef.current?.click()}
-                                        className="aspect-square bg-[#f4f4f4] hover:bg-[#e8e8e8] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 transition-all text-gray-400 hover:text-blue-500 hover:border-blue-300 group"
+                                        disabled={!isKycVerified || isKycCheckLoading}
+                                        className="aspect-square bg-[#f4f4f4] hover:bg-[#e8e8e8] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 transition-all text-gray-400 hover:text-blue-500 hover:border-blue-300 group disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <PhotoIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
                                         <span className="text-[10px] font-bold">Add Image</span>
@@ -368,7 +416,8 @@ export default function NewCampaignPage() {
                             <input
                                 type="number"
                                 name="fundingGoalAmount"
-                                className="w-48 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                disabled={!isKycVerified || isKycCheckLoading}
+                                className="w-48 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                             <span className="text-[13px] font-bold text-gray-900">VND</span>
                         </div>
@@ -384,7 +433,8 @@ export default function NewCampaignPage() {
                             <input
                                 type="number"
                                 name="minimumDonationAmount"
-                                className="w-48 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                disabled={!isKycVerified || isKycCheckLoading}
+                                className="w-48 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                             <span className="text-[13px] font-bold text-gray-900">VND</span>
                         </div>
@@ -400,20 +450,23 @@ export default function NewCampaignPage() {
                             <input
                                 type="date"
                                 name="startAt"
-                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                disabled={!isKycVerified || isKycCheckLoading}
+                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                             <span className="text-gray-400 font-bold">--</span>
                             <input
                                 type="date"
                                 name="endAt"
-                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                disabled={!isKycVerified || isKycCheckLoading}
+                                className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#000000] focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
 
                             <label className="flex items-center gap-2 ml-4 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="autoCloseWhenGoalReached"
-                                    className="w-4 h-4 rounded text-blue-500 border-gray-300 focus:ring-blue-400 focus:ring-offset-0 bg-[#e5e5e5]"
+                                    disabled={!isKycVerified || isKycCheckLoading}
+                                    className="w-4 h-4 rounded text-blue-500 border-gray-300 focus:ring-blue-400 focus:ring-offset-0 bg-[#e5e5e5] disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                                 <span className="text-[12px] font-bold text-gray-900">Auto-close When Goal Reached?</span>
                             </label>
@@ -424,10 +477,10 @@ export default function NewCampaignPage() {
                     <div className="pt-12 pb-6 flex justify-center">
                         <button
                             type="submit"
-                            disabled={isLoading}
-                            className="bg-gradient-to-r from-[#4fb3fc] to-[#45a8f7] hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed text-white font-black text-sm px-16 py-3.5 rounded-[12px] shadow-[0_4px_14px_0_rgba(79,179,252,0.39)] transition-all uppercase tracking-wide"
+                            disabled={isLoading || !isKycVerified || isKycCheckLoading}
+                            className="bg-gradient-to-r from-[#4fb3fc] to-[#45a8f7] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm px-16 py-3.5 rounded-[12px] shadow-[0_4px_14px_0_rgba(79,179,252,0.39)] transition-all uppercase tracking-wide"
                         >
-                            {isLoading ? 'Saving...' : 'Save'}
+                            {isKycCheckLoading ? 'Checking...' : !isKycVerified ? 'Complete eKYC to Create' : isLoading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
 
