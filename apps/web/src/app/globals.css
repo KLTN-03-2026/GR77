@@ -10,7 +10,13 @@
   --header-crumb-h: 32px;
   /* Breadcrumb bar on sm+ */
   --header-h: calc(var(--header-row-h) + var(--header-crumb-h));
-  /* 120px total */
+  /* 110px total */
+}
+
+@media (max-width: 767px) {
+  :root {
+    --header-row-h: 64px;
+  }
 }
 
 @theme inline {

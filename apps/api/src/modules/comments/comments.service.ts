@@ -50,12 +50,16 @@ export class CommentsService {
             });
 
             if (parentComment && parentComment.userId !== userId) {
+                const link = parentComment.userId === comment.campaign.creatorUserId 
+                    ? `/creator/campaigns/${dto.campaignId}` 
+                    : `/home/${dto.campaignId}`;
+                    
                 await this.notificationsService.create({
                     userId: parentComment.userId,
-                    title: 'Phản hồi mới',
-                    message: `${commenterName} đã trả lời bình luận của bạn trong "${comment.campaign.title}"`,
+                    title: 'New Reply',
+                    message: `${commenterName} replied to your comment in "${comment.campaign.title}"`,
                     type: 'COMMENT',
-                    link: `/home/${dto.campaignId}`,
+                    link,
                 });
             }
         }
@@ -66,10 +70,10 @@ export class CommentsService {
         if (comment.campaign.creatorUserId !== userId && comment.campaign.creatorUserId !== parentAuthorId) {
             await this.notificationsService.create({
                 userId: comment.campaign.creatorUserId,
-                title: 'Bình luận mới',
-                message: `${commenterName} đã bình luận vào chiến dịch "${comment.campaign.title}"`,
+                title: 'New Comment',
+                message: `${commenterName} commented on your campaign "${comment.campaign.title}"`,
                 type: 'COMMENT',
-                link: `/home/${dto.campaignId}`,
+                link: `/creator/campaigns/${dto.campaignId}`,
             });
         }
 

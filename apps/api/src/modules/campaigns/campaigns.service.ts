@@ -85,7 +85,7 @@ export class CampaignsService {
       title: 'Campaign Approved!',
       message: `Your campaign "${campaign.title}" has been approved and is now live.`,
       type: 'CAMPAIGN_APPROVED',
-      link: `/campaigns/${campaign.id}`
+      link: `/creator/campaigns/${campaign.id}`
     });
 
     await this.mailService.sendCampaignStatusUpdateToUser(
@@ -114,7 +114,7 @@ export class CampaignsService {
       title: 'Campaign Revision Required',
       message: `Your campaign "${campaign.title}" was not approved. Reason: ${note}`,
       type: 'CAMPAIGN_REJECTED',
-      link: `/my-campaigns`
+      link: `/creator/campaigns/${campaign.id}`
     });
 
     await this.mailService.sendCampaignStatusUpdateToUser(

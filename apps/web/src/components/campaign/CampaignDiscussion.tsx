@@ -51,13 +51,13 @@ export function CampaignDiscussion({
     return (
         <section className="pb-20 text-gray-900">
             {/* Header */}
-            <div className="flex items-center justify-between mb-3 px-1">
-                <div className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-blue-500" />
-                    <h3 className="text-base sm:text-lg font-bold">Comments</h3>
+            <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center gap-3">
+                    <MessageSquare className="w-6 h-6 text-blue-500" />
+                    <h2 className="text-xl italic font-black text-gray-900 tracking-tight">Discussion</h2>
                 </div>
                 <span className="text-[10px] sm:text-[12px] font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                    {comments.length} bình luận
+                    {comments?.reduce((total: number, c: any) => total + 1 + (c.replies?.length || 0), 0) || 0} comments
                 </span>
             </div>
 
@@ -71,7 +71,7 @@ export function CampaignDiscussion({
                     {comments.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
                             <MessageSquare className="w-12 h-12 opacity-20" />
-                            <p className="font-medium italic">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+                            <p className="font-medium italic">No comments yet. Be the first!</p>
                         </div>
                     ) : (
                         comments.map((comment) => (

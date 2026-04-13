@@ -3,7 +3,7 @@
 import '@fontsource/allura';
 import { BellIcon, Bars3Icon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import Logo from '@/components/common/logo';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import {
@@ -33,6 +33,40 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
   const router = useRouter();
   const { translate } = useAdminLanguage();
   const { user, logout } = useGlobalAuth();
+
+  // ── Mobile auto-hide header on scroll ──
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollThreshold = 10; // minimum scroll distance before toggling
+
+  useEffect(() => {
+    const isMobile = () => window.innerWidth < 768;
+
+    const handleScroll = () => {
+      if (!isMobile()) {
+        setHeaderVisible(true);
+        return;
+      }
+
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY.current;
+
+      if (Math.abs(delta) < scrollThreshold) return;
+
+      if (delta > 0 && currentScrollY > 80) {
+        // Scrolling DOWN → hide header
+        setHeaderVisible(false);
+      } else if (delta < 0) {
+        // Scrolling UP → show header
+        setHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const userName = [user?.profile?.firstName, user?.profile?.lastName].filter(Boolean).join(' ') || user?.username || 'User';
   const userAvatar = user?.profile?.avatarUrl;
@@ -165,11 +199,13 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 transition-all duration-300">
+    <header
+      className={`bg-white/70 backdrop-blur-md border-b border-gray-200 fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${headerVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+    >
       {/* Top Row: Logo & Welcome area */}
       <div className="flex items-center justify-between" style={{ height: 'var(--header-row-h)' }}>
-        {/* Logo Area: Always at the left, fixed width on lg to match Sidebar */}
-        <div className="flex items-center pl-0 pr-2 sm:px-6 shrink-0 md:w-64 border-r border-gray-50 h-full">
+        <div className="flex items-center pl-0 pr-2 sm:px-6 shrink-0 md:w-64 border-r border-transparent h-full">
           <button
             onClick={onToggleSidebar}
             className="p-1 sm:p-2 -ml-0 sm:-ml-2 text-gray-900 hover:bg-gray-100 rounded-lg transition-colors mr-1 sm:mr-1 lg:mr-2 flex-shrink-0"
@@ -281,7 +317,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
       </div>
 
       {/* Breadcrumb row: Stays below top row, aligns with content */}
-      <div className={`bg-[#f8fdff] border-t border-gray-50 px-3 sm:px-6 lg:px-8 flex items-center transition-all duration-300 ${isOpen ? 'lg:ml-64' : 'lg:ml-0'}`} style={{ height: 'var(--header-crumb-h)' }}>
+      <div className={`bg-transparent border-t border-gray-50 px-3 sm:px-6 lg:px-8 flex items-center transition-all duration-300 ${isOpen ? 'lg:ml-64' : 'lg:ml-0'}`} style={{ height: 'var(--header-crumb-h)' }}>
         <div className="flex items-center text-xs sm:text-sm text-gray-500 font-medium tracking-wide">
           {renderBreadcrumbs()}
         </div>

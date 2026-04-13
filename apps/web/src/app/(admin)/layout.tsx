@@ -153,11 +153,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         <main className="pb-24 lg:pb-4 flex-1" style={{ paddingTop: 'var(--header-h)' }}>
 
           <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
-            <div className="mb-8">
-              <h1 className="text-3xl font-black text-[#24305E] uppercase tracking-wider">
-                {currentMenu.name}
-              </h1>
-            </div>
+            {!pathname.includes('/notifications') && (
+              <div className="mb-8">
+                <h1 className="text-3xl font-black text-[#24305E] uppercase tracking-wider">
+                  {currentMenu.name}
+                </h1>
+              </div>
+            )}
             {children}
           </div>
         </main>

@@ -1,0 +1,5 @@
+import { NotificationsView } from '@/components/notifications/NotificationsView';
+
+export default function AdminNotificationsPage() {
+    return <NotificationsView isAdmin={true} />;
+}

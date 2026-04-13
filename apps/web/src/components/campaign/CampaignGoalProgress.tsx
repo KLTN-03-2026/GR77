@@ -89,7 +89,7 @@ export function CampaignGoalProgress({
                             href={`/creator/campaigns/${campaignId}`}
                             className="block w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-black text-base text-center rounded-full shadow-xl shadow-blue-100 transition-all active:scale-95"
                         >
-                            Quản lý chiến dịch
+                            Manage Campaign
                         </a>
                     </div>
                 )}

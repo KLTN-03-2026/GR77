@@ -35,7 +35,7 @@ export default function CampaignFilterBar({
                     placeholder="Search campaigns..."
                     value={search}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    className="w-full h-[25px] sm:h-[35px] pl-8 sm:pl-10 pr-3 sm:pr-4 border border-gray-200 rounded-xl sm:rounded-2xl text-[11px] sm:text-sm font-medium text-gray-900 placeholder-gray-500 bg-gray-50 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all"
+                    className="w-full h-[25px] sm:h-[35px] pl-8 sm:pl-10 pr-3 sm:pr-4 border border-gray-200 rounded-xl sm:rounded-2xl text-[11px] sm:text-sm font-medium text-gray-900 placeholder-gray-400 bg-gray-50 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all"
                 />
             </div>
 
@@ -59,12 +59,12 @@ export default function CampaignFilterBar({
                     value={selectedCategory}
                     onChange={(e) => onCategoryChange(e.target.value)}
                     className="shrink-0 w-[100px] sm:w-auto h-[25px] sm:h-[35px] px-2 sm:px-6 rounded-full text-[10px] sm:text-sm font-bold bg-white text-gray-800 border-2 border-gray-100 hover:border-gray-200 hover:text-black transition-all outline-none cursor-pointer appearance-none shadow-sm text-center"
-                    style={{ 
-                        backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%23000000\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', 
-                        backgroundPosition: 'right .3rem center', 
-                        backgroundRepeat: 'no-repeat', 
-                        backgroundSize: '1em 1em', 
-                        paddingRight: '1.2rem' 
+                    style={{
+                        backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%23000000\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")',
+                        backgroundPosition: 'right .3rem center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: '1em 1em',
+                        paddingRight: '1.2rem'
                     }}
                 >
                     <option value="All">All Categories</option>
