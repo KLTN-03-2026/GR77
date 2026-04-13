@@ -32,7 +32,7 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <div className="lg:col-span-1 space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden text-center relative">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden text-center relative">
         {/* Cover Image */}
         <div className="h-28 relative group">
           {coverPreview ? (
@@ -84,7 +84,7 @@ export function ProfileHeader({
         </div>
 
         {/* Basic Info */}
-        <div className="px-6 pb-6 pt-3">
+        <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-3">
           <h2 className="text-xl font-bold text-[#1d2951]">{displayName}</h2>
           <p className="text-sm font-bold text-cyan-500 uppercase tracking-wider mt-1">
             {profile?.role || 'USER'}
@@ -131,7 +131,7 @@ export function ProfileHeader({
       {(avatarFile || coverFile) && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-700 font-medium flex items-start gap-2">
           <ExclamationCircleIcon className="w-5 h-5 shrink-0 mt-0.5" />
-          <span>Hình ảnh mới sẽ được lưu khi bạn nhấn <strong>"Save Changes"</strong>.</span>
+          <span>New images will be saved when you click <strong>"Save changes"</strong>.</span>
         </div>
       )}
     </div>

@@ -162,7 +162,7 @@ export function NotificationsView({ isAdmin }: { isAdmin?: boolean }) {
 
     return (
         <div className="max-w-4xl mx-auto w-full">
-            <div className="bg-white/70 backdrop-blur-xl border border-white/60 p-5 sm:p-8 rounded-xl shadow-xl shadow-blue-900/5">
+            <div className="bg-white/60 backdrop-blur-xl border-[#607895]/40 border p-5 sm:p-8 rounded-xl">
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between mb-2 sm:mb-4">
                     <h1 className={isAdmin
@@ -219,7 +219,7 @@ export function NotificationsView({ isAdmin }: { isAdmin?: boolean }) {
                             <div
                                 key={n.id}
                                 onClick={() => handleNotificationClick(n)}
-                                className={`flex items-start gap-3 px-5 py-3 sm:px-4 sm:py-4 cursor-pointer transition-all border-b border-white/50 last:border-b-0 ${n.isRead
+                                className={`flex items-start gap-3 px-5 py-3 sm:px-4 sm:py-4 cursor-pointer transition-all border-b border-white/100 last:border-b-0 ${n.isRead
                                     ? 'hover:bg-white/60'
                                     : 'bg-[#E0F0FA]/40 hover:bg-[#E0F0FA]/60'
                                     }`}
