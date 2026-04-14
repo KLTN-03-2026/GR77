@@ -28,7 +28,7 @@ export default function RegisterForm({
   const [agreed, setAgreed] = useState(false);
 
   return (
-    <form onSubmit={onSubmit} className="space-y-8 max-w-5xl">
+    <form onSubmit={onSubmit} className="space-y-3 max-w-5xl" noValidate>
       {error && (
         <div className="p-4 bg-red-800/20 border border-red-700/80 rounded-xl text-white text-sm">
           {error}
@@ -54,7 +54,10 @@ export default function RegisterForm({
             required
             className={`w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all border ${fieldErrors.email ? 'border-red-700 bg-red-50' : 'border-gray-100'}`}
           />
-          {fieldErrors.email && <p className="text-red-700 text-xs mt-1.5 font-bold italic">{fieldErrors.email}</p>}
+          <div className={`flex items-center gap-1.5 mt-1.5 h-[22px] px-2.5 py-0.5 rounded-[3px] border border-gray-200 bg-white shadow-sm text-[12px] text-red-600 font-medium ${fieldErrors.email ? 'visible' : 'invisible'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" className="shrink-0"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" /></svg>
+            <span>{fieldErrors.email || '\u00A0'}</span>
+          </div>
         </div>
       </div>
 
@@ -87,7 +90,10 @@ export default function RegisterForm({
             required
             className={`w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all border ${fieldErrors.password ? 'border-red-700 bg-red-50' : 'border-gray-100'}`}
           />
-          {fieldErrors.password && <p className="text-red-700 text-xs mt-1.5 font-bold italic">{fieldErrors.password}</p>}
+          <div className={`flex items-center gap-1.5 mt-1.5 h-[22px] px-2.5 py-0.5 rounded-[3px] border border-gray-200 bg-white shadow-sm text-[12px] text-red-600 font-medium ${fieldErrors.password ? 'visible' : 'invisible'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" className="shrink-0"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" /></svg>
+            <span>{fieldErrors.password || '\u00A0'}</span>
+          </div>
         </div>
       </div>
 
@@ -117,7 +123,10 @@ export default function RegisterForm({
             required
             className={`w-full bg-white rounded-none px-6 py-3 text-gray-800 outline-none shadow-sm focus:ring-2 focus:ring-blue-300 transition-all border ${fieldErrors.confirmPassword ? 'border-red-700 bg-red-50' : 'border-gray-100'}`}
           />
-          {fieldErrors.confirmPassword && <p className="text-red-700 text-xs mt-1.5 font-bold italic">{fieldErrors.confirmPassword}</p>}
+          <div className={`flex items-center gap-1.5 mt-1.5 h-[22px] px-2.5 py-0.5 rounded-[3px] border border-gray-200 bg-white shadow-sm text-[12px] text-red-600 font-medium ${fieldErrors.confirmPassword ? 'visible' : 'invisible'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" className="shrink-0"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" /></svg>
+            <span>{fieldErrors.confirmPassword || '\u00A0'}</span>
+          </div>
         </div>
       </div>
 

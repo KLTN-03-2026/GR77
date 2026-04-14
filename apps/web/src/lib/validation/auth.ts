@@ -20,7 +20,7 @@ export const AUTH_ERRORS_MAP: Record<string, string> = {
 
 export const validateEmail = (email: string): string | undefined => {
     if (!email) return 'Vui lòng nhập email.';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) return 'Email không đúng định dạng.';
     return undefined;
 };
