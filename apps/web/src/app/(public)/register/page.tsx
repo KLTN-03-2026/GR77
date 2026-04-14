@@ -207,7 +207,7 @@ export default function RegisterPage() {
 
     if (success) {
         return (
-            <div className="register-page relative min-h-screen flex items-center justify-center overflow-hidden">
+            <div className="register-page relative w-[100vw] max-w-full min-h-[100dvh] flex items-center justify-center overflow-x-hidden overflow-y-auto bg-[#00AEEF]">
                 <style jsx global>{`
                     .register-page * { font-family: 'Inter', sans-serif; }
                     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -242,9 +242,9 @@ export default function RegisterPage() {
                         transform: scale(1.08);
                     }
                 `}</style>
-                <div className="absolute inset-0 anim-gradient-bg" style={{ background: "linear-gradient(135deg, #0097d9 0%, #00AEEF 25%, #33c1f5 50%, #00AEEF 75%, #007bb5 100%)" }} />
+                <div className="fixed inset-0 anim-gradient-bg pointer-events-none" style={{ background: "linear-gradient(135deg, #0097d9 0%, #00AEEF 25%, #33c1f5 50%, #00AEEF 75%, #007bb5 100%)" }} />
 
-                <div className="relative z-10 w-full max-w-[520px] px-6 py-12 anim-up">
+                <div className="relative z-10 w-full max-w-[520px] px-6 py-12 anim-up my-auto">
                     <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl p-10 shadow-2xl text-center">
                         {verifySuccess ? (
                             <>
@@ -406,21 +406,21 @@ export default function RegisterPage() {
         }
       `}</style>
 
-            <div className="register-page relative min-h-screen flex items-center justify-center overflow-hidden">
+            <div className="register-page relative w-[100vw] max-w-full min-h-[100dvh] flex items-center justify-center overflow-x-hidden overflow-y-auto bg-[#00AEEF]">
                 <div
-                    className="absolute inset-0 anim-gradient-bg"
+                    className="fixed inset-0 anim-gradient-bg pointer-events-none"
                     style={{
                         background: "linear-gradient(135deg, #0097d9 0%, #00AEEF 25%, #33c1f5 50%, #00AEEF 75%, #007bb5 100%)",
                     }}
                 />
 
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="fixed inset-0 pointer-events-none overflow-hidden">
                     <div className="absolute top-[8%] left-[6%] w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white/10 anim-float" />
                     <div className="absolute bottom-[12%] left-[10%] w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-white/8 anim-float" style={{ animationDelay: "1s" }} />
                     <div className="absolute top-[60%] left-[50%] -translate-x-1/2 w-36 h-36 sm:w-52 sm:h-52 rounded-full border border-white/10 anim-pulse-ring" />
                 </div>
 
-                <div className="relative z-10 w-full max-w-[440px] px-5 sm:px-6 py-12 sm:py-16">
+                <div className="relative z-10 w-full max-w-[440px] px-5 sm:px-6 py-12 sm:py-16 my-auto">
                     <div className="flex justify-center mb-4 anim-up-0">
                         <div className="px-5 py-1.5 rounded-full text-sm font-semibold tracking-wide border border-white/25 bg-white/15 backdrop-blur-sm text-white">
                             Kindlink Register
@@ -535,12 +535,12 @@ export default function RegisterPage() {
 
                         <div className="anim-up-4 pt-2 pb-2">
                             <div className="flex items-center gap-3">
-                                <input 
-                                    type="checkbox" 
-                                    id="terms-check" 
-                                    checked={agreed} 
-                                    onChange={(e) => setAgreed(e.target.checked)} 
-                                    className="w-5 h-5 accent-[#00AEEF] rounded border-none cursor-pointer" 
+                                <input
+                                    type="checkbox"
+                                    id="terms-check"
+                                    checked={agreed}
+                                    onChange={(e) => setAgreed(e.target.checked)}
+                                    className="w-5 h-5 accent-[#00AEEF] rounded border-none cursor-pointer"
                                 />
                                 <label htmlFor="terms-check" className="text-sm cursor-pointer opacity-95 text-white">
                                     I agree to the <Link href="/policies" target="_blank" className="underline hover:text-white/80 transition-colors">Terms of Service and Privacy Policy</Link>.

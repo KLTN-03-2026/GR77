@@ -171,17 +171,17 @@ export default function LoginPage() {
         }
       `}</style>
 
-            <div className="login-page relative min-h-screen flex items-center justify-center overflow-hidden">
+            <div className="login-page relative w-[100vw] max-w-full min-h-[100dvh] flex items-center justify-center overflow-x-hidden overflow-y-auto bg-[#00AEEF]">
                 {/* ===== FULL-WIDTH BLUE GRADIENT BACKGROUND ===== */}
                 <div
-                    className="absolute inset-0 anim-gradient-bg"
+                    className="fixed inset-0 anim-gradient-bg pointer-events-none"
                     style={{
                         background: "linear-gradient(135deg, #0097d9 0%, #00AEEF 25%, #33c1f5 50%, #00AEEF 75%, #007bb5 100%)",
                     }}
                 />
 
                 {/* ===== FLOATING CIRCLES & DECORATIONS ===== */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="fixed inset-0 pointer-events-none overflow-hidden">
                     {/* Large circles */}
                     <div className="absolute top-[8%] left-[6%] w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white/10 anim-float" />
                     <div className="absolute top-[20%] right-[8%] w-16 h-16 sm:w-22 sm:h-22 rounded-full bg-white/8 anim-float-d" />
@@ -199,7 +199,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* ===== FORM CONTENT ===== */}
-                <div className="relative z-10 w-full max-w-[440px] px-5 sm:px-6 py-12 sm:py-16">
+                <div className="relative z-10 w-full max-w-[440px] px-5 sm:px-6 py-12 sm:py-16 my-auto">
                     {/* Badge */}
                     <div className="flex justify-center mb-4 anim-up-0">
                         <div className="px-5 py-1.5 rounded-full text-sm font-semibold tracking-wide border border-white/25 bg-white/15 backdrop-blur-sm text-white">
