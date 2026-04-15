@@ -251,7 +251,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Header: User Info - Compact */}
                     <div className="px-5 py-4 flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">

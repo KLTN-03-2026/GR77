@@ -57,7 +57,7 @@ export default function RegisterForm({
 
             {/* ── Mobile Google Login ── */}
             <div className="lg:hidden absolute bottom-[5vh] left-1/2 -translate-x-1/2 w-full max-w-[340px] px-2 z-20">
-                <div className="[&_.btn-google]:!bg-white [&_.btn-google]:!border [&_.btn-google]:!border-gray-300 [&_.btn-google]:!rounded-full transform scale-[0.95] origin-[50%_0%]">
+                <div className="[&_.btn-google]:!bg-white [&_.btn-google]:!border [&_.btn-google]:!border-gray-300 [&_.btn-google]:!rounded-full [&_.btn-google]:!transition-all [&_.btn-google]:!duration-300 [&_.btn-google]:hover:-translate-y-[2px] [&_.btn-google]:hover:!shadow-[0_6px_20px_rgba(0,0,0,0.1)] [&_.btn-google]:hover:!border-gray-400 [&_.btn-google]:active:translate-y-0 [&_.btn-google]:active:!scale-[0.97] transform scale-[0.95] origin-[50%_0%]">
                     <GoogleLoginButton />
                 </div>
             </div>
@@ -216,7 +216,7 @@ export default function RegisterForm({
                                 <button
                                     type="submit"
                                     disabled={isLoading || !agreed}
-                                    className="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-[#D6EFF6] text-[#1a1a2e] font-extrabold text-[15px] lg:text-[14px] px-12 lg:px-16 py-[12px] lg:py-[9px] rounded-[30px] border border-[#BEDDE8] transition-all tracking-[2px] lg:tracking-[2px] uppercase hover:not:disabled:bg-[#c4e5ef] hover:not:disabled:-translate-y-px hover:not:disabled:shadow-[0_4px_16px_rgba(0,0,0,0.08)] active:not:disabled:translate-y-0 active:not:disabled:scale-[0.98] disabled:opacity-55 disabled:cursor-not-allowed"
+                                    className="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-[#99EBFF] text-[#1a1a2e] font-extrabold text-[15px] lg:text-[14px] px-12 lg:px-16 py-[12px] lg:py-[9px] rounded-[30px] border border-[#BEDDE8] transition-all duration-300 ease-out tracking-[2px] lg:tracking-[2px] uppercase hover:not-disabled:bg-gradient-to-r hover:not-disabled:from-[#A8E0F0] hover:not-disabled:to-[#7DD3E8] hover:not-disabled:border-[#7DD3E8] hover:not-disabled:-translate-y-[3px] hover:not-disabled:shadow-[0_8px_25px_rgba(72,201,233,0.35)] hover:not-disabled:scale-[1] active:not-disabled:translate-y-0 active:not-disabled:scale-[0.97] active:not-disabled:shadow-[0_2px_8px_rgba(72,201,233,0.25)] disabled:opacity-55 disabled:cursor-not-allowed"
                                 >
                                     {isLoading ? (
                                         <>
@@ -245,7 +245,7 @@ export default function RegisterForm({
                         <div className="flex items-center gap-4 my-2 lg:my-4 before:content-[''] before:flex-1 before:h-px before:bg-[#48C9E9]/30 lg:before:bg-white/35 after:content-[''] after:flex-1 after:h-px after:bg-[#48C9E9]/30 lg:after:bg-white/35">
                             <span className="text-[12px] lg:text-[13px] text-gray-500 lg:text-white/70 font-medium">or</span>
                         </div>
-                        <div className="[&_.btn-google]:!bg-white [&_.btn-google]:!border [&_.btn-google]:!border-gray-300 [&_.btn-google]:!rounded-full transform scale-[0.85] lg:scale-[0.95] origin-top mb-4 lg:mb-0">
+                        <div className="[&_.btn-google]:!bg-white [&_.btn-google]:!border [&_.btn-google]:!border-gray-300 [&_.btn-google]:!rounded-full [&_.btn-google]:!transition-all [&_.btn-google]:!duration-300 [&_.btn-google]:hover:-translate-y-[3px] [&_.btn-google]:hover:!shadow-[0_8px_25px_rgba(0,0,0,0.12)] [&_.btn-google]:hover:!border-gray-400 [&_.btn-google]:active:translate-y-0 [&_.btn-google]:active:!scale-[0.97] transform scale-[0.85] lg:scale-[0.95] origin-top mb-4 lg:mb-0">
                             <GoogleLoginButton />
                         </div>
                     </div>

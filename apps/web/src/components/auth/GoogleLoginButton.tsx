@@ -111,31 +111,32 @@ export default function GoogleLoginButton() {
                         onClick={() => setShowModal(false)}
                     />
 
-                    <div className="relative z-[100000] bg-white w-full max-w-[420px] rounded-[40px] p-8 sm:p-10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] animate-in zoom-in-95 fade-in duration-300 ease-out">
+                    <div className="relative z-[100000] bg-white w-full max-w-[380px] rounded-2xl p-6 sm:p-7 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] animate-in zoom-in-95 fade-in duration-300 ease-out">
                         <div className="text-center">
-                            <div className="mx-auto w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center mb-8">
-                                <svg className="w-8 h-8 text-[#00AEEF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <div className="mx-auto w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center mb-5">
+                                <svg className="w-7 h-7 text-[#00AEEF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m9 12 2 2 4-4" />
                                 </svg>
                             </div>
 
-                            <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4 tracking-tight">Terms of Service</h3>
+                            <h3 className="text-2xl font-black text-gray-900 mb-2.5 tracking-tight">Terms of Service</h3>
 
-                            <p className="text-gray-500 text-base leading-relaxed mb-10">
+                            <p className="text-gray-500 text-[15px] leading-relaxed mb-6">
                                 To provide the best experience and protect your data, please confirm that you agree to Kindlink's
                                 <a href="/policies" target="_blank" rel="noopener noreferrer" className="text-[#00AEEF] font-bold mx-1 hover:underline">Terms of Service and Privacy Policy</a>.
                             </p>
 
-                            <div className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-2.5">
                                 <button
                                     onClick={handleAgree}
-                                    className="w-full py-4 bg-[#00AEEF] text-white font-bold text-lg rounded-2xl hover:bg-[#0097d9] transition-all shadow-xl shadow-blue-100 hover:shadow-blue-200 active:scale-[0.98]"
+                                    className="w-full py-2.5 text-cyan-500 font-bold text-[17px] rounded-full hover:bg-[#8AE8FF]/20 transition-all hover:not-disabled:scale-[1.02] border-2 border-cyan-500 hover:shadow-cyan-100 shadow-sm active:scale-[0.98]"
                                 >
                                     I Agree
                                 </button>
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="w-full py-4 text-gray-400 font-bold text-base hover:text-gray-600 transition-colors"
+                                    className="w-full py-2.5 text-gray-400 font-bold text-[15px] hover:text-gray-600 transition-colors"
                                 >
                                     Not now
                                 </button>
