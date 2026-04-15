@@ -241,7 +241,7 @@ function AdminLoginForm() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="admin@kindlink.com"
+                                placeholder=""
                                 required
                                 autoComplete="email"
                                 className="field-input w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 outline-none text-[15px] placeholder-slate-400 shadow-sm"
