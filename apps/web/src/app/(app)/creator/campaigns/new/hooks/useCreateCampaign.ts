@@ -14,12 +14,32 @@ export function useCreateCampaign() {
     const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
     const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
     const galleryInputRef = useRef<HTMLInputElement>(null);
+    const [isKycVerified, setIsKycVerified] = useState(false);
+    const [isKycCheckLoading, setIsKycCheckLoading] = useState(true);
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/categories`)
             .then((res) => res.json())
             .then((data) => setCategories(data))
             .catch((err) => console.error('Failed to load categories:', err));
+
+        const token = localStorage.getItem('accessToken');
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/me`, {
+            headers: {
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                setIsKycVerified(data.isKycVerified || false);
+            })
+            .catch((err) => {
+                console.error('Failed to load user data:', err);
+                setIsKycVerified(false);
+            })
+            .finally(() => {
+                setIsKycCheckLoading(false);
+            });
     }, []);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,7 +266,10 @@ export function useCreateCampaign() {
         galleryInputRef,
         removeGalleryImage,
         handleGalleryChange,
+
         handleSubmit,
-        router
+        router,
+        isKycVerified,
+        isKycCheckLoading
     };
 }
