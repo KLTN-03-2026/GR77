@@ -1,5 +1,5 @@
 import React from 'react';
-import { XMarkIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ExclamationCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface ChangeEmailModalProps {
   showEmailModal: boolean;
@@ -82,10 +82,10 @@ export function ChangeEmailModal({
               <button
                 onClick={handleRequestEmailChange}
                 disabled={emailLoading || !newEmail || !emailPassword}
-                className="w-full py-3 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-full font-bold text-cyan-600 border border-cyan-600 bg-cyan-50 hover:bg-cyan-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-95"
               >
                 {emailLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-cyan-600/30 border-t-cyan-600 rounded-full animate-spin" />
                 ) : (
                   'Send Verification Code'
                 )}
@@ -111,19 +111,19 @@ export function ChangeEmailModal({
               <button
                 onClick={handleVerifyEmailChange}
                 disabled={emailLoading || otpCode.length !== 6}
-                className="w-full py-3 rounded-2xl font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-full font-bold text-cyan-600 border border-cyan-600 bg-cyan-50 hover:bg-cyan-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-95"
               >
                 {emailLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-cyan-600/30 border-t-cyan-600 rounded-full animate-spin" />
                 ) : (
                   'Confirm Email Change'
                 )}
               </button>
               <button
                 onClick={() => setEmailStep('form')}
-                className="w-full text-center text-sm text-gray-400 hover:text-gray-600 font-medium"
+                className="w-full py-3 rounded-full font-bold text-[#BC4639] border border-[#BC4639] bg-white hover:bg-[#BC4639]/5 transition-all text-sm flex items-center justify-center gap-2 active:scale-95 group"
               >
-                ← Back
+                <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" /> Back
               </button>
             </>
           )}

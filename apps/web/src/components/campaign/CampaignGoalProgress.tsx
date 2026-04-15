@@ -31,7 +31,7 @@ export function CampaignGoalProgress({
     return (
         <section className="w-full h-full flex flex-col">
             <div className="flex flex-col items-center flex-1 w-full">
-                
+
                 {/* 1. Pie Chart Area - Centered in top half */}
                 <div className="flex-1 flex flex-col justify-center w-full items-center py-4">
                     <div className="relative w-40 h-40 sm:w-56 sm:h-56 lg:w-72 lg:h-72 shrink-0">
@@ -67,32 +67,32 @@ export function CampaignGoalProgress({
                             <button
                                 onClick={handleJoin}
                                 disabled={isJoined}
-                                className={`flex-1 py-3.5 sm:py-4.5 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg shadow-pink-100/50 ${
-                                    isJoined 
-                                    ? "bg-gray-400 border-gray-400 text-white cursor-default" 
+                                className={`flex-1 py-2.5 sm:py-3 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg shadow-pink-100/50 ${isJoined
+                                    ? "bg-gray-400 border-gray-400 text-white cursor-default"
                                     : "bg-white border-pink-500 text-pink-500 hover:bg-pink-50"
-                                }`}
+                                    }`}
                             >
                                 {isJoined ? "Joined" : "Join Free"}
                             </button>
                             <button
                                 onClick={() => setDonateOpen(true)}
-                                className="flex-1 py-3.5 sm:py-4.5 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full shadow-lg shadow-yellow-100/50 transition-all active:scale-95"
+                                className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full shadow-lg shadow-yellow-100/50 transition-all active:scale-95"
                             >
                                 Donate
                             </button>
                         </div>
                     </div>
                 ) : (
-                    <div className="w-full shrink-0 pt-6">
+                    <div className="w-full shrink-0 pt-6 flex justify-center">
                         <a
                             href={`/creator/campaigns/${campaignId}`}
-                            className="block w-full py-4.5 bg-blue-500 hover:bg-blue-600 text-white font-black text-lg text-center rounded-full shadow-xl shadow-blue-100 transition-all active:scale-95"
+                            className="w-full sm:w-auto px-8 py-3 rounded-full font-bold text-cyan-600 border border-cyan-600 bg-cyan-50 hover:bg-cyan-100 text-sm transition-all shadow-sm flex items-center justify-center gap-2 active:scale-95"
                         >
-                            Quản lý chiến dịch
+                            Manage Campaign
                         </a>
                     </div>
                 )}
+
             </div>
         </section>
     );

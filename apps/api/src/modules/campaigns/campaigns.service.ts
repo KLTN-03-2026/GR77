@@ -85,7 +85,7 @@ export class CampaignsService {
       title: 'Campaign Approved!',
       message: `Your campaign "${campaign.title}" has been approved and is now live.`,
       type: 'CAMPAIGN_APPROVED',
-      link: `/campaigns/${campaign.id}`
+      link: `/creator/campaigns/${campaign.id}`
     });
 
     await this.mailService.sendCampaignStatusUpdateToUser(
@@ -114,7 +114,7 @@ export class CampaignsService {
       title: 'Campaign Revision Required',
       message: `Your campaign "${campaign.title}" was not approved. Reason: ${note}`,
       type: 'CAMPAIGN_REJECTED',
-      link: `/my-campaigns`
+      link: `/creator/campaigns/${campaign.id}`
     });
 
     await this.mailService.sendCampaignStatusUpdateToUser(
@@ -367,9 +367,19 @@ export class CampaignsService {
       throw new BadRequestException('Minimum donation amount cannot be greater than the funding goal amount');
     }
 
+    const { galleryUrls, ...restDto } = dto;
+
     return (this.prisma as any).campaign.update({
       where: { id },
-      data: dto,
+      data: {
+        ...restDto,
+        ...(galleryUrls ? {
+          images: {
+            deleteMany: {},
+            create: galleryUrls.map((url, index) => ({ url, order: index }))
+          }
+        } : {})
+      },
     });
   }
 }

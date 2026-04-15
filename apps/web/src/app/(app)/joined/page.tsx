@@ -95,53 +95,59 @@ export default function KindlinkJoinedPage() {
         <>
           <div className="space-y-[2vw]">
             {campaigns.map((cp) => (
-              <div key={cp.participantId} className={styles.hCard}>
-                <div className={`${styles.hInner} flex w-full h-full overflow-hidden bg-white`}>
-                  <div className={`${styles.hImgWrap} h-full shrink-0 flex items-center`}>
-                    <div className={`${styles.hImgFrame} relative w-full overflow-hidden`}>
-                      <img src={cp.coverImageUrl || fallbackImage} alt={cp.title} className="w-full h-full object-cover" />
+              <div key={cp.participantId} className="group [container-type:inline-size] [container-name:hcard] md:aspect-[3.5/1] aspect-auto">
+                <div className="flex w-full h-full overflow-hidden bg-white rounded-[5cqi] md:rounded-[3.5cqi] border-[1.5px] border-[#e3e9f1] transition-all hover:border-cyan-400 md:flex-row flex-col">
+                  {/* Image Section */}
+                  <div className="h-full shrink-0 flex items-center md:w-[28cqi] md:min-w-[28cqi] md:p-[1.5cqi] w-full p-0">
+                    <div className="relative w-full overflow-hidden md:aspect-square aspect-[3/2] md:rounded-[2cqi] rounded-t-[5cqi] rounded-b-0">
+                      <img
+                        src={cp.coverImageUrl || fallbackImage}
+                        alt={cp.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
                       {cp.category && (
-                        <span className={`${styles.hBadge} ${styles.hBadgeTl} absolute font-bold bg-white/90 text-black shadow-sm capitalize`}>
+                        <span className="absolute md:top-[1cqi] md:left-[1cqi] top-[3cqi] left-[3cqi] md:px-[1.4cqi] md:py-[0.4cqi] px-[3cqi] py-[1.5cqi] md:text-[1.3cqi] text-[3.5cqi] font-bold bg-white/90 text-black shadow-sm capitalize rounded-full">
                           {cp.category}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className={`${styles.hContent} flex-1 flex flex-col justify-between min-w-0 overflow-hidden`}>
+                  {/* Content Section */}
+                  <div className="flex-1 flex flex-col justify-between min-w-0 overflow-hidden md:p-[1.8cqi_3cqi_1cqi] p-[4.5cqi]">
                     <div>
                       <Link href={`/joined/${cp.id}`}>
-                        <h2 className={`${styles.hTitle} font-extrabold text-gray-900 overflow-hidden text-ellipsis cursor-pointer`} style={{ display: '-webkit-box' }}>
+                        <h2 className="font-extrabold text-gray-900 overflow-hidden text-ellipsis md:text-[2.4cqi] text-[6.8cqi] md:mb-[0.5cqi] mb-[2.5cqi] leading-[1.3] cursor-pointer" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                           {cp.title}
                         </h2>
                       </Link>
-                      <p className={`${styles.hGoalLabel} font-bold text-slate-700 italic`}>
-                        Funding Goal <span className="text-pink-500 not-italic font-black">{formatCurrency(cp.fundingGoalAmount)} VND</span>
+                      <p className="font-bold text-slate-700 md:text-[1.8cqi] text-[6cqi] md:mt-[0.5cqi] mt-[2.5cqi] leading-[1.5]">
+                        Goal: <span className="text-[#14ABD1] font-black">{formatCurrency(cp.fundingGoalAmount)} VND</span>
                       </p>
 
-                      <div className={`${styles.hDateInputWrap} relative`}>
+                      <div className="relative w-full md:max-w-[36cqi] md:mt-[1cqi] mt-[3.5cqi]">
                         <input
                           type="text"
                           readOnly
                           value={`Start at: ${formatDate(cp.startAt)}`}
-                          className={`${styles.hDateInput} w-full border border-gray-200 bg-gray-50/30 text-gray-500 font-medium outline-none cursor-pointer`}
+                          className="w-full border border-gray-200 bg-gray-50/30 text-gray-400 font-medium outline-none cursor-pointer md:rounded-[1.6cqi] md:px-[1.4cqi] md:py-[0.8cqi] md:pr-[3.5cqi] px-[4cqi] py-[3cqi] pr-[9cqi] md:text-[1.4cqi] text-[4.5cqi] rounded-[3cqi]"
                         />
-                        <div className={`${styles.hDateInputIcon} absolute top-1/2 -translate-y-1/2 pointer-events-none`}>
-                          <Calendar className="text-gray-400" />
+                        <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none md:right-[1.2cqi] right-[3.5cqi]">
+                          <Calendar className="text-gray-400 md:w-[1.6cqi] md:h-[1.6cqi] w-[5cqi] h-[5cqi]" />
                         </div>
                       </div>
                     </div>
 
-                    <div className={`${styles.hFooter} flex flex-wrap items-center justify-between border-t border-gray-100`}>
-                      <div className={`${styles.hFooterInfo} flex items-center italic text-gray-400`}>
-                        <Clock className="shrink-0" />
+                    <div className="flex flex-wrap items-center justify-between border-t border-gray-100 md:p-0 md:pt-[1cqi] md:mt-[0.8cqi] p-[3.5cqi] mt-[3.5cqi] gap-[3cqi] md:gap-[1cqi] md:flex-row flex-col md:items-center items-start">
+                      <div className="flex items-center italic text-gray-400 md:text-[1.4cqi] text-[4.5cqi] gap-[1.5cqi] md:gap-[0.5cqi]">
+                        <Clock className="shrink-0 md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
                         <span>
-                          Joined at: <span className={`${styles.infoValue} not-italic text-gray-900`}>{formatTime(cp.joinedAt)}</span>
+                          Joined at: <span className="not-italic text-gray-900 md:ml-[0.2cqi] ml-[0.5cqi]">{formatTime(cp.joinedAt)}</span>
                         </span>
                       </div>
-                      <Link href={`/joined/${cp.id}`} className={`${styles.hFooterLink} inline-flex items-center font-bold text-blue-500 no-underline hover:underline hover:text-blue-600 transition-all`}>
+                      <Link href={`/joined/${cp.id}`} className="inline-flex items-center font-bold text-blue-500 no-underline hover:underline hover:text-blue-600 transition-all md:text-[1.4cqi] text-[4cqi] gap-[0.2cqi]">
                         View Detail
-                        <ChevronRight />
+                        <ChevronRight className="md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
                       </Link>
                     </div>
                   </div>

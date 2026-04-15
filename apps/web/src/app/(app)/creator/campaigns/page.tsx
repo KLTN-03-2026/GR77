@@ -59,6 +59,7 @@ export default function CreatorCampaignsPage() {
     const [campaigns, setCampaigns] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const fetchCampaigns = async () => {
@@ -99,6 +100,10 @@ export default function CreatorCampaignsPage() {
         fetchCampaigns();
     }, [router]);
 
+    const filteredCampaigns = campaigns.filter(campaign =>
+        campaign.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
 
     return (
         <div className="w-full pb-10">
@@ -118,15 +123,17 @@ export default function CreatorCampaignsPage() {
                         <div className="relative w-full max-w-lg">
                             <input
                                 type="text"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-full py-2.5 pl-6 pr-12 text-sm focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder-gray-400 font-medium"
+                                className="w-full h-[25px] sm:h-[35px] bg-gray-50 border border-gray-200 rounded-full pl-6 pr-12 text-[11px] sm:text-sm text-gray-900 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder-gray-300"
                                 placeholder="Search campaigns..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
                             <MagnifyingGlassIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 font-bold" strokeWidth={2.5} />
                         </div>
                     </div>
 
-                    <Link href="/creator/campaigns/new" className="inline-flex justify-center items-center bg-gradient-to-r from-[#47c9e5] to-[#2b9ec5] hover:opacity-90 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-md transition-opacity w-full sm:w-auto gap-2">
-                        + Add Campaign
+                    <Link href="/creator/campaigns/new" className="inline-flex justify-center items-center bg-white hover:bg-[#2b9ec5]/10 border-2 border-[#2b9ec5] text-[#2b9ec5] px-8 py-2.5 rounded-full text-sm font-black transition-colors w-full sm:w-auto gap-2">
+                        + Add campaign
                     </Link>
                 </div>
 
@@ -139,30 +146,30 @@ export default function CreatorCampaignsPage() {
                     <div className="flex justify-center items-center py-24 text-red-500 font-medium text-lg border-2 border-dashed border-red-200 rounded-2xl bg-red-50">
                         {error}
                     </div>
-                ) : campaigns.length > 0 ? (
+                ) : filteredCampaigns.length > 0 ? (
                     <>
                         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white text-gray-800">
-                            <table className="w-full text-center text-[13px] font-medium border-collapse">
+                            <table className="w-full min-w-[1000px] table-fixed text-center text-[13px] font-medium border-collapse">
                                 <thead className="bg-[#7fa8e8] text-white">
                                     <tr>
                                         <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[5%]">ID</th>
-                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[20%]">Name</th>
-                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Created at</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[28%]">Name</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[12%]">Created at</th>
                                         <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Goal (VND)</th>
-                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Address</th>
-                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[15%]">Approval Status</th>
-                                        <th className="py-3.5 px-4 font-bold w-[15%]">Status</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[20%]">Address</th>
+                                        <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[10%]">Approval</th>
+                                        <th className="py-3.5 px-4 font-bold w-[10%]">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {campaigns.map((camp, index) => (
+                                    {filteredCampaigns.map((camp, index) => (
                                         <tr
                                             key={camp.id}
-                                            onClick={() => router.push(`/creator/campaigns/${camp.id}`)}
+                                            onClick={() => router.push(`/creator/campaigns/${camp.id}?idx=${index + 1}`)}
                                             className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors cursor-pointer"
                                         >
                                             <td className="border-r border-white font-bold">#{index + 1}</td>
-                                            <td className="border-r border-white px-4 text-left">
+                                            <td className="border-r border-white px-4 text-left overflow-hidden">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
                                                         {camp.coverImageUrl ? (
@@ -173,15 +180,15 @@ export default function CreatorCampaignsPage() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="flex flex-col truncate">
-                                                        <div className="font-bold truncate">{camp.title}</div>
-                                                        <div className="text-[10px] text-gray-400">{camp.category}</div>
+                                                    <div className="flex flex-col min-w-0 flex-1">
+                                                        <div className="font-bold truncate text-gray-900">{camp.title}</div>
+                                                        <div className="text-[10px] text-gray-400 truncate">{camp.category}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
-                                            <td className="border-r border-white font-bold">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
-                                            <td className="border-r border-white px-4 truncate text-left">{camp.locationText}</td>
+                                            <td className="border-r border-white font-bold text-gray-800">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
+                                            <td className="border-r border-white px-4 text-left truncate text-gray-700">{camp.locationText}</td>
                                             <td className="border-r border-white px-4">
                                                 <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${camp.status === 'ACTIVE' ? 'bg-green-100 text-green-600' :
                                                     camp.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
@@ -311,7 +318,7 @@ export default function CreatorCampaignsPage() {
 
                 {/* Total Raised Section */}
                 <div className="flex-1 flex flex-col justify-center items-center lg:pl-10 pt-4 lg:pt-0">
-                    <div className="relative w-40 h-40 sm:w-[180px] sm:h-[180px]">
+                    <div className="relative w-[180px] h-[180px]">
                         {/* Inner custom shadows layer for the donut could reside under the SVG */}
                         <div className="absolute inset-0 rounded-full bg-blue-50/20 blur-xl"></div>
 
@@ -319,8 +326,8 @@ export default function CreatorCampaignsPage() {
                             <PieChart>
                                 <Pie
                                     data={donutData}
-                                    innerRadius={window?.innerWidth < 640 ? 55 : 68}
-                                    outerRadius={window?.innerWidth < 640 ? 75 : 90}
+                                    innerRadius={68}
+                                    outerRadius={90}
                                     startAngle={90}
                                     endAngle={-270}
                                     dataKey="value"

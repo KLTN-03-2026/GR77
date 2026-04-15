@@ -1,169 +1,32 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import Link from 'next/link';
-import { CalendarIcon, MagnifyingGlassIcon, Bars3CenterLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import { HeartIcon } from '@heroicons/react/24/solid';
-import FavoriteButton from '@/components/campaign/FavoriteButton';
-import styles from '@/components/campaign/CampaignCard.module.css';
-
-// Pagination helper
-function getPageNumbers(current: number, total: number) {
-    const delta = 1;
-    const range: (number | string)[] = [];
-    const rangeWithDots: (number | string)[] = [];
-    let last: number | undefined;
-    for (let i = 1; i <= total; i++) {
-        if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
-            range.push(i);
-        }
-    }
-    for (const i of range) {
-        if (last !== undefined && typeof i === 'number' && i - last > 1) {
-            rangeWithDots.push('...');
-        }
-        rangeWithDots.push(i);
-        if (typeof i === 'number') last = i;
-    }
-    return rangeWithDots;
-}
-
-const ITEMS_PER_PAGE = 4;
-
-interface CategoryOption {
-    id: string;
-    name: string;
-}
+import { Bars3CenterLeftIcon } from '@heroicons/react/24/outline';
+import { useCampaigns } from './useCampaigns';
+import CampaignFilterBar from './CampaignFilterBar';
+import CampaignCard from './CampaignCard';
+import Pagination from './Pagination';
 
 export default function ListCampaignsPage() {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [search, setSearch] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('All');
-    const [startDateFilter, setStartDateFilter] = useState('');
-    const [endDateFilter, setEndDateFilter] = useState('');
-    const [campaigns, setCampaigns] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [totalFromApi, setTotalFromApi] = useState(0);
-    const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
-    const [categories, setCategories] = useState<CategoryOption[]>([]);
-
-    // Fetch dynamic categories
-    useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/categories`)
-            .then(res => res.json())
-            .then(data => setCategories(data))
-            .catch(err => console.error('Failed to load categories:', err));
-    }, []);
-
-    // Fetch campaigns
-    useEffect(() => {
-        const fetchCampaigns = async () => {
-            setIsLoading(true);
-            setError('');
-            try {
-                const params = new URLSearchParams();
-                params.set('page', '1');
-                params.set('limit', '100'); // Fetch all for client-side filtering
-
-                if (selectedCategory !== 'All') {
-                    params.set('category', selectedCategory);
-                }
-                if (search) {
-                    params.set('q', search);
-                }
-
-                const token = localStorage.getItem('accessToken');
-                const headers: HeadersInit = {};
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns?${params.toString()}`, {
-                    headers,
-                });
-
-                if (!res.ok) {
-                    throw new Error('Failed to fetch campaigns');
-                }
-
-                const data = await res.json();
-                setCampaigns(data.items || []);
-                setTotalFromApi(data.meta?.total || 0);
-
-                // Populate favoriteIds from the isFavorited field in campaigns
-                if (token) {
-                    const ids = new Set<string>(
-                        (data.items || [])
-                            .filter((c: any) => c.isFavorited)
-                            .map((c: any) => c.id)
-                    );
-                    setFavoriteIds(ids);
-                }
-            } catch (err: any) {
-                console.error('Fetch error:', err);
-                setError(err.message || 'Something went wrong');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchCampaigns();
-    }, [search, selectedCategory]);
-
-    const formatDate = (dateString?: string) => {
-        if (!dateString) return 'No date';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    };
-
-    const formatCurrency = (amount: number | string) => {
-        return Number(amount).toLocaleString('vi-VN');
-    };
-
-    // Client-side date filtering
-    const filtered = useMemo(() => {
-        return campaigns.filter((c) => {
-            const matchDate = (() => {
-                if (!startDateFilter && !endDateFilter) return true;
-                const campaignDate = c.startAt ? new Date(c.startAt).getTime() : 0;
-                const start = startDateFilter ? new Date(startDateFilter).getTime() : 0;
-                const end = endDateFilter ? new Date(endDateFilter).getTime() + 86400000 : Infinity;
-                return campaignDate >= start && campaignDate <= end;
-            })();
-
-            return matchDate;
-        });
-    }, [campaigns, startDateFilter, endDateFilter]);
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const paginated = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const handleSearch = (val: string) => {
-        setSearch(val);
-        setCurrentPage(1);
-    };
-
-    const handleFavoriteToggle = useCallback((campaignId: string, nowFavorited: boolean) => {
-        setFavoriteIds(prev => {
-            const next = new Set(prev);
-            if (nowFavorited) next.add(campaignId);
-            else next.delete(campaignId);
-            return next;
-        });
-        setCampaigns(prev => prev.map(c => c.id === campaignId ? { ...c, favoritesCount: (c.favoritesCount || 0) + (nowFavorited ? 1 : -1) } : c));
-    }, []);
-
-    const getProgress = (raised: number, goal: number) => {
-        if (!goal || goal === 0) return 0;
-        return Math.min((raised / goal) * 100, 100);
-    };
+    const {
+        search,
+        setSearch,
+        startDateFilter,
+        setStartDateFilter,
+        endDateFilter,
+        setEndDateFilter,
+        selectedCategory,
+        setSelectedCategory,
+        categories,
+        isLoading,
+        error,
+        filtered,
+        paginated,
+        currentPage,
+        totalPages,
+        handlePageChange,
+        favoriteIds,
+        handleFavoriteToggle,
+    } = useCampaigns();
 
     return (
         <div className="w-full">
@@ -177,47 +40,17 @@ export default function ListCampaignsPage() {
             </div>
 
             {/* Search + filter bar */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-1.5 sm:mb-6">
-                <div className="relative flex-1">
-                    <MagnifyingGlassIcon className="absolute left-3 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                    <input
-                        type="text"
-                        placeholder="Search campaigns..."
-                        value={search}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2.5 border border-gray-200 rounded-xl sm:rounded-2xl text-[11px] sm:text-sm font-medium text-gray-900 placeholder-gray-500 bg-gray-50 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all"
-                    />
-                </div>
-
-                <div className="flex flex-row gap-1.5 sm:gap-2 w-full sm:w-auto flex-nowrap items-center">
-                    <div className="flex-1 sm:flex-none flex items-center justify-between bg-white border border-gray-200 rounded-full px-1.5 sm:px-2 py-1 sm:py-1 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-200 transition-all min-w-0">
-                        <input
-                            type="date"
-                            value={startDateFilter}
-                            onChange={(e) => { setStartDateFilter(e.target.value); setCurrentPage(1); }}
-                            className="flex-1 sm:flex-none w-0 sm:w-auto px-0.5 sm:px-2 py-0.5 text-[10px] sm:text-sm font-medium text-gray-600 outline-none bg-transparent cursor-pointer text-center min-w-0"
-                        />
-                        <span className="text-gray-300 text-[9px] sm:text-xs shrink-0 mx-0.5">-</span>
-                        <input
-                            type="date"
-                            value={endDateFilter}
-                            onChange={(e) => { setEndDateFilter(e.target.value); setCurrentPage(1); }}
-                            className="flex-1 sm:flex-none w-0 sm:w-auto px-0.5 sm:px-2 py-0.5 text-[10px] sm:text-sm font-medium text-gray-600 outline-none bg-transparent cursor-pointer text-center min-w-0"
-                        />
-                    </div>
-                    <select
-                        value={selectedCategory}
-                        onChange={(e) => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
-                        className="shrink-0 w-[100px] sm:w-auto px-2 sm:px-6 py-1.5 sm:py-2.5 rounded-full text-[10px] sm:text-sm font-bold bg-white text-gray-800 border-2 border-gray-100 hover:border-gray-200 hover:text-black transition-all outline-none cursor-pointer appearance-none shadow-sm text-center"
-                        style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%23000000\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right .3rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em 1em', paddingRight: '1.2rem' }}
-                    >
-                        <option value="All">All Categories</option>
-                        {categories.map(cat => (
-                            <option key={cat.id} value={cat.name}>{cat.name}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
+            <CampaignFilterBar
+                search={search}
+                onSearchChange={setSearch}
+                startDate={startDateFilter}
+                onStartDateChange={setStartDateFilter}
+                endDate={endDateFilter}
+                onEndDateChange={setEndDateFilter}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                categories={categories}
+            />
 
             <p className="text-[10px] sm:text-sm text-gray-500 mb-2 sm:mb-4">
                 Showing {filtered.length} campaign{filtered.length !== 1 ? 's' : ''}
@@ -236,104 +69,21 @@ export default function ListCampaignsPage() {
             ) : paginated.length > 0 ? (
                 <>
                     <div className="space-y-[2vw] mb-[2vw]">
-                        {paginated.map((campaign) => {
-                            return (
-                                <Link
-                                    key={campaign.id}
-                                    href={`/home/${campaign.id}`}
-                                    className={`${styles.hCard} block`}
-                                >
-                                    <div className={`${styles.hInner} flex w-full h-full overflow-hidden bg-white`}>
-                                        <div className={`${styles.hImgWrap} h-full shrink-0 flex items-center`}>
-                                            <div className={`${styles.hImgFrame} relative w-full overflow-hidden`}>
-                                                {campaign.coverImageUrl ? (
-                                                    <img
-                                                        src={campaign.coverImageUrl}
-                                                        alt={campaign.title}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className={`${styles.hImgPlaceholder} w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-100 to-blue-100`}>
-                                                        <Bars3CenterLeftIcon />
-                                                    </div>
-                                                )}
-                                                <span className={`${styles.hBadge} ${styles.hBadgeTl} absolute font-bold bg-white/90 text-black shadow-sm`}>
-                                                    {campaign.categoryRel?.name || campaign.category}
-                                                </span>
-                                                <span className={`${styles.hBadge} ${styles.hBadgeTr} absolute font-bold uppercase shadow-sm ${campaign.status === 'ACTIVE' ? 'bg-green-100/90 text-green-600' : 'bg-yellow-100/90 text-yellow-600'}`}>
-                                                    {campaign.status}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className={`${styles.hContent} flex-1 flex flex-col justify-between min-w-0 overflow-hidden`}>
-                                            <div>
-                                                <h2 className={`${styles.hTitle} font-extrabold text-gray-900 overflow-hidden text-ellipsis`} style={{ display: '-webkit-box' }}>
-                                                    {campaign.title}
-                                                </h2>
-                                                {campaign.locationText && (
-                                                    <div className={`${styles.hLocation} flex items-center text-gray-400`}>
-                                                        <MapPinIcon className="shrink-0" />
-                                                        <span>{campaign.locationText}</span>
-                                                    </div>
-                                                )}
-                                                <p className={`${styles.hGoalLabel} font-bold text-slate-700`}>
-                                                    Goal: <span className="font-black text-black">{formatCurrency(campaign.fundingGoalAmount)} VND</span>
-                                                </p>
-                                                <p className={`${styles.hSubText} font-bold text-gray-400 uppercase`}>
-                                                    Min: {formatCurrency(campaign.minimumDonationAmount)} VND
-                                                </p>
-                                                <div className={`${styles.hMetaRow} flex flex-wrap items-center`}>
-                                                    <div className={`${styles.hMetaPill} inline-flex items-center text-gray-500 bg-gray-50 border border-gray-100`}>
-                                                        <CalendarIcon className="text-gray-400 shrink-0" />
-                                                        <span className="font-bold">{formatDate(campaign.startAt)}</span>
-                                                        <span className={`${styles.metaSep} text-gray-300`}>→</span>
-                                                        <span className="font-bold">{formatDate(campaign.endAt)}</span>
-                                                    </div>
-                                                </div>
-                                                <div className={`${styles.hFavRow} flex items-center text-gray-400`}>
-                                                    <HeartIcon className="text-pink-400 shrink-0" />
-                                                    <span className="font-bold">{campaign.favoritesCount || 0} favorites</span>
-                                                </div>
-                                            </div>
-
-                                            <div className={`${styles.hActions} flex items-center`}>
-                                                <span className={`${styles.hBtnPrimary} font-bold border-2 border-[#496D96] bg-transparent text-[#496D96] cursor-pointer text-center whitespace-nowrap hover:bg-[#B2CDEB]`}>
-                                                    View Details
-                                                </span>
-                                                <FavoriteButton
-                                                    campaignId={campaign.id}
-                                                    initialFavorited={favoriteIds.has(campaign.id)}
-                                                    onToggle={handleFavoriteToggle}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-                            );
-                        })}
+                        {paginated.map((campaign) => (
+                            <CampaignCard 
+                                key={campaign.id} 
+                                campaign={campaign} 
+                                isFavorited={favoriteIds.has(campaign.id)} 
+                                onFavoriteToggle={handleFavoriteToggle} 
+                            />
+                        ))}
                     </div>
 
-                    {totalPages > 1 && (
-                        <div className="flex justify-center items-center gap-2 mb-8 flex-wrap">
-                            {getPageNumbers(currentPage, totalPages).map((item, idx) =>
-                                typeof item === 'number' ? (
-                                    <button
-                                        key={idx}
-                                        onClick={() => handlePageChange(item)}
-                                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-bold transition-all ${currentPage === item
-                                            ? 'bg-cyan-400 text-white shadow-lg shadow-cyan-100 scale-110'
-                                            : 'border border-gray-100 text-gray-400 hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        {item}
-                                    </button>
-                                ) : (
-                                    <span key={idx} className="px-2 text-gray-400">{item}</span>
-                                )
-                            )}
-                        </div>
-                    )}
+                    <Pagination 
+                        currentPage={currentPage} 
+                        totalPages={totalPages} 
+                        onPageChange={handlePageChange} 
+                    />
                 </>
             ) : (
                 <div className="text-center py-20 bg-gray-50 rounded-[3rem] border border-gray-100 border-dashed">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 
@@ -15,6 +15,9 @@ interface CampaignHeaderProps {
 
 export function CampaignHeader({ title, status, images, isCreator, isLiked, onToggleLike }: CampaignHeaderProps) {
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
+    const touchStartX = useRef(0);
+    const touchEndX = useRef(0);
+    const isDragging = useRef(false);
 
     useEffect(() => {
         if (images.length <= 1) return;
@@ -25,13 +28,44 @@ export function CampaignHeader({ title, status, images, isCreator, isLiked, onTo
         return () => clearInterval(timer);
     }, [images.length]);
 
-    const goToPrev = () => setCurrentImgIndex((p) => (p - 1 + images.length) % images.length);
-    const goToNext = () => setCurrentImgIndex((p) => (p + 1) % images.length);
+    const goToPrev = useCallback(() => setCurrentImgIndex((p) => (p - 1 + images.length) % images.length), [images.length]);
+    const goToNext = useCallback(() => setCurrentImgIndex((p) => (p + 1) % images.length), [images.length]);
+
+    /* ── Touch / Swipe support for mobile ── */
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+        isDragging.current = true;
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging.current) return;
+        touchEndX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging.current) return;
+        isDragging.current = false;
+        const delta = touchStartX.current - touchEndX.current;
+        const SWIPE_THRESHOLD = 50;
+
+        if (Math.abs(delta) > SWIPE_THRESHOLD) {
+            if (delta > 0) {
+                goToNext();  // swipe left → next
+            } else {
+                goToPrev();  // swipe right → prev
+            }
+        }
+    };
 
     return (
         <section className="w-full h-full">
             {title && <h1 className="text-4xl font-extrabold text-gray-900 mb-6 tracking-tight">{title}</h1>}
-            <div className="relative overflow-hidden bg-black w-full h-full group rounded-2xl">
+            <div
+                className="relative overflow-hidden bg-black w-full h-full group rounded-2xl touch-pan-y"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
                 {/* Status badge - rounded with glassmorphism */}
                 <span className={`absolute top-4 left-4 text-white px-5 py-1.5 font-bold text-sm z-20 rounded-full backdrop-blur-md ${status === "ACTIVE" ? "bg-green-500/60" : "bg-yellow-500/60"}`}>
                     {status}
@@ -62,7 +96,8 @@ export function CampaignHeader({ title, status, images, isCreator, isLiked, onTo
                         key={index}
                         src={img}
                         alt={`Slide ${index}`}
-                        className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out ${index === currentImgIndex ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+                        className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out select-none ${index === currentImgIndex ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+                        draggable={false}
                     />
                 ))}
 

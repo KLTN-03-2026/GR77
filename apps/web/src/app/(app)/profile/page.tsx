@@ -98,7 +98,7 @@ export default function MyProfilePage() {
         setCoverPreview(data.profile.coverImageUrl || null);
       }
     } catch {
-      showToast('error', 'Không thể tải thông tin profile.');
+      showToast('error', 'Failed to load profile information.');
     } finally {
       setIsLoading(false);
     }
@@ -191,9 +191,9 @@ export default function MyProfilePage() {
       setAvatarFile(null);
       setCoverFile(null);
 
-      showToast('success', 'Profile đã được cập nhật thành công!');
+      showToast('success', 'Profile updated successfully!');
     } catch (err: any) {
-      showToast('error', err.message || 'Đã xảy ra lỗi khi lưu.');
+      showToast('error', err.message || 'An error occurred while saving.');
     } finally {
       setIsSaving(false);
     }
@@ -242,7 +242,7 @@ export default function MyProfilePage() {
       setProfile((prev) => prev ? { ...prev, email: data.user.email } : prev);
       setShowEmailModal(false);
       resetEmailModal();
-      showToast('success', 'Email đã được thay đổi thành công!');
+      showToast('success', 'Email changed successfully!');
     } catch (err: any) {
       setEmailError(err.message);
     } finally {
@@ -273,7 +273,7 @@ export default function MyProfilePage() {
   }
 
   return (
-    <div className="w-full space-y-8 pb-12">
+    <div className="w-full space-y-6 sm:space-y-8 pb-8 sm:pb-12">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold animate-[slideIn_0.3s_ease] ${toast.type === 'success'
@@ -293,15 +293,15 @@ export default function MyProfilePage() {
       )}
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <UserIcon className="w-7 h-7 text-cyan-500" />
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <UserIcon className="w-6 h-6 sm:w-7 sm:h-7 text-cyan-500" />
           My Profile
         </h1>
-        <p className="text-sm text-gray-400 mt-1 ml-9">Manage your personal information and preferences.</p>
+        <p className="text-xs sm:text-sm text-gray-400 mt-1 ml-8 sm:ml-9">Manage your personal information and preferences.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
         {/* ════ Left Column: Avatar & Basic Info ════ */}
         <ProfileHeader
           displayName={displayName}
