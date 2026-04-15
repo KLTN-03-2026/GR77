@@ -15,7 +15,7 @@ async function main() {
 
   // ================= ADMIN USER =================
   const adminEmail = 'admin@kindlink.com';
-  const adminPassword = process.env.ADMIN_SEED_PASSWORD || '123456';
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'Admin123';
   const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
 
   const admin = await prisma.user.upsert({
