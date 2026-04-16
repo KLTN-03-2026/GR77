@@ -84,7 +84,7 @@ export default function GoogleLoginButton() {
                 type="button"
                 onClick={handleButtonClick}
                 disabled={isProcessing}
-                className="btn-google w-full py-3.5 bg-white border border-gray-200 text-gray-700 font-semibold text-[15px] rounded-full flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50"
+                className="btn-google w-full h-[45px] lg:h-[42px] bg-white border border-gray-200 text-gray-700 font-semibold text-[15px] rounded-full flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
             >
                 {isProcessing ? (
                     <div className="h-5 w-5 border-2 border-[#00AEEF] border-t-transparent rounded-full animate-spin"></div>
