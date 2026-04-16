@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   AreaChart,
   Area,
@@ -28,36 +30,13 @@ export interface FundDistributionData {
 
 export interface ActivityLogItem {
   id: string; // Add ID for API matching instead of map index
-  name: string;
+  username: string;
   email: string;
+  avatarUrl?: string;
   activity: string;
-  time: string; // This could be createdAt from BE mapped to relative time
-  status: 'Pending' | 'Approved' | 'Rejected';
+  date: string; 
+  type: string;
 }
-
-// ── DATA ─────────────────────────────────────────────────────────────
-const donationData: DonationData[] = [
-  { month: 'JAN', value: 1200 },
-  { month: 'FEB', value: 1800 },
-  { month: 'MAR', value: 1600 },
-  { month: 'APR', value: 2400 },
-  { month: 'MAY', value: 5000 },
-];
-
-const fundDistribution: FundDistributionData[] = [
-  { name: 'Giáo dục', value: 35, color: '#F76C6C' },
-  { name: 'Y tế', value: 25, color: '#7BC712' },
-  { name: 'Môi trường', value: 20, color: '#5DA2D5' },
-  { name: 'Cộng đồng', value: 20, color: '#FAED26' },
-];
-
-const activityLog: ActivityLogItem[] = [
-  { id: '1', name: 'Hiếu', email: 'hieu@gmail.com', activity: 'Đã đăng ký', time: '2 phút trước', status: 'Pending' },
-  { id: '2', name: 'Tiên', email: 'tien@gmail.com', activity: 'Quyên góp chiến dịch', time: '10 phút trước', status: 'Approved' },
-  { id: '3', name: 'Trà My', email: 'my@gmail.com', activity: 'Quyên góp chiến dịch', time: '8 phút trước', status: 'Approved' },
-  { id: '4', name: 'An', email: 'an@gmail.com', activity: 'Đã đăng ký', time: '2 phút trước', status: 'Pending' },
-  { id: '5', name: 'Vương', email: 'vuong@gmail.com', activity: 'Đã đăng ký', time: '2 phút trước', status: 'Pending' },
-];
 
 // ── STAT CARD ─────────────────────────────────────────────────────────
 function StatCard({
@@ -80,20 +59,6 @@ function StatCard({
   );
 }
 
-// ── STATUS BADGE ──────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: string }) {
-  const isApproved = status === 'Approved';
-  const displayStatus = status === 'Approved' ? 'Đã duyệt' : status === 'Pending' ? 'Chờ xử lý' : 'Từ chối';
-  return (
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-bold text-black ${isApproved ? 'bg-[#7BC712]' : 'bg-[#FAED26]'
-        }`}
-    >
-      {displayStatus}
-    </span>
-  );
-}
-
 // ── AVATAR PLACEHOLDER ────────────────────────────────────────────────
 function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
   // Can use avatarUrl directly here if provided from BE
@@ -110,23 +75,64 @@ function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
   );
 }
 
-// ── DONUT LEGEND ──────────────────────────────────────────────────────
-function DonutLegend() {
-  return (
-    <div className="flex flex-col gap-1.5 mt-4 text-xs">
-      {fundDistribution.map((d) => (
-        <div key={d.name} className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: d.color }} />
-          <span className="text-gray-600">{d.name}</span>
-          <span className="ml-auto font-semibold text-gray-700">{d.value}%</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ── MAIN PAGE ─────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('adminAccessToken');
+    if (!token) {
+      router.push('/admin/login');
+    }
+  }, [router]);
+
+  const [stats, setStats] = useState({ totalUsers: 0, activeCampaigns: 0, totalDonationAmount: 0 });
+  const [donationData, setDonationData] = useState<DonationData[]>([]);
+  const [fundDistribution, setFundDistribution] = useState<FundDistributionData[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityLogItem[]>([]);
+  const [filter, setFilter] = useState<string>('');
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      const token = localStorage.getItem('adminAccessToken');
+      if (!token) return;
+      const headers = { Authorization: `Bearer ${token}` };
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+      try {
+        const [statsRes, growthRes, fundRes] = await Promise.all([
+          fetch(`${apiUrl}/admin-dashboard/stats`, { headers }),
+          fetch(`${apiUrl}/admin-dashboard/donation-growth`, { headers }),
+          fetch(`${apiUrl}/admin-dashboard/fund-allocation`, { headers })
+        ]);
+        
+        if (statsRes.ok) setStats(await statsRes.json());
+        if (growthRes.ok) setDonationData(await growthRes.json());
+        if (fundRes.ok) setFundDistribution(await fundRes.json());
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+    fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      const token = localStorage.getItem('adminAccessToken');
+      if (!token) return;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      try {
+        const url = filter ? `${apiUrl}/admin-dashboard/activity-log?filter=${filter}` : `${apiUrl}/admin-dashboard/activity-log`;
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) setActivityLog(await res.json());
+      } catch (error) {
+        console.error('Error fetching activity log:', error);
+      }
+    };
+    fetchLogs();
+  }, [filter]);
+
   return (
     <div className="space-y-5">
 
@@ -134,7 +140,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           label="Tổng người dùng"
-          value="5,240"
+          value={stats.totalUsers.toLocaleString()}
           icon={
             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
               <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
@@ -143,7 +149,7 @@ export default function AdminDashboardPage() {
         />
         <StatCard
           label="Chiến dịch hoạt động"
-          value="87"
+          value={stats.activeCampaigns.toLocaleString()}
           icon={
             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
               <path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z" />
@@ -152,7 +158,7 @@ export default function AdminDashboardPage() {
         />
         <StatCard
           label="Tổng quyên góp"
-          value="5,240"
+          value={`${stats.totalDonationAmount.toLocaleString()} đ`}
           icon={
             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
               <path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
@@ -176,7 +182,7 @@ export default function AdminDashboardPage() {
             </svg>
           </div>
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={donationData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+            <AreaChart data={donationData} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
               <defs>
                 <linearGradient id="donationGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#00AEEF" stopOpacity={0.5} />
@@ -185,10 +191,10 @@ export default function AdminDashboardPage() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toLocaleString()}k`} />
               <Tooltip
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Donated']}
+                formatter={(v) => [`${Number(v).toLocaleString()} đ`, 'Quyên góp']}
               />
               <Area
                 type="monotone"
@@ -206,75 +212,118 @@ export default function AdminDashboardPage() {
         {/* Funds Distribution – Donut Chart */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800">Phân bổ quỹ</h2>
-          <p className="text-xs text-gray-400 mb-2">Biểu đồ tròn</p>
-          <div className="flex items-center gap-6">
-            <ResponsiveContainer width={180} height={180}>
-              <PieChart>
-                <Pie
-                  data={fundDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={52}
-                  outerRadius={80}
-                  dataKey="value"
-                  strokeWidth={2}
-                  stroke="#fff"
-                >
-                  {fundDistribution.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
+          <p className="text-xs text-gray-400 mb-2">Biểu đồ tròn theo danh mục</p>
+          {fundDistribution.length > 0 ? (
+            <div className="flex items-center gap-6">
+              <ResponsiveContainer width={180} height={180}>
+                <PieChart>
+                  <Pie
+                    data={fundDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={52}
+                    outerRadius={80}
+                    dataKey="value"
+                    strokeWidth={2}
+                    stroke="#fff"
+                  >
+                    {fundDistribution.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v) => [`${Number(v)}%`]}
+                    contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex-1">
+                <div className="flex flex-col gap-1.5 mt-4 text-xs max-h-[160px] overflow-y-auto">
+                  {fundDistribution.map((d) => (
+                    <div key={d.name} className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                      <span className="text-gray-600 truncate">{d.name}</span>
+                      <span className="ml-auto font-semibold text-gray-700">{d.value}%</span>
+                    </div>
                   ))}
-                </Pie>
-                <Tooltip
-                  formatter={(v) => [`${Number(v)}%`]}
-                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex-1">
-              <DonutLegend />
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="h-[180px] flex items-center justify-center text-gray-400 text-sm">Chưa có dữ liệu phân bổ</div>
+          )}
         </div>
       </div>
 
       {/* ── RECENT ACTIVITY LOG ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {/* Table header button */}
-        <div className="px-5 pt-4 pb-2">
+        {/* Table header button and filter */}
+        <div className="px-5 pt-4 pb-2 flex justify-between items-center bg-white border-b border-gray-100">
           <button className="px-4 py-1.5 rounded-lg border border-transparent text-sm font-semibold text-black bg-[#7598C1] hover:bg-[#5DA2D5] transition-colors shadow-sm">
             Nhật ký hoạt động gần đây
           </button>
+          <select 
+            value={filter} 
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7598C1] text-gray-700 bg-white"
+          >
+            <option value="">Tất cả hoạt động</option>
+            <option value="1">Đã đăng ký</option>
+            <option value="2">Đã tạo chiến dịch</option>
+            <option value="3">Xác minh CCCD</option>
+            <option value="4">Đã quyên góp</option>
+            <option value="5">Đã rút tiền</option>
+          </select>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-5 py-3 font-semibold text-gray-700 w-48">Người dùng</th>
+              <tr className="bg-gray-50/50">
+                <th className="text-left px-5 py-3 font-semibold text-gray-700 w-16">STT</th>
+                <th className="text-left px-5 py-3 font-semibold text-gray-700 w-64">Người dùng</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-700">Hoạt động</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Thời gian</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Trạng thái</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Ngày</th>
               </tr>
             </thead>
             <tbody>
-              {activityLog.map((row) => (
-                <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              {activityLog.length > 0 ? activityLog.map((row, index) => {
+                const getRowColor = (type: string) => {
+                  switch (type) {
+                    case 'REGISTER': return 'bg-blue-50/60 hover:bg-blue-100/60';
+                    case 'CAMPAIGN': return 'bg-green-50/60 hover:bg-green-100/60';
+                    case 'EKYC': return 'bg-yellow-50/60 hover:bg-yellow-100/60';
+                    case 'DONATION': return 'bg-pink-50/60 hover:bg-pink-100/60';
+                    case 'WITHDRAWAL': return 'bg-gray-100/60 hover:bg-gray-200/60';
+                    default: return 'hover:bg-gray-50';
+                  }
+                };
+                
+                const dateStr = new Date(row.date).toLocaleString('vi-VN', { 
+                  hour: '2-digit', minute: '2-digit', 
+                  day: '2-digit', month: '2-digit', year: 'numeric' 
+                });
+
+                return (
+                <tr key={row.id} className={`border-b border-gray-100 transition-colors ${getRowColor(row.type)}`}>
+                  <td className="px-5 py-3 font-medium text-gray-700">{index + 1}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2.5">
-                      <Avatar name={row.name} />
+                      <Avatar name={row.username} avatarUrl={row.avatarUrl} />
                       <div>
-                        <p className="font-semibold text-gray-800 leading-tight">{row.name}</p>
-                        <p className="text-xs text-gray-400">Email : {row.email}</p>
+                        <p className="font-semibold text-gray-800 leading-tight truncate max-w-[150px]">{row.username}</p>
+                        <p className="text-xs text-gray-500 truncate max-w-[150px]">Email : {row.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{row.activity}</td>
-                  <td className="px-4 py-3 text-gray-500">{row.time}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={row.status} />
-                  </td>
+                  <td className="px-4 py-3 text-gray-800 font-medium">{row.activity}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{dateStr}</td>
                 </tr>
-              ))}
+              )}) : (
+                <tr>
+                  <td colSpan={4} className="px-5 py-8 text-center text-gray-500">Không có dữ liệu phù hợp</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -283,3 +332,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
