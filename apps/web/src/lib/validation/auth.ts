@@ -14,7 +14,7 @@ export const AUTH_ERRORS_MAP: Record<string, string> = {
     'AUTH_003': 'Vui lòng không để trống trường này.',
     'AUTH_101': 'Email này đã được sử dụng. Vui lòng chọn email khác.',
     'AUTH_102': 'Email hoặc mật khẩu không chính xác.',
-    'AUTH_106': 'Email này đã đăng ký bình thường. Hãy dùng mật khẩu để đăng nhập.',
+    'AUTH_106': 'Tài khoản đã được thiết lập mật khẩu. Vui lòng đăng nhập để tiếp tục.',
     'AUTH_105': 'Tài khoản này dùng Google. Hãy nhấn "Continue with Google".',
 };
 

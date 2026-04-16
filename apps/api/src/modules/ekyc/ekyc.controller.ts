@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Patch, Param, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, Patch, Param, Query, ForbiddenException } from '@nestjs/common';
 import { EkycService } from './ekyc.service';
 import { VerifyEkycDto } from './dto/verify-ekyc.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
@@ -31,8 +31,8 @@ export class EkycController {
     @Get('pending')
     @UseGuards(RolesGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    async getPending() {
-        return this.ekycService.getAllPending();
+    async getAll(@Query('status') status?: string) {
+        return this.ekycService.getAll(status);
     }
 
     @Patch('approve/:userId')
