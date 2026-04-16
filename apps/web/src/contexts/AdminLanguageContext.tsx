@@ -15,6 +15,7 @@ const translations: Record<Language, Record<string, string>> = {
         // Menu
         'menu.dashboard': 'Bảng điều khiển',
         'menu.users': 'Quản lý người dùng',
+        'menu.reports': 'Quản lý báo cáo',
         'menu.campaigns': 'Chiến dịch',
         'menu.categories': 'Danh mục chiến dịch',
         'menu.transactions': 'Giao dịch',
@@ -86,6 +87,7 @@ const translations: Record<Language, Record<string, string>> = {
         // Menu
         'menu.dashboard': 'Dashboard',
         'menu.users': 'Users',
+        'menu.reports': 'Reports',
         'menu.campaigns': 'Campaigns',
         'menu.categories': 'Campaign Categories',
         'menu.transactions': 'Transactions',
