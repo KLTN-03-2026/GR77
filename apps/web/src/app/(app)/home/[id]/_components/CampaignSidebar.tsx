@@ -10,6 +10,7 @@ interface CampaignSidebarProps {
     campaignId: string;
     setDonateOpen: (open: boolean) => void;
     handleJoin: () => void;
+    handleLeave?: () => void;
     handleToggleLike: (id: string, isFavorited: boolean) => void;
     formatCurrency: (amount: number | string) => string;
 }
@@ -24,6 +25,7 @@ export function CampaignSidebar({
     campaignId,
     setDonateOpen,
     handleJoin,
+    handleLeave,
     handleToggleLike,
     formatCurrency,
 }: CampaignSidebarProps) {
@@ -45,6 +47,7 @@ export function CampaignSidebar({
                     campaignId={campaignId}
                     setDonateOpen={setDonateOpen}
                     handleJoin={handleJoin}
+                    handleLeave={handleLeave}
                     handleToggleLike={handleToggleLike}
                     formatCurrency={formatCurrency}
                 />

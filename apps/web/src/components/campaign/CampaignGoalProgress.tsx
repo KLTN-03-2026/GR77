@@ -5,12 +5,14 @@ interface CampaignGoalProgressProps {
     raisedPercent: number;
     fundingGoal: number;
     totalRaised: number;
+    participantsCount?: number;
     isJoined: boolean;
     isLiked: boolean;
     isCreator?: boolean;
     campaignId: string;
     setDonateOpen: (open: boolean) => void;
     handleJoin: () => void;
+    handleLeave?: () => void;
     handleToggleLike: (id: string, isFavorited: boolean) => void;
     formatCurrency: (amount: number | string) => string;
 }
@@ -19,12 +21,14 @@ export function CampaignGoalProgress({
     raisedPercent,
     fundingGoal,
     totalRaised,
+    participantsCount,
     isJoined,
     isLiked,
     isCreator,
     campaignId,
     setDonateOpen,
     handleJoin,
+    handleLeave,
     handleToggleLike,
     formatCurrency
 }: CampaignGoalProgressProps) {
@@ -48,7 +52,7 @@ export function CampaignGoalProgress({
 
                 {/* 2. Progress Stats Area - Centered in Middle */}
                 <div className="flex-1 flex flex-col justify-center w-full max-w-md py-4">
-                    <div className="space-y-4 w-full">
+                    <div className="space-y-3 w-full">
                         <div className="flex justify-between p-4 bg-gray-50 border border-gray-200 rounded-[20px] items-center shadow-sm">
                             <span className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-widest">Goal</span>
                             <span className="font-black text-gray-900 text-sm sm:text-lg">{formatCurrency(fundingGoal)} VND</span>
@@ -57,6 +61,12 @@ export function CampaignGoalProgress({
                             <span className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-widest">Raised</span>
                             <span className="font-black text-gray-900 text-sm sm:text-base lg:text-lg">{formatCurrency(totalRaised)} VND</span>
                         </div>
+                        {participantsCount !== undefined && (
+                            <div className="flex justify-between p-4 bg-cyan-50 border border-cyan-100 rounded-[20px] items-center shadow-sm">
+                                <span className="text-xs sm:text-sm font-bold text-cyan-600 uppercase tracking-widest">Joined</span>
+                                <span className="font-black text-cyan-700 text-sm sm:text-lg">{participantsCount} Member{participantsCount !== 1 ? 's' : ''}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -64,16 +74,24 @@ export function CampaignGoalProgress({
                 {!isCreator ? (
                     <div className="w-full shrink-0 pt-6">
                         <div className="flex gap-4">
-                            <button
-                                onClick={handleJoin}
-                                disabled={isJoined}
-                                className={`flex-1 py-2.5 sm:py-3 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg shadow-pink-100/50 ${isJoined
-                                    ? "bg-gray-400 border-gray-400 text-white cursor-default"
-                                    : "bg-white border-pink-500 text-pink-500 hover:bg-pink-50"
-                                    }`}
-                            >
-                                {isJoined ? "Joined" : "Join Free"}
-                            </button>
+                            {isJoined && !handleLeave ? (
+                                <button
+                                    disabled
+                                    className="flex-1 py-2.5 sm:py-3 border-2 border-gray-200 font-black text-sm sm:text-base rounded-full bg-gray-50 text-gray-400 cursor-not-allowed shadow-none"
+                                >
+                                    Joined
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={isJoined ? handleLeave : handleJoin}
+                                    className={`flex-1 py-2.5 sm:py-3 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg ${isJoined
+                                        ? "bg-white border-red-500 text-red-500 hover:bg-red-50 shadow-red-100/50"
+                                        : "bg-white border-pink-500 text-pink-500 hover:bg-pink-50 shadow-pink-100/50"
+                                        }`}
+                                >
+                                    {isJoined ? "Leave" : "Join Free"}
+                                </button>
+                            )}
                             <button
                                 onClick={() => setDonateOpen(true)}
                                 className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full shadow-lg shadow-yellow-100/50 transition-all active:scale-95"
