@@ -5,6 +5,7 @@ import { useGlobalAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { AUTH_ERRORS_MAP } from '@/lib/validation/auth';
 
 export default function GoogleLoginButton() {
     const { login } = useGlobalAuth();
@@ -42,11 +43,9 @@ export default function GoogleLoginButton() {
             const data = await res.json();
 
             if (!res.ok) {
-                if (data.message === 'EMAIL_ALREADY_REGISTERED_LOCAL') {
-                    setError('Email này đã được đăng ký bằng mật khẩu. Vui lòng đăng nhập bình thường để liên kết.');
-                } else {
-                    setError(data.message || 'Đăng nhập Google thất bại');
-                }
+                const errorKey = data.message;
+                const errorMessage = AUTH_ERRORS_MAP[errorKey] || data.message || 'Đăng nhập Google thất bại';
+                setError(errorMessage);
                 return;
             }
 
@@ -85,7 +84,7 @@ export default function GoogleLoginButton() {
                 type="button"
                 onClick={handleButtonClick}
                 disabled={isProcessing}
-                className="btn-google w-full py-3.5 bg-white border border-gray-200 text-gray-700 font-semibold text-[15px] rounded-full flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50"
+                className="btn-google w-full h-[45px] lg:h-[42px] bg-white border border-gray-200 text-gray-700 font-semibold text-[15px] rounded-full flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
             >
                 {isProcessing ? (
                     <div className="h-5 w-5 border-2 border-[#00AEEF] border-t-transparent rounded-full animate-spin"></div>
@@ -123,7 +122,7 @@ export default function GoogleLoginButton() {
                             <h3 className="text-2xl font-black text-gray-900 mb-2.5 tracking-tight">Terms of Service</h3>
 
                             <p className="text-gray-500 text-[15px] leading-relaxed mb-6">
-                                To provide the best experience and protect your data, please confirm that you agree to Kindlink's
+                                To provide the best experience and protect your data, please confirm that you agree to Kindlink's <br />
                                 <a href="/policies" target="_blank" rel="noopener noreferrer" className="text-[#00AEEF] font-bold mx-1 hover:underline">Terms of Service and Privacy Policy</a>.
                             </p>
 

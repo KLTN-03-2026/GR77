@@ -91,7 +91,9 @@ export default function AdminKycPage() {
     if (!token) return;
     setIsLoading(true);
     try {
-      const endpoint = filterStatus === 'All' ? `${API}/ekyc/pending` : `${API}/ekyc/pending?status=${filterStatus}`;
+      const endpoint = filterStatus === 'All'
+        ? `${API}/ekyc/pending`
+        : `${API}/ekyc/pending?status=${filterStatus.toUpperCase()}`;
       const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -398,29 +400,38 @@ export default function AdminKycPage() {
 
             {/* Action Buttons */}
             <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3">
-              <button
-                onClick={() => handleReject(selectedKyc.userId, 'Requested Re-upload')}
-                className="px-5 py-2.5 w-full sm:w-auto rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
-              >
-                Request Re-upload
-              </button>
-              <button
-                onClick={() => {
-                  const reason = window.prompt("Lý do từ chối (Rejection Reason)?");
-                  if (reason) handleReject(selectedKyc.userId, reason);
-                }}
-                className="px-5 py-2.5 w-full sm:w-auto rounded-xl border border-transparent text-sm font-semibold text-white bg-[#F76C6C] hover:bg-red-600 hover:shadow-md transition-all shadow-sm flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                Reject
-              </button>
-              <button
-                onClick={() => handleApprove(selectedKyc.userId)}
-                className="px-6 py-2.5 w-full sm:w-auto rounded-xl border border-transparent text-sm font-semibold text-black bg-[#7BC712] hover:bg-[#68A90F] hover:shadow-md transition-all shadow-sm flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                Approve
-              </button>
+              {selectedKyc.status === 'PENDING' ? (
+                <>
+                  <button
+                    onClick={() => handleReject(selectedKyc.userId, 'Requested Re-upload')}
+                    className="px-5 py-2.5 w-full sm:w-auto rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                  >
+                    Request Re-upload
+                  </button>
+                  <button
+                    onClick={() => {
+                      const reason = window.prompt("Lý do từ chối (Rejection Reason)?");
+                      if (reason) handleReject(selectedKyc.userId, reason);
+                    }}
+                    className="px-5 py-2.5 w-full sm:w-auto rounded-xl border border-transparent text-sm font-semibold text-white bg-[#F76C6C] hover:bg-red-600 hover:shadow-md transition-all shadow-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleApprove(selectedKyc.userId)}
+                    className="px-6 py-2.5 w-full sm:w-auto rounded-xl border border-transparent text-sm font-semibold text-black bg-[#7BC712] hover:bg-[#68A90F] hover:shadow-md transition-all shadow-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Approve
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-3 w-full justify-end">
+                  <span className="text-sm text-gray-500">This record has been processed:</span>
+                  <StatusBadge status={selectedKyc.status} />
+                </div>
+              )}
             </div>
 
           </div>

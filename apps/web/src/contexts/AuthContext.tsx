@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (error) {
-        console.error("Failed to restore auth session:", error);
+        console.warn("Failed to restore auth session:", error);
       } finally {
         setIsLoading(false);
       }

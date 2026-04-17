@@ -97,10 +97,20 @@ export class EkycService {
     }
 
     // Admin functions
-    async getAllPending() {
+    async getAll(status?: string) {
+        const where: any = {};
+
+        if (status && status !== 'All') {
+            const upperStatus = status.toUpperCase();
+            if (['PENDING', 'APPROVED', 'REJECTED'].includes(upperStatus)) {
+                where.status = upperStatus as EkycStatus;
+            }
+        }
+
         return this.prisma.userEkyc.findMany({
-            where: { status: EkycStatus.PENDING },
+            where,
             include: { user: { select: { email: true, username: true } } },
+            orderBy: { createdAt: 'desc' },
         });
     }
 
@@ -109,6 +119,12 @@ export class EkycService {
             const ekyc = await tx.userEkyc.update({
                 where: { userId },
                 data: { status: EkycStatus.APPROVED },
+            });
+
+            // Also update the User record so campaign creation check passes
+            await tx.user.update({
+                where: { id: userId },
+                data: { isKycVerified: true },
             });
 
             return ekyc;
@@ -127,12 +143,22 @@ export class EkycService {
     }
 
     async reject(userId: string, reason: string) {
-        const result = await this.prisma.userEkyc.update({
-            where: { userId },
-            data: {
-                status: EkycStatus.REJECTED,
-                rejectionReason: reason
-            },
+        const result = await this.prisma.$transaction(async (tx) => {
+            const ekyc = await tx.userEkyc.update({
+                where: { userId },
+                data: {
+                    status: EkycStatus.REJECTED,
+                    rejectionReason: reason
+                },
+            });
+
+            // Also reset the User record
+            await tx.user.update({
+                where: { id: userId },
+                data: { isKycVerified: false },
+            });
+
+            return ekyc;
         });
 
         // Send system notification

@@ -39,7 +39,7 @@ export default function LoginForm({
             </div>
 
             {/* ── Mobile Titles ── */}
-            <div className="lg:hidden absolute top-[10vh] sm:top-[12vh] left-1/2 -translate-x-1/2 w-full px-4 z-20">
+            <div className="md:hidden absolute top-[10vh] sm:top-[12vh] left-1/2 -translate-x-1/2 w-full px-4 z-20">
                 <h1 className="text-center text-[#1a1a2e] text-[26px] sm:text-[28px] font-extrabold mb-1 tracking-tight">
                     Welcome Kindlink!
                 </h1>
@@ -48,31 +48,42 @@ export default function LoginForm({
                 </h2>
             </div>
 
-            {/* ── Illustration: desktop only ── */}
-            <img
-                src="/images/background/img.svg"
-                alt="Kindlink Community"
-                className="hidden lg:block absolute left-[6.5%] top-1/2 -translate-y-1/2 w-[37vw] max-h-[72vh] object-contain drop-shadow-xl select-none pointer-events-none z-[1]"
-                draggable={false}
-            />
+            {/* ── Left Hero Section: desktop only ── */}
+            <div className="hidden lg:flex absolute left-0 top-0 bottom-0 w-[50%] flex-col pl-[2%] pr-[5%] pt-[100px] xl:pt-[120px] pb-6 z-[1] overflow-hidden">
+                {/* Hero Text */}
+                <div className="max-w-[480px] flex-shrink-0">
+                    <h2 className="text-black/80 text-[clamp(28px,3.5vw,48px)] font-extrabold leading-[1.15] mb-3 drop-shadow-lg">
+                        Where Giving Flows<br />with Trust
+                    </h2>
+                    <p className="text-white/80 text-[clamp(13px,1.2vw,18px)] leading-relaxed font-medium max-w-[420px]">
+                        Join the next generation of philanthropic flows, where every contribution is etched into the digital ledger of hope.
+                    </p>
+                </div>
 
-            {/* ── Mobile Google Login ── */}
-            <div className="lg:hidden absolute bottom-[5vh] left-1/2 -translate-x-1/2 w-full max-w-[340px] px-2 z-20">
-                <div className="[&_.btn-google]:!bg-white [&_.btn-google]:!border [&_.btn-google]:!border-gray-300 [&_.btn-google]:!rounded-full [&_.btn-google]:!transition-all [&_.btn-google]:!duration-300 [&_.btn-google]:hover:-translate-y-[2px] [&_.btn-google]:hover:!shadow-[0_6px_20px_rgba(0,0,0,0.1)] [&_.btn-google]:hover:!border-gray-400 [&_.btn-google]:active:translate-y-0 [&_.btn-google]:active:!scale-[0.97] transform scale-[0.95] origin-[50%_0%]">
-                    <GoogleLoginButton />
+                {/* Illustration at bottom — scales to fill remaining space */}
+                <div className="flex-1 min-h-0 flex items-end mt-4">
+                    <img
+                        src="/images/background/img.svg"
+                        alt="Kindlink Community"
+                        className="max-w-[500px] w-full max-h-full object-contain drop-shadow-xl select-none pointer-events-none"
+                        draggable={false}
+                    />
                 </div>
             </div>
 
+
+
             {/* ── Form Section ── */}
-            <div className="relative z-10 w-full flex items-center justify-center lg:justify-end lg:pr-[4%] xl:pr-[6%]
+            <div className="relative z-10 w-full flex items-center justify-center
+                lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-[50%]
                 mt-0 lg:mt-0">
-                <div className="max-w-[340px] lg:max-w-[420px] xl:max-w-[440px] w-full px-4">
+                <div className="max-w-[340px] md:max-w-[460px] lg:max-w-[420px] xl:max-w-[440px] w-full px-4 flex-shrink-0">
                     {/* Title */}
-                    <div className="hidden lg:block">
-                        <h1 className="text-center text-[#1a1a2e] lg:text-white text-[20px] sm:text-[24px] lg:text-[30px] font-extrabold mb-0.5 tracking-tight">
+                    <div className="hidden md:block md:mb-8 lg:mb-0">
+                        <h1 className="text-center text-[#1a1a2e] lg:text-white text-[24px] md:text-[32px] lg:text-[30px] font-extrabold mb-0.5 md:mb-2 lg:mb-0.5 tracking-tight">
                             Welcome Kindlink!
                         </h1>
-                        <h2 className="text-center text-[#1a1a2e] lg:text-white text-[15px] sm:text-[18px] lg:text-[22px] font-extrabold mb-3 lg:mb-5 tracking-[3px] uppercase">
+                        <h2 className="text-center text-[#1a1a2e] lg:text-white text-[18px] md:text-[24px] lg:text-[22px] font-extrabold mb-3 md:mb-6 lg:mb-5 tracking-[3px] uppercase">
                             LOGIN
                         </h2>
                     </div>
@@ -191,7 +202,7 @@ export default function LoginForm({
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-[#99EBFF] text-[#1a1a2e] font-extrabold text-[15px] lg:text-[14px] px-12 lg:px-16 py-[12px] lg:py-[9px] rounded-[30px] border border-[#BEDDE8] transition-all duration-300 ease-out tracking-[2px] lg:tracking-[2px] uppercase hover:not-disabled:bg-gradient-to-r hover:not-disabled:from-[#A8E0F0] hover:not-disabled:to-[#7DD3E8] hover:not-disabled:border-[#7DD3E8] hover:not-disabled:-translate-y-[3px] hover:not-disabled:shadow-[0_8px_25px_rgba(72,201,233,0.35)] hover:not-disabled:scale-[1] active:not-disabled:translate-y-0 active:not-disabled:scale-[0.97] active:not-disabled:shadow-[0_2px_8px_rgba(72,201,233,0.25)] disabled:opacity-55 disabled:cursor-not-allowed"
+                                    className="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-[#44BAD7] text-white font-extrabold text-[15px] lg:text-[14px] px-12 lg:px-16 py-[12px] lg:py-[9px] rounded-[30px] border border-[#44BAD7] transition-all duration-300 ease-out tracking-[2px] lg:tracking-[2px] uppercase hover:not-disabled:bg-gradient-to-r hover:not-disabled:from-[#2AA2BF] hover:not-disabled:to-[#44BAD7] hover:not-disabled:border-[#44BAD7] hover:not-disabled:-translate-y-[3px] hover:not-disabled:shadow-[0_8px_25px_rgba(72,201,233,0.35)] hover:not-disabled:scale-[1] active:not-disabled:translate-y-0 active:not-disabled:scale-[0.97] active:not-disabled:shadow-[0_2px_8px_rgba(72,201,233,0.25)] disabled:opacity-55 disabled:cursor-not-allowed"
                                 >
                                     {isLoading ? (
                                         <>
@@ -213,15 +224,17 @@ export default function LoginForm({
                                 </Link>
                             </p>
                         </form>
-                    </div>
 
-                    {/* Google Login (Desktop) */}
-                    <div className="hidden lg:block">
-                        <div className="flex items-center gap-4 my-2 lg:my-4 before:content-[''] before:flex-1 before:h-px before:bg-[#48C9E9]/30 lg:before:bg-white/35 after:content-[''] after:flex-1 after:h-px after:bg-[#48C9E9]/30 lg:after:bg-white/35">
-                            <span className="text-[12px] lg:text-[13px] text-gray-500 lg:text-white/70 font-medium">or</span>
-                        </div>
-                        <div className="[&_.btn-google]:!bg-white [&_.btn-google]:!border [&_.btn-google]:!border-gray-300 [&_.btn-google]:!rounded-full [&_.btn-google]:!transition-all [&_.btn-google]:!duration-300 [&_.btn-google]:hover:-translate-y-[3px] [&_.btn-google]:hover:!shadow-[0_8px_25px_rgba(0,0,0,0.12)] [&_.btn-google]:hover:!border-gray-400 [&_.btn-google]:active:translate-y-0 [&_.btn-google]:active:!scale-[0.97] transform scale-[0.85] lg:scale-[0.95] origin-top mb-4 lg:mb-0">
-                            <GoogleLoginButton />
+                        {/* Google Login (All devices) */}
+                        <div className="block mt-2 lg:mt-0 px-2 lg:px-0">
+                            <div className="flex items-center gap-4 my-2 lg:my-2 before:content-[''] before:flex-1 before:h-px before:bg-[#48C9E9]/20 lg:before:bg-gray-200 after:content-[''] after:flex-1 after:h-px after:bg-[#48C9E9]/20 lg:after:bg-gray-200">
+                                <span className="text-[12px] lg:text-[13px] text-gray-500 lg:text-gray-400 font-medium">or</span>
+                            </div>
+                            <div className="flex justify-center mb-3 lg:mb-1">
+                                <div className="w-full sm:min-w-[280px] sm:w-auto [&_.btn-google]:!bg-white [&_.btn-google]:!border [&_.btn-google]:!border-gray-200 [&_.btn-google]:!rounded-full [&_.btn-google]:!transition-all [&_.btn-google]:!duration-300 [&_.btn-google]:hover:-translate-y-[3px] [&_.btn-google]:hover:!shadow-[0_8px_25px_rgba(0,0,0,0.08)] [&_.btn-google]:active:translate-y-0 [&_.btn-google]:active:!scale-[0.97] sm:[&_.btn-google]:!px-10 lg:[&_.btn-google]:!px-12">
+                                    <GoogleLoginButton />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
