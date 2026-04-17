@@ -25,7 +25,6 @@ export default function CampaignDetailClient({ id }: { id: string }) {
     const [isLiked, setIsLiked] = useState(false);
     const [error, setError] = useState('');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
     const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
     const [withdrawalAmount, setWithdrawalAmount] = useState('');
     const [withdrawalReason, setWithdrawalReason] = useState('');
@@ -152,35 +151,6 @@ export default function CampaignDetailClient({ id }: { id: string }) {
         setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
-    const formatTimeAgo = (dateString: string) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-        if (isNaN(diffInSeconds)) return 'Unknown date';
-        if (diffInSeconds < 0) return 'Just now';
-        if (diffInSeconds < 60) return 'Just now';
-        const diffInMinutes = Math.floor(diffInSeconds / 60);
-        if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
-        const diffInHours = Math.floor(diffInMinutes / 60);
-        if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-        const diffInDays = Math.floor(diffInHours / 24);
-        if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-        const diffInWeeks = Math.floor(diffInDays / 7);
-        if (diffInWeeks < 4) return `${diffInWeeks} week${diffInWeeks > 1 ? 's' : ''} ago`;
-        const diffInMonths = Math.floor(diffInDays / 30);
-        if (diffInMonths < 12) return `${diffInMonths} month${diffInMonths > 1 ? 's' : ''} ago`;
-        return `${Math.floor(diffInDays / 365)} year${Math.floor(diffInDays / 365) > 1 ? 's' : ''} ago`;
-    };
-
-    const toggleReplies = (commentId: string) => {
-        setExpandedReplies(prev => ({
-            ...prev,
-            [commentId]: !prev[commentId]
-        }));
-    };
-
     return (
         <div className="w-full pb-20 text-gray-800">
             {/* Breadcrumbs / Back navigation */}
@@ -198,12 +168,12 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                     </button>
                     <Link
                         href={`/creator/campaigns/${id}/edit`}
-                        className="flex items-center gap-2 px-5 py-2 rounded-2xl bg-white border border-blue-100 text-blue-600 font-bold text-[13px] shadow-sm hover:bg-blue-50 transition-all active:scale-95"
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-blue-100 border-2 border-blue-500 text-blue-700 font-bold text-sm shadow-sm hover:bg-blue-200 transition-all active:scale-95"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                         </svg>
-                        EDIT
+                        Edit Campaign
                     </Link>
                 </div>
             </div>
@@ -213,7 +183,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                 <div className="lg:col-span-8 space-y-8">
 
                     {/* Cover Image Slider */}
-                    <div className="relative aspect-video rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/5 group">
+                    <div className="relative aspect-video rounded-xl overflow-hidden shadow-xl ring-1 ring-black/5 group">
                         {images.length > 0 ? (
                             <>
                                 <img
@@ -260,7 +230,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                     </div>
 
                     {/* Campaign Info */}
-                    <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+                    <div className="bg-white rounded-xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
                         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight mb-4 tracking-tight">
                             {campaign.title}
                         </h1>
@@ -287,157 +257,48 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         </div>
                     </div>
 
-                    {/* Comments Section */}
-                    <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+                    {/* Updates Section */}
+                    <div className="bg-white rounded-2xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
                         <div className="flex items-center gap-3 mb-10">
-                            <div className="p-3 bg-blue-50 rounded-2xl">
-                                <ChatBubbleLeftEllipsisIcon className="h-6 w-6 text-blue-500" />
+                            <div className="p-3 bg-blue-50 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-blue-500">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+                                </svg>
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900 leading-none mb-1.5">Discussion</h2>
+                                <h2 className="text-xl font-bold text-gray-900 leading-none mb-1.5">Post an Update</h2>
                                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                                    {campaign.comments?.reduce((total: number, c: any) => total + 1 + (c.replies?.length || 0), 0) || 0} Comments
+                                    Notify your supporters
                                 </p>
                             </div>
                         </div>
 
-                        <div className="space-y-8 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar lg:min-h-[200px]">
-                            {campaign.comments && campaign.comments.length > 0 ? (
-                                <div className="space-y-10">
-                                    {campaign.comments.map((comment: any) => {
-                                        const replies = comment.replies || [];
-                                        const isExpanded = expandedReplies[comment.id];
-                                        const displayedReplies = isExpanded ? replies : replies.slice(0, 1);
-
-                                        return (
-                                            <div key={comment.id} className="space-y-6">
-                                                {/* Parent Comment */}
-                                                <div className="flex gap-3 text-left items-start group">
-                                                    <img
-                                                        src={comment.user?.profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user?.id || comment.userId}`}
-                                                        alt={comment.user?.username}
-                                                        className="h-12 w-12 rounded-full object-cover ring-4 ring-white shadow-sm"
-                                                    />
-                                                    <div className="flex-1">
-                                                        <div className="mb-0.5">
-                                                            <span className="text-sm font-black text-gray-900">{comment.user?.username || 'User'}</span>
-                                                        </div>
-                                                        <p className="text-[13px] text-gray-600 leading-relaxed font-semibold bg-gray-50/50 p-4 rounded-2xl rounded-tl-none border border-gray-100/50 group-hover:bg-gray-50 transition-all">
-                                                            {comment.content}
-                                                        </p>
-                                                        <div className="flex items-center gap-4 mt-2">
-                                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{formatTimeAgo(comment.createdAt)}</span>
-                                                            <button className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors">
-                                                                Reply
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Replies */}
-                                                {replies.length > 0 && (
-                                                    <div className="ml-10 sm:ml-16 space-y-6 border-l-2 border-gray-50 pl-6 sm:pl-10">
-                                                        {displayedReplies.map((reply: any) => (
-                                                            <div key={reply.id} className="flex gap-3 text-left items-start group">
-                                                                <img
-                                                                    src={reply.user?.profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user?.id || reply.userId}`}
-                                                                    alt={reply.user?.username}
-                                                                    className="h-10 w-10 rounded-full object-cover ring-4 ring-white shadow-sm"
-                                                                />
-                                                                <div className="flex-1">
-                                                                    <div className="mb-0.5">
-                                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                                            <span className="text-[13px] font-black text-gray-900">{reply.user?.username || 'User'}</span>
-                                                                            {reply.user?.id !== comment.user?.id && (
-                                                                                <>
-                                                                                    <span className="text-[12px] font-black text-gray-400">›</span>
-                                                                                    <span className="text-[13px] font-bold text-blue-500">{comment.user?.username}</span>
-                                                                                </>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                    <p className="text-[13px] text-gray-600 leading-relaxed font-semibold bg-blue-50/20 p-4 rounded-2xl rounded-tl-none border border-blue-50/50 group-hover:bg-blue-50/30 transition-all">
-                                                                        {reply.content}
-                                                                    </p>
-                                                                    <div className="flex items-center gap-4 mt-2">
-                                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{formatTimeAgo(reply.createdAt)}</span>
-                                                                        <button className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors">
-                                                                            Reply
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-
-                                                        {!isExpanded && replies.length > 1 && (
-                                                            <button
-                                                                onClick={() => toggleReplies(comment.id)}
-                                                                className="text-[10px] font-black text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-2 group"
-                                                            >
-                                                                <div className="w-6 h-[2px] bg-gray-100 group-hover:bg-blue-100 transition-all"></div>
-                                                                VIEW {replies.length - 1} MORE REPL{replies.length - 1 > 1 ? 'IES' : 'Y'}
-                                                            </button>
-                                                        )}
-                                                        {isExpanded && replies.length > 1 && (
-                                                            <button
-                                                                onClick={() => toggleReplies(comment.id)}
-                                                                className="text-[10px] font-black text-blue-400 hover:text-blue-600 transition-colors flex items-center gap-2 group"
-                                                            >
-                                                                <div className="w-6 h-[2px] bg-blue-100 transition-all"></div>
-                                                                COLLAPSE REPLIES
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-
-                                    <div className="pt-6 flex justify-center border-t border-gray-50">
-                                        <button className="flex items-center gap-2 px-8 py-3 rounded-2xl border-2 border-gray-100 text-[11px] font-black text-gray-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50/30 transition-all uppercase tracking-widest active:scale-95">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                            </svg>
-                                            Show more comments
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-center py-20 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
-                                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                                        <ChatBubbleLeftEllipsisIcon className="h-8 w-8 text-gray-200" />
-                                    </div>
-                                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">No comments yet</p>
-                                    <p className="text-[11px] text-gray-400 mt-2">Be the first to share your thoughts!</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Comment Input */}
-                        <div className="mt-10 pt-10 border-t border-gray-100">
+                        {/* Input Area */}
+                        <div>
                             <div className="flex gap-4">
                                 <img
                                     src={creatorAvatar}
                                     alt="Your Avatar"
                                     className="h-12 w-12 rounded-full object-cover ring-4 ring-white shadow-md border border-gray-100"
                                 />
-                                <div className="flex-1 relative">
+                                <div className="flex-1 space-y-4">
+                                    <input
+                                        type="text"
+                                        placeholder="Update Title (e.g., Purchased 100 warm coats)"
+                                        className="w-full bg-gray-50 border-gray-100 rounded-xl py-3 px-5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold shadow-sm"
+                                    />
                                     <textarea
-                                        placeholder="What do you think about this campaign? Share your thoughts here..."
-                                        rows={1}
-                                        className="w-full bg-gray-50 border-gray-100 rounded-3xl py-4 px-6 pr-24 text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold overflow-hidden min-h-[56px] shadow-sm hover:shadow-md focus:shadow-lg"
+                                        placeholder="Write your detailed update here. This will be visible to all supporters in the Updates channel..."
+                                        rows={4}
+                                        className="w-full bg-gray-50 border-gray-100 rounded-xl py-4 px-6 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-y shadow-sm"
                                     ></textarea>
-                                    <button className="absolute right-2 top-2 bg-blue-500 text-white text-[11px] font-black px-6 py-2.5 rounded-2xl hover:bg-black transition-all shadow-md active:scale-95 uppercase tracking-widest">
-                                        Send
-                                    </button>
+                                    <div className="flex justify-end pt-2">
+                                        <button className="bg-cyan-50 border-2 border-cyan-500 text-cyan-700 text-sm font-bold px-8 py-3 rounded-full hover:bg-cyan-100 transition-all shadow-sm active:scale-95">
+                                            Publish Update
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <p className="mt-4 text-center text-[10px] text-gray-400 font-bold flex items-center justify-center gap-1.5 uppercase tracking-widest">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-blue-500">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4.13-5.689Z" clipRule="evenodd" />
-                                </svg>
-                                Commenting publicly as {creatorName}
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -445,7 +306,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                 {/* Right Column: Status, Funding, Wallet Button, Creator */}
                 <div className="lg:col-span-4">
                     {/* Status and Funding Card */}
-                    <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(8,112,184,0.07)] border border-blue-50/50">
+                    <div className="bg-white rounded-xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(8,112,184,0.07)] border border-blue-50/50">
                         <div className="flex justify-between items-center mb-10">
                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Current Status</span>
                             <div className={`px-4 py-1.5 rounded-full text-[10px] font-black flex items-center gap-2 shadow-sm border ${campaign.status === 'ACTIVE'
@@ -475,34 +336,34 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                             ></div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mb-8">
-                            <div className="bg-gray-50/50 rounded-2xl p-5 border border-gray-100 text-center hover:bg-gray-50 transition-all">
-                                <div className="text-xl font-black text-gray-900 mb-1">{campaign._count?.donations || 0}</div>
-                                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Supporters</div>
+                        <div className="grid grid-cols-2 gap-3 mb-8">
+                            <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100 text-center hover:bg-gray-50 transition-all flex flex-col justify-center">
+                                <div className="text-lg font-black text-blue-600 mb-1">{campaign.participantsCount || 0}</div>
+                                <div className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest">Joined</div>
                             </div>
-                            <div className="bg-gray-50/50 rounded-2xl p-5 border border-gray-100 text-center hover:bg-gray-50 transition-all">
-                                <div className="text-xl font-black text-gray-900 mb-1">
+                            <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100 text-center hover:bg-gray-50 transition-all flex flex-col justify-center">
+                                <div className="text-lg font-black text-gray-900 mb-1">
                                     {campaign.endAt ? Math.max(0, Math.ceil((new Date(campaign.endAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : '---'}
                                 </div>
-                                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Days left</div>
+                                <div className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest">Days left</div>
                             </div>
                         </div>
 
                         {/* Public Link Button */}
-                        <div className="space-y-4 mb-8">
+                        <div className="space-y-3 mb-8">
                             <Link
                                 href={`/home/${campaign.id}`}
-                                className="w-full bg-gray-900 hover:bg-black text-white py-4.5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl transition-all active:scale-[0.98] text-[11px] uppercase tracking-widest border border-gray-800"
+                                className="w-full bg-gray-50 border-2 border-cyan-500 text-cyan-700 hover:bg-cyan-100 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
                             >
-                                <ShareIcon className="h-4 w-4" />
+                                <ShareIcon className="h-5 w-5" />
                                 View Public Page
                             </Link>
 
                             <button
                                 onClick={() => setWithdrawalModalOpen(true)}
-                                className="w-full bg-green-500 hover:bg-green-600 text-white py-4.5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-green-100 transition-all active:scale-[0.98] text-[11px] uppercase tracking-widest border border-green-400"
+                                className="w-full bg-green-50 border-2 border-green-500 hover:bg-green-200 text-green-700 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.55-.22-2.203-.702-1.172-.879-1.172-2.303 0-3.182 1.172-.879 3.07-.879 4.242 0 .493.37.79.88.879 1.414m-7.333 4.19-.068.581c-.135.53-.418 1.012-.879 1.414m-12.019-12 1.642 1.642" />
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 8.25V7.5A2.25 2.25 0 0 0 12.75 5.25h-1.5A2.25 2.25 0 0 0 9 7.5v.75m6 7.5V16.5a2.25 2.25 0 0 1-2.25 2.25h-1.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
                                 </svg>
