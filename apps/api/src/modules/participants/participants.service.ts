@@ -5,6 +5,7 @@ import {
     ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 /**
  * ParticipantsService
@@ -19,7 +20,10 @@ import { PrismaService } from '../../prisma/prisma.service';
  */
 @Injectable()
 export class ParticipantsService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly notificationsService: NotificationsService
+    ) { }
 
     // ─── Helper: campaign select shape ───────────────────────────────────────
     private campaignSelect = {
@@ -74,12 +78,29 @@ export class ParticipantsService {
                 where: { id: existing.id },
                 data: { status: 'JOINED', joinedAt: new Date(), leftAt: null },
             });
+
+            await this.notificationsService.create({
+                userId: campaign.creatorUserId,
+                title: 'New Supporter Joined',
+                message: `A supporter has rejoined your campaign: ${campaign.title}`,
+                type: 'CAMPAIGN_UPDATE',
+                link: `/creator/campaigns/${campaign.id}`
+            });
+
             return { joined: true, participant: updated };
         }
 
         // 3. Tạo mới participation record
         const participant = await (this.prisma as any).campaignParticipant.create({
             data: { userId, campaignId, status: 'JOINED' },
+        });
+
+        await this.notificationsService.create({
+            userId: campaign.creatorUserId,
+            title: 'New Supporter Joined',
+            message: `A new member just joined your campaign: ${campaign.title}`,
+            type: 'CAMPAIGN_UPDATE',
+            link: `/creator/campaigns/${campaign.id}`
         });
 
         return { joined: true, participant };

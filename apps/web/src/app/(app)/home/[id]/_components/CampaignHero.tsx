@@ -4,9 +4,10 @@ import { ArrowLeft } from "lucide-react";
 interface CampaignHeroProps {
     coverImageUrl: string;
     title: string;
+    backUrl?: string;
 }
 
-export function CampaignHero({ coverImageUrl, title }: CampaignHeroProps) {
+export function CampaignHero({ coverImageUrl, title, backUrl = "/list" }: CampaignHeroProps) {
     return (
         <div className="flex flex-col w-full">
             <div className="relative w-full aspect-[4/3] sm:aspect-video lg:aspect-[2.35/1] max-h-[70vh] rounded-none sm:mb-0 bg-gray-100">
@@ -29,7 +30,7 @@ export function CampaignHero({ coverImageUrl, title }: CampaignHeroProps) {
 
                 {/* Unified Back Button (Absolute) */}
                 <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-30">
-                    <Link href="/list" className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/70 backdrop-blur-md text-gray-900 hover:bg-white/90 transition-all font-bold text-xs sm:text-sm shadow-sm ring-1 ring-white/50 rounded-full">
+                    <Link href={backUrl} className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/70 backdrop-blur-md text-gray-900 hover:bg-white/90 transition-all font-bold text-xs sm:text-sm shadow-sm ring-1 ring-white/50 rounded-full">
                         <ArrowLeft className="w-4 h-4" />
                         <span className="hidden sm:inline">Back to Campaigns</span>
                         <span className="inline sm:hidden">Back</span>

@@ -422,6 +422,7 @@ export default function CampaignDetailPage({
                                     raisedPercent={raisedPercent}
                                     fundingGoal={fundingGoal}
                                     totalRaised={totalRaised}
+                                    participantsCount={campaign?.participantsCount}
                                     isJoined={isJoined}
                                     isLiked={isLiked}
                                     isCreator={currentUser?.id === campaign?.creatorUserId}

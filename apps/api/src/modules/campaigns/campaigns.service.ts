@@ -301,7 +301,7 @@ export class CampaignsService {
             }
           }
         },
-        _count: { select: { favorites: true, donations: true } }
+        _count: { select: { favorites: true, donations: true, participants: true } }
       }
     });
 
@@ -313,6 +313,7 @@ export class CampaignsService {
       progress: Number(campaign.fundingGoalAmount) > 0 ? (Number(campaign.currentRaisedAmount || 0) / Number(campaign.fundingGoalAmount)) * 100 : 0,
       favoritesCount: campaign._count.favorites,
       donationsCount: campaign._count.donations,
+      participantsCount: campaign._count.participants,
       _count: undefined,
     };
   }
