@@ -17,6 +17,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
 import { EkycModule } from './modules/ekyc/ekyc.module';
+import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { EkycModule } from './modules/ekyc/ekyc.module';
     WalletModule,
     WithdrawalsModule,
     EkycModule,
+    AdminDashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
