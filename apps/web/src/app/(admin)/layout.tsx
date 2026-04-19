@@ -18,6 +18,7 @@ import {
   Cog6ToothIcon,
   UserGroupIcon,
   TagIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 
 
@@ -42,6 +43,7 @@ function useAdminMenu(role: AdminRole): MenuItem[] {
   const commonMenuItems: MenuItem[] = [
     { name: translate('menu.dashboard'), href: '/admin/dashboard', icon: ChartBarIcon },
     { name: translate('menu.users'), href: '/admin/users', icon: UsersIcon },
+    { name: translate('menu.reports'), href: '/admin/report', icon: ExclamationCircleIcon },
     { name: translate('menu.campaigns'), href: '/admin/campaigns', icon: FlagIcon },
     { name: translate('menu.categories'), href: '/admin/categories', icon: TagIcon },
     { name: translate('menu.transactions'), href: '/admin/transactions', icon: ArrowsRightLeftIcon },
