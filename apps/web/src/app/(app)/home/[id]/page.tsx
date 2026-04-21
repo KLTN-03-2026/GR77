@@ -360,7 +360,7 @@ export default function CampaignDetailPage({
     };
 
     const getAvatar = (user: any) => {
-        return user?.profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}`;
+        return user?.profile?.avatarUrl || null;
     };
 
     /* ── Render ── */

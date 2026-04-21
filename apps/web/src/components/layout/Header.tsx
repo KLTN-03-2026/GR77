@@ -247,7 +247,13 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center justify-center p-0.5 rounded-full border-2 border-[#47c9e5] hover:shadow-md transition-all overflow-hidden"
                 >
-                  <img src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName || 'User'}`} alt="Avatar" className="h-6 w-6 sm:h-10 sm:w-10 rounded-full object-cover bg-white aspect-square" />
+                  {userAvatar ? (
+                    <img src={userAvatar} alt="Avatar" className="h-6 w-6 sm:h-10 sm:w-10 rounded-full object-cover bg-white relative z-0" />
+                  ) : (
+                    <div className="h-6 w-6 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
+                      <UserIcon className="w-4 h-4 sm:w-6 sm:h-6 text-cyan-300" />
+                    </div>
+                  )}
                 </button>
 
                 {isProfileOpen && (
@@ -255,7 +261,13 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
                     {/* Header: User Info - Compact */}
                     <div className="px-5 py-4 flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
-                        <img src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName || 'User'}`} alt="Avatar" className="h-full w-full object-cover bg-white" />
+                        {userAvatar ? (
+                          <img src={userAvatar} alt="Avatar" className="h-full w-full object-cover bg-white" />
+                        ) : (
+                          <div className="h-full w-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
+                            <UserIcon className="w-6 h-6 text-cyan-300" />
+                          </div>
+                        )}
                       </div>
                       <div className="overflow-hidden">
                         <p className="text-base font-bold text-[#1d2951] truncate leading-tight">{userName}</p>

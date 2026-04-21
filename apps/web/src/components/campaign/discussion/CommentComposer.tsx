@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { Send, XCircle } from "lucide-react";
+import { UserIcon } from "@heroicons/react/24/outline";
 
 interface CommentComposerProps {
     currentUser: any;
@@ -32,18 +33,18 @@ export function CommentComposer({
     // Cancel reply if clicked outside of this inline composer
     useEffect(() => {
         if (!isInline) return;
-        
+
         const handleMouseDown = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
             if (containerRef.current && !containerRef.current.contains(target)) {
                 // If it's another reply button, let it handle the action
                 if (target.closest('[data-reply-action="true"]')) return;
-                
+
                 // Otherwise close the inline composer
                 setReplyingTo(null);
             }
         };
-        
+
         document.addEventListener("mousedown", handleMouseDown);
         return () => document.removeEventListener("mousedown", handleMouseDown);
     }, [isInline, setReplyingTo]);
@@ -80,11 +81,17 @@ export function CommentComposer({
 
     return (
         <div ref={containerRef} className={`flex items-start gap-2.5 ${isInline ? 'mt-2 mb-1' : 'px-4 py-4 sm:px-6 sm:py-5 border-t border-gray-100 bg-white'}`}>
-            <img
-                src={getAvatar(currentUser)}
-                className={`${isInline ? 'w-6 h-6 mt-0.5' : 'w-8 h-8 sm:w-9 sm:h-9'} shrink-0 rounded-full object-cover`}
-                alt="avatar"
-            />
+            {getAvatar(currentUser) && !getAvatar(currentUser).includes('dicebear') ? (
+                <img
+                    src={getAvatar(currentUser)}
+                    className={`${isInline ? 'w-6 h-6 mt-0.5' : 'w-8 h-8 sm:w-9 sm:h-9'} shrink-0 rounded-full object-cover bg-white`}
+                    alt="avatar"
+                />
+            ) : (
+                <div className={`${isInline ? 'w-6 h-6 mt-0.5' : 'w-8 h-8 sm:w-9 sm:h-9'} shrink-0 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center`}>
+                    <UserIcon className="w-1/2 h-1/2 text-cyan-300" />
+                </div>
+            )}
             <div className={`flex-1 flex items-center bg-[#f0f2f5] rounded-[18px] px-3 py-1.5 min-w-0`}>
                 <textarea
                     ref={textareaRef}
