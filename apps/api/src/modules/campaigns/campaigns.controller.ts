@@ -7,8 +7,11 @@ import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { MinRole } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../auth/permissions.decorator';
+import { AdminPermission } from '../../constants/permissions';
 
 @Controller('campaigns')
 export class CampaignsController {
@@ -19,8 +22,9 @@ export class CampaignsController {
    * 
    * Admin-only list of all campaigns
    */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.CAMPAIGNS_VIEW)
   @Get('admin/all')
   findAllAdmin(@Query() query: GetCampaignsQueryDto) {
     return this.campaignsService.findAllAdmin(query);
@@ -29,8 +33,9 @@ export class CampaignsController {
   /**
    * POST /campaigns/:id/approve
    */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.CAMPAIGNS_APPROVE)
   @Post(':id/approve')
   approve(@Param('id') id: string, @Request() req: any) {
     const adminId = req.user.userId || req.user.sub;
@@ -40,8 +45,9 @@ export class CampaignsController {
   /**
    * POST /campaigns/:id/reject
    */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.CAMPAIGNS_APPROVE)
   @Post(':id/reject')
   reject(@Param('id') id: string, @Request() req: any, @Body('note') note: string) {
     const adminId = req.user.userId || req.user.sub;

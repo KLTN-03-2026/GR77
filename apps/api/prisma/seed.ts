@@ -13,25 +13,51 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('Starting seed process...')
 
-  // ================= ADMIN USER =================
-  const adminEmail = 'admin@kindlink.com';
-  const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'Admin123';
-  const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
+  // ================= ADMIN ACCOUNTS =================
+  const commonPassword = process.env.ADMIN_SEED_PASSWORD || 'Admin123';
+  const hashedPassword = await bcrypt.hash(commonPassword, 10);
 
-  const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {
-      password: hashedAdminPassword,
+  const adminUsers = [
+    {
+      email: 'superadmin@kindlink.com',
+      username: 'SuperAdmin',
+      role: 'SUPER_ADMIN',
+      permissions: [],
     },
-    create: {
-      email: adminEmail,
-      username: 'Admin',
-      password: hashedAdminPassword,
+    {
+      email: 'admin_campaign@kindlink.com',
+      username: 'CampaignManager',
       role: 'ADMIN',
-      isVerified: true,
+      permissions: ['CAMPAIGNS_VIEW', 'CAMPAIGNS_APPROVE', 'CATEGORIES_MANAGE'],
     },
-  });
-  console.log(`Seeded admin user: ${admin.email}`);
+    {
+      email: 'admin_finance@kindlink.com',
+      username: 'FinanceOfficer',
+      role: 'ADMIN',
+      permissions: ['TRANSACTIONS_VIEW', 'WITHDRAWALS_APPROVE', 'REVENUE_VIEW'],
+    },
+  ];
+
+  console.log('Seeding admin accounts...');
+  for (const u of adminUsers) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {
+        role: u.role as any,
+        permissions: u.permissions as any,
+        password: hashedPassword,
+      },
+      create: {
+        email: u.email,
+        username: u.username,
+        password: hashedPassword,
+        role: u.role as any,
+        permissions: u.permissions as any,
+        isVerified: true,
+      },
+    });
+    console.log(`Seeded account: ${u.email} [${u.role}]`);
+  }
 
   // ================= CATEGORIES =================
   const categories = [

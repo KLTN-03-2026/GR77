@@ -6,6 +6,7 @@ import {
     Param,
     UseGuards,
     Request,
+    Query,
     ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -26,9 +27,9 @@ export class UsersController {
      * - SUPER_ADMIN → trả về tất cả trừ chính mình
      */
     @Get()
-    async findAll(@Request() req: any) {
+    async findAll(@Request() req: any, @Query('roleGroup') roleGroup?: 'ADMINS' | 'MEMBERS') {
         const { sub, role } = req.user;
-        return this.usersService.findAll(sub, role);
+        return this.usersService.findAll(sub, role, roleGroup);
     }
 
     /**
@@ -82,5 +83,20 @@ export class UsersController {
     async unlock(@Param('id') id: string, @Request() req: any) {
         const { sub, role } = req.user;
         return this.usersService.unlock(id, sub, role);
+    }
+
+    /**
+     * PATCH /users/:id/permissions
+     * Chỉ SUPER_ADMIN được phép phân quyền.
+     */
+    @Post(':id/permissions')
+    @MinRole(Role.SUPER_ADMIN)
+    async updatePermissions(
+        @Param('id') id: string,
+        @Body('permissions') permissions: string[],
+        @Request() req: any,
+    ) {
+        const { sub, role } = req.user;
+        return this.usersService.updatePermissions(id, permissions, sub, role);
     }
 }
