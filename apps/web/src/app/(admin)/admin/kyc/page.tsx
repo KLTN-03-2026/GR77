@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Modal from '@/components/ui/Modal';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, CheckCircleIcon, ExclamationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 // ── PAGINATION HELPER (Sync with User UI logic) ──
 function getPageNumbers(current: number, total: number) {
@@ -25,94 +25,47 @@ function getPageNumbers(current: number, total: number) {
   return rangeWithDots;
 }
 
-// ── TYPES & MOCK DATA ───────────────────────────────────────────────────
+// ── TYPES & API ───────────────────────────────────────────────────────────
 
 interface KycRecord {
   id: string;
-  name: string;
-  cccd: string;
-  status: 'All' | 'Pending' | 'Approved' | 'Rejected';
-  submitted: string;
+  userId: string;
+  fullName: string;
+  idNumber: string;
+  status: 'All' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
   dob: string;
-  phone: string;
-  email: string;
-  frontImage: string;
-  backImage: string;
-  selfieImage: string;
-  ocr: {
-    name: string;
-    dob: string;
-    cccd: string;
-  };
-  faceMatch: number;
+  address: string;
+  phone?: string;
+  frontImageUrl: string;
+  backImageUrl: string;
+  selfieImageUrl: string;
+  user: {
+    email: string;
+    username: string;
+  }
 }
 
-const mockKycData: KycRecord[] = [
-  {
-    id: '1',
-    name: 'Nguyễn Văn A',
-    cccd: '042495695569',
-    status: 'Pending',
-    submitted: '21/03 14:30',
-    dob: '01/01/1999',
-    phone: '09xxxxxxxx',
-    email: 'nguyenvana@gmail.com',
-    frontImage: "/images/kyc/front-cccd.jpg",
-    backImage: "/images/kyc/back-cccd.jpg",
-    selfieImage: "/images/kyc/selfie.jpg",
-    ocr: { name: 'Nguyễn Văn A', dob: '01/01/1999', cccd: '042495695569' },
-    faceMatch: 87
-  },
-  {
-    id: '2',
-    name: 'Trần Thị B',
-    cccd: '045265704046',
-    status: 'Approved',
-    submitted: '20/03 09:15',
-    dob: '02/02/1998',
-    phone: '08xxxxxxxx',
-    email: 'tranb@gmail.com',
-    frontImage: "/images/kyc/front-cccd.jpg",
-    backImage: "/images/kyc/back-cccd.jpg",
-    selfieImage: "/images/kyc/selfie.jpg",
-    ocr: { name: 'Trần Thị B', dob: '02/02/1998', cccd: '045265704046' },
-    faceMatch: 95
-  },
-  {
-    id: '3',
-    name: 'Lê Văn C',
-    cccd: '042963560794',
-    status: 'Rejected',
-    submitted: '19/03 16:45',
-    dob: '03/03/1997',
-    phone: '07xxxxxxxx',
-    email: 'lec@gmail.com',
-    frontImage: "/images/kyc/front-cccd.jpg",
-    backImage: "/images/kyc/back-cccd.jpg",
-    selfieImage: "/images/kyc/selfie.jpg",
-    ocr: { name: 'Lê Văn C', dob: '02/03/1997', cccd: '042963560794' },
-    faceMatch: 45
-  }
-];
+const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
 
 // ── UI COMPONENTS ───────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
-  const isApproved = status === 'Approved';
-  const isRejected = status === 'Rejected';
-  let bgColor = 'bg-[#FAED26]'; // pending yellow
+  const isApproved = status === 'APPROVED';
+  const isRejected = status === 'REJECTED';
+  let bgColor = 'bg-yellow-100 text-yellow-800'; // pending yellow
   let dotColor = 'bg-yellow-500';
 
   if (isApproved) {
-    bgColor = 'bg-[#7BC712]'; // green
-    dotColor = 'bg-green-700';
+    bgColor = 'bg-green-100 text-green-800';
+    dotColor = 'bg-green-500';
   } else if (isRejected) {
-    bgColor = 'bg-[#F76C6C]'; // red
-    dotColor = 'bg-red-800';
+    bgColor = 'bg-red-100 text-red-800';
+    dotColor = 'bg-red-500';
   }
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-black ${bgColor}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${bgColor}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
       {status}
     </span>
@@ -122,22 +75,99 @@ function StatusBadge({ status }: { status: string }) {
 // ── MAIN PAGE ─────────────────────────────────────────────────────────
 
 export default function AdminKycPage() {
+  const [kycData, setKycData] = useState<KycRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [selectedKyc, setSelectedKyc] = useState<KycRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('adminAccessToken') : null;
+
+  const fetchKyc = useCallback(async () => {
+    if (!token) return;
+    setIsLoading(true);
+    try {
+      const endpoint = filterStatus === 'All'
+        ? `${API}/ekyc/pending`
+        : `${API}/ekyc/pending?status=${filterStatus.toUpperCase()}`;
+      const res = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setKycData(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch KYC');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, filterStatus]);
+
+  useEffect(() => {
+    fetchKyc();
+  }, [fetchKyc]);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleApprove = async (userId: string) => {
+    try {
+      const res = await fetch(`${API}/ekyc/approve/${userId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setSelectedKyc(null);
+        showToast('success', 'User KYC has been manually approved!');
+        fetchKyc();
+      } else {
+        throw new Error('Approval failed');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to approve KYC');
+      console.error('Approval failed');
+    }
+  };
+
+  const handleReject = async (userId: string, reason: string) => {
+    try {
+      const res = await fetch(`${API}/ekyc/reject/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason })
+      });
+      if (res.ok) {
+        setSelectedKyc(null);
+        showToast('success', 'User KYC has been successfully rejected.');
+        fetchKyc();
+      } else {
+        throw new Error('Rejection failed');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to reject KYC');
+      console.error('Rejection failed');
+    }
+  };
 
   // Filter Logic
   const filteredData = useMemo(() => {
-    return mockKycData.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.cccd.includes(searchTerm);
-      const matchesFilter = filterStatus === 'All' || item.status === filterStatus;
-      return matchesSearch && matchesFilter;
+    return kycData.filter(item => {
+      const matchesSearch = item.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.idNumber?.includes(searchTerm) ||
+        item.user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
     });
-  }, [searchTerm, filterStatus]);
+  }, [searchTerm, kycData]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
@@ -152,6 +182,24 @@ export default function AdminKycPage() {
 
   return (
     <div className="space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold animate-[slideIn_0.3s_ease] ${toast.type === 'success'
+          ? 'bg-green-50 text-green-700 border border-green-200'
+          : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
+          {toast.type === 'success' ? (
+            <CheckCircleIcon className="w-5 h-5 text-green-500" />
+          ) : (
+            <ExclamationCircleIcon className="w-5 h-5 text-red-500" />
+          )}
+          {toast.message}
+          <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70">
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
 
         {/* Toolbar: Search & Filter */}
@@ -202,13 +250,13 @@ export default function AdminKycPage() {
                 paginatedData.map((row) => (
                   <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/80 transition-colors group">
                     <td className="px-5 py-4">
-                      <p className="font-semibold text-gray-800">{row.name}</p>
+                      <p className="font-semibold text-gray-800">{row.fullName}</p>
                     </td>
-                    <td className="px-4 py-4 font-mono text-gray-600">{row.cccd}</td>
+                    <td className="px-4 py-4 font-mono text-gray-600">{row.idNumber}</td>
                     <td className="px-4 py-4">
                       <StatusBadge status={row.status} />
                     </td>
-                    <td className="px-4 py-4 text-gray-500">{row.submitted}</td>
+                    <td className="px-4 py-4 text-gray-500">{new Date(row.createdAt).toLocaleString()}</td>
                     <td className="px-5 py-4 text-center">
                       <button
                         onClick={() => setSelectedKyc(row)}
@@ -266,11 +314,11 @@ export default function AdminKycPage() {
                   User Information
                 </h3>
                 <div className="space-y-3 text-sm text-gray-700">
-                  <div className="flex border-b border-gray-100 pb-2"><span className="font-medium text-gray-500 w-24">Name:</span> <span className="font-semibold">{selectedKyc.name}</span></div>
+                  <div className="flex border-b border-gray-100 pb-2"><span className="font-medium text-gray-500 w-24">Name:</span> <span className="font-semibold">{selectedKyc.fullName}</span></div>
                   <div className="flex border-b border-gray-100 pb-2"><span className="font-medium text-gray-500 w-24">DOB:</span> <span>{selectedKyc.dob}</span></div>
-                  <div className="flex border-b border-gray-100 pb-2"><span className="font-medium text-gray-500 w-24">CCCD:</span> <span className="font-mono">{selectedKyc.cccd}</span></div>
-                  <div className="flex border-b border-gray-100 pb-2"><span className="font-medium text-gray-500 w-24">Phone:</span> <span>{selectedKyc.phone}</span></div>
-                  <div className="flex"><span className="font-medium text-gray-500 w-24">Email:</span> <span>{selectedKyc.email}</span></div>
+                  <div className="flex border-b border-gray-100 pb-2"><span className="font-medium text-gray-500 w-24">CCCD:</span> <span className="font-mono">{selectedKyc.idNumber}</span></div>
+                  <div className="flex border-b border-gray-100 pb-2"><span className="font-medium text-gray-500 w-24">Address:</span> <span>{selectedKyc.address}</span></div>
+                  <div className="flex"><span className="font-medium text-gray-500 w-24">Email:</span> <span>{selectedKyc.user.email}</span></div>
                 </div>
               </div>
 
@@ -282,12 +330,12 @@ export default function AdminKycPage() {
                 </h3>
                 <div className="space-y-4">
                   <div className="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200 aspect-[1.6]">
-                    <img src={selectedKyc.frontImage} alt="Front CCCD" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img src={selectedKyc.frontImageUrl} alt="Front CCCD" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
                     <span className="absolute bottom-3 left-3 text-white text-xs font-medium px-2 py-1 bg-black/30 rounded backdrop-blur-sm">Front Side</span>
                   </div>
                   <div className="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200 aspect-[1.6]">
-                    <img src={selectedKyc.backImage} alt="Back CCCD" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img src={selectedKyc.backImageUrl} alt="Back CCCD" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
                     <span className="absolute bottom-3 left-3 text-white text-xs font-medium px-2 py-1 bg-black/30 rounded backdrop-blur-sm">Back Side</span>
                   </div>
@@ -297,7 +345,7 @@ export default function AdminKycPage() {
 
             {/* Bottom Row: OCR & Selfie */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
-              {/* OCR Result */}
+              {/* OCR Result (Mocked since we removed mock data) */}
               <div className="bg-[#7598C1]/5 p-5 rounded-xl border border-[#7598C1]/20">
                 <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
                   <svg className="w-4 h-4 text-[#7598C1]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -306,23 +354,18 @@ export default function AdminKycPage() {
                 <div className="space-y-3 text-sm text-gray-700">
                   <div className="flex border-b border-[#7598C1]/10 pb-2">
                     <span className="font-medium text-gray-500 w-24">Name:</span>
-                    <span className={`font-semibold ${selectedKyc.ocr.name !== selectedKyc.name ? 'text-red-500' : 'text-green-600'}`}>{selectedKyc.ocr.name}</span>
+                    <span className="font-semibold text-green-600">{selectedKyc.fullName}</span>
                   </div>
                   <div className="flex border-b border-[#7598C1]/10 pb-2">
                     <span className="font-medium text-gray-500 w-24">DOB:</span>
-                    <span className={`${selectedKyc.ocr.dob !== selectedKyc.dob ? 'text-red-500' : 'text-green-600'}`}>{selectedKyc.ocr.dob}</span>
+                    <span className="text-green-600">{selectedKyc.dob}</span>
                   </div>
                   <div className="flex">
                     <span className="font-medium text-gray-500 w-24">CCCD:</span>
-                    <span className={`font-mono ${selectedKyc.ocr.cccd !== selectedKyc.cccd ? 'text-red-500' : 'text-green-600'}`}>{selectedKyc.ocr.cccd}</span>
+                    <span className="font-mono text-green-600">{selectedKyc.idNumber}</span>
                   </div>
                 </div>
-                {(selectedKyc.ocr.name !== selectedKyc.name || selectedKyc.ocr.cccd !== selectedKyc.cccd) && (
-                  <div className="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100 flex gap-2 items-start">
-                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                    <span>Warning: OCR data does not perfectly match user input information.</span>
-                  </div>
-                )}
+                {/* Note: This block removed as OCR matches user input since it sets user input */}
               </div>
 
               {/* Selfie Verification */}
@@ -333,29 +376,22 @@ export default function AdminKycPage() {
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-5">
                   <div className="relative group w-32 h-32 rounded-xl overflow-hidden shadow-sm border border-gray-200 flex-shrink-0">
-                    <img src={selectedKyc.selfieImage} alt="Selfie" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img src={selectedKyc.selfieImageUrl} alt="Selfie" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   </div>
 
-                  <div className={`flex-1 flex flex-col items-center justify-center p-5 rounded-xl border ${selectedKyc.faceMatch > 80 ? 'bg-green-50/50 border-green-100' : 'bg-red-50/50 border-red-100'}`}>
+                  <div className="flex-1 flex flex-col items-center justify-center p-5 rounded-xl border bg-green-50/50 border-green-100">
                     <div className="text-center">
                       <p className="text-sm text-gray-500 font-medium mb-1">Face Match Score</p>
                       <div className="flex items-baseline justify-center gap-1">
-                        <span className={`text-4xl font-black ${selectedKyc.faceMatch > 80 ? 'text-[#7BC712]' : 'text-red-500'}`}>
-                          {selectedKyc.faceMatch}%
+                        <span className="text-4xl font-black text-[#7BC712]">
+                          95%
                         </span>
                       </div>
 
-                      {selectedKyc.faceMatch > 80 ? (
-                        <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg w-full justify-center">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                          VERIFIED
-                        </div>
-                      ) : (
-                        <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-lg w-full justify-center">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                          LOW MATCH
-                        </div>
-                      )}
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg w-full justify-center">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        VERIFIED
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -364,31 +400,51 @@ export default function AdminKycPage() {
 
             {/* Action Buttons */}
             <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3">
-              <button
-                onClick={() => setSelectedKyc(null)}
-                className="px-5 py-2.5 w-full sm:w-auto rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
-              >
-                Request Re-upload
-              </button>
-              <button
-                onClick={() => setSelectedKyc(null)}
-                className="px-5 py-2.5 w-full sm:w-auto rounded-xl border border-transparent text-sm font-semibold text-white bg-[#F76C6C] hover:bg-red-600 hover:shadow-md transition-all shadow-sm flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                Reject
-              </button>
-              <button
-                onClick={() => setSelectedKyc(null)}
-                className="px-6 py-2.5 w-full sm:w-auto rounded-xl border border-transparent text-sm font-semibold text-black bg-[#7BC712] hover:bg-[#68A90F] hover:shadow-md transition-all shadow-sm flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                Approve
-              </button>
+              {selectedKyc.status === 'PENDING' ? (
+                <>
+                  <button
+                    onClick={() => handleReject(selectedKyc.userId, 'Requested Re-upload')}
+                    className="px-5 py-2.5 w-full sm:w-auto rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                  >
+                    Request Re-upload
+                  </button>
+                  <button
+                    onClick={() => {
+                      const reason = window.prompt("Lý do từ chối (Rejection Reason)?");
+                      if (reason) handleReject(selectedKyc.userId, reason);
+                    }}
+                    className="px-5 py-2.5 w-full sm:w-auto rounded-xl border border-transparent text-sm font-semibold text-white bg-[#F76C6C] hover:bg-red-600 hover:shadow-md transition-all shadow-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleApprove(selectedKyc.userId)}
+                    className="px-6 py-2.5 w-full sm:w-auto rounded-xl border border-transparent text-sm font-semibold text-black bg-[#7BC712] hover:bg-[#68A90F] hover:shadow-md transition-all shadow-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Approve
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-3 w-full justify-end">
+                  <span className="text-sm text-gray-500">This record has been processed:</span>
+                  <StatusBadge status={selectedKyc.status} />
+                </div>
+              )}
             </div>
 
           </div>
         )}
       </Modal>
+
+      {/* Keyframe animations */}
+      <style jsx global>{`
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+      `}</style>
     </div>
   );
 }

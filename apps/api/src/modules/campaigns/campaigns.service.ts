@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
@@ -85,7 +85,7 @@ export class CampaignsService {
       title: 'Campaign Approved!',
       message: `Your campaign "${campaign.title}" has been approved and is now live.`,
       type: 'CAMPAIGN_APPROVED',
-      link: `/campaigns/${campaign.id}`
+      link: `/creator/campaigns/${campaign.id}`
     });
 
     await this.mailService.sendCampaignStatusUpdateToUser(
@@ -114,7 +114,7 @@ export class CampaignsService {
       title: 'Campaign Revision Required',
       message: `Your campaign "${campaign.title}" was not approved. Reason: ${note}`,
       type: 'CAMPAIGN_REJECTED',
-      link: `/my-campaigns`
+      link: `/creator/campaigns/${campaign.id}`
     });
 
     await this.mailService.sendCampaignStatusUpdateToUser(
@@ -301,7 +301,7 @@ export class CampaignsService {
             }
           }
         },
-        _count: { select: { favorites: true, donations: true } }
+        _count: { select: { favorites: true, donations: true, participants: true } }
       }
     });
 
@@ -313,11 +313,30 @@ export class CampaignsService {
       progress: Number(campaign.fundingGoalAmount) > 0 ? (Number(campaign.currentRaisedAmount || 0) / Number(campaign.fundingGoalAmount)) * 100 : 0,
       favoritesCount: campaign._count.favorites,
       donationsCount: campaign._count.donations,
+      participantsCount: campaign._count.participants,
       _count: undefined,
     };
   }
 
   async create(userId: string, dto: CreateCampaignDto) {
+    if (dto.minimumDonationAmount > dto.fundingGoalAmount) {
+      throw new BadRequestException('Minimum donation amount cannot be greater than the funding goal amount');
+    }
+
+    // Check if user is KYC verified
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isKycVerified: true }
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.isKycVerified) {
+      throw new ForbiddenException('You must complete eKYC verification to create a campaign');
+    }
+
     const { galleryUrls, ...rest } = dto;
     const campaign = await (this.prisma as any).campaign.create({
       data: {
@@ -356,9 +375,27 @@ export class CampaignsService {
       throw new ForbiddenException('You do not have permission to update this campaign');
     }
 
+    // Validation for amounts if both are present or if only one is updated
+    const finalGoal = dto.fundingGoalAmount ?? Number(campaign.fundingGoalAmount);
+    const finalMin = dto.minimumDonationAmount ?? Number(campaign.minimumDonationAmount);
+
+    if (finalMin > finalGoal) {
+      throw new BadRequestException('Minimum donation amount cannot be greater than the funding goal amount');
+    }
+
+    const { galleryUrls, ...restDto } = dto;
+
     return (this.prisma as any).campaign.update({
       where: { id },
-      data: dto,
+      data: {
+        ...restDto,
+        ...(galleryUrls ? {
+          images: {
+            deleteMany: {},
+            create: galleryUrls.map((url, index) => ({ url, order: index }))
+          }
+        } : {})
+      },
     });
   }
 }

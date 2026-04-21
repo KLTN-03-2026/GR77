@@ -21,6 +21,7 @@ export default function Home() {
     password, setPassword,
     confirmPassword, setConfirmPassword,
     isLoading, isLoadingResend, error, success,
+    fieldErrors, setFieldErrors,
     handleRegister, handleResendEmail,
     cooldown, attemptsUsed
   } = useAuth();
@@ -236,7 +237,7 @@ export default function Home() {
 
             <div className="relative z-10 w-full p-8 lg:p-16 lg:pl-24 text-white">
               {success ? (
-                <OTPInput 
+                <OTPInput
                   email={email}
                   onResend={handleResendEmail}
                   isLoadingResend={isLoadingResend}
@@ -244,7 +245,7 @@ export default function Home() {
                   attemptsUsed={attemptsUsed}
                 />
               ) : (
-                <RegisterForm 
+                <RegisterForm
                   email={email}
                   setEmail={setEmail}
                   password={password}
@@ -253,6 +254,8 @@ export default function Home() {
                   setConfirmPassword={setConfirmPassword}
                   isLoading={isLoading}
                   error={error}
+                  fieldErrors={fieldErrors}
+                  setFieldErrors={setFieldErrors}
                   onSubmit={handleRegister}
                 />
               )}

@@ -18,6 +18,7 @@ import {
   Cog6ToothIcon,
   UserGroupIcon,
   TagIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 
 
@@ -42,6 +43,7 @@ function useAdminMenu(role: AdminRole): MenuItem[] {
   const commonMenuItems: MenuItem[] = [
     { name: translate('menu.dashboard'), href: '/admin/dashboard', icon: ChartBarIcon },
     { name: translate('menu.users'), href: '/admin/users', icon: UsersIcon },
+    { name: translate('menu.reports'), href: '/admin/report', icon: ExclamationCircleIcon },
     { name: translate('menu.campaigns'), href: '/admin/campaigns', icon: FlagIcon },
     { name: translate('menu.categories'), href: '/admin/categories', icon: TagIcon },
     { name: translate('menu.transactions'), href: '/admin/transactions', icon: ArrowsRightLeftIcon },
@@ -134,28 +136,32 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const roleLabel = adminRole === 'SUPER_ADMIN' ? 'SUPER ADMIN' : 'ADMIN';
 
   return (
-    <div className="min-h-screen bg-[#D0E3F9]/100 flex flex-col">
+    <div className="min-h-dvh bg-[#D0E3F9]/100 flex flex-col">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         menuItems={menuItems}
         roleLabel={roleLabel}
-        topSpacerClass="h-[128px]"
       />
 
-      <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
+
+      <div className={`flex flex-col min-h-dvh transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
+
         <Header
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           isOpen={sidebarOpen}
           roleLabel={roleLabel}
         />
-        <main className="pt-[128px] pb-24 lg:pb-4 flex-1">
+        <main className="pb-24 lg:pb-4 flex-1" style={{ paddingTop: 'var(--header-h)' }}>
+
           <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
-            <div className="mb-8">
-              <h1 className="text-3xl font-black text-[#24305E] uppercase tracking-wider">
-                {currentMenu.name}
-              </h1>
-            </div>
+            {!pathname.includes('/notifications') && (
+              <div className="mb-8">
+                <h1 className="text-3xl font-black text-[#24305E] uppercase tracking-wider">
+                  {currentMenu.name}
+                </h1>
+              </div>
+            )}
             {children}
           </div>
         </main>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { UserPlus, Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import styles from '@/components/campaign/CampaignCard.module.css';
 
 function formatCurrency(amount: number | string) {
   return Number(amount).toLocaleString('vi-VN');
@@ -70,12 +71,12 @@ export default function KindlinkJoinedPage() {
 
   return (
     <div className="w-full">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <UserPlus className="w-7 h-7 text-cyan-500" />
+      <div className="mb-2 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+          <UserPlus className="w-5 h-5 sm:w-7 sm:h-7 text-cyan-500" />
           Joined Campaigns
         </h1>
-        <p className="text-sm text-gray-400 mt-1 ml-9">Chiến dịch bạn đã tham gia</p>
+        <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-[22px] sm:ml-9">Chiến dịch bạn đã tham gia</p>
       </div>
 
       {isLoading ? (
@@ -92,48 +93,63 @@ export default function KindlinkJoinedPage() {
         </div>
       ) : (
         <>
-          <div className="space-y-6">
+          <div className="space-y-[2vw]">
             {campaigns.map((cp) => (
-              <div key={cp.participantId} className="flex flex-col md:flex-row bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-md transition-all group">
-                <div className="w-full md:w-[35%] p-4 h-56 md:h-auto">
-                  <div className="relative h-full w-full overflow-hidden rounded-[2rem]">
-                    <img src={cp.coverImageUrl || fallbackImage} alt={cp.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                  </div>
-                </div>
-
-                <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
-                  <div>
-                    <Link href={`/joined/${cp.id}`}>
-                      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors cursor-pointer leading-tight line-clamp-2">
-                        {cp.title}
-                      </h2>
-                    </Link>
-                    <p className="text-lg font-semibold text-gray-600 mb-6 italic">
-                      Funding Goal <span className="text-pink-500 not-italic">{formatCurrency(cp.fundingGoalAmount)} VND</span>
-                    </p>
-
-                    <div className="relative max-w-xs mb-6 group/input">
-                      <input
-                        type="text"
-                        readOnly
-                        value={`Start at: ${formatDate(cp.startAt)}`}
-                        className="w-full p-3 pr-10 border border-gray-200 rounded-2xl text-sm bg-gray-50/30 outline-none focus:border-blue-400 cursor-pointer text-gray-500 font-medium transition-all"
+              <div key={cp.participantId} className="group [container-type:inline-size] [container-name:hcard] md:aspect-[3.5/1] aspect-auto">
+                <div className="flex w-full h-full overflow-hidden bg-white rounded-[5cqi] md:rounded-[3.5cqi] border-[1.5px] border-[#e3e9f1] transition-all hover:border-cyan-400 md:flex-row flex-col">
+                  {/* Image Section */}
+                  <div className="h-full shrink-0 flex items-center md:w-[28cqi] md:min-w-[28cqi] md:p-[1.5cqi] w-full p-0">
+                    <div className="relative w-full overflow-hidden md:aspect-square aspect-[3/2] md:rounded-[2cqi] rounded-t-[5cqi] rounded-b-0">
+                      <img
+                        src={cp.coverImageUrl || fallbackImage}
+                        alt={cp.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <Calendar className="absolute right-4 top-3.5 w-4 h-4 text-gray-400 pointer-events-none group-hover/input:text-blue-500 transition-colors" />
+                      {cp.category && (
+                        <span className="absolute md:top-[1cqi] md:left-[1cqi] top-[3cqi] left-[3cqi] md:px-[1.4cqi] md:py-[0.4cqi] px-[3cqi] py-[1.5cqi] md:text-[1.3cqi] text-[3.5cqi] font-bold bg-white/90 text-black shadow-sm capitalize rounded-full">
+                          {cp.category}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-gray-50 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-gray-400 transition-all">
-                      <Clock className="w-4 h-4 transition-all" />
-                      <span className="text-sm font-medium italic">
-                        Joined at: <span className="text-gray-900 not-italic ml-1">{formatTime(cp.joinedAt)}</span>
-                      </span>
+                  {/* Content Section */}
+                  <div className="flex-1 flex flex-col justify-between min-w-0 overflow-hidden md:p-[1.8cqi_3cqi_1cqi] p-[4.5cqi]">
+                    <div>
+                      <Link href={`/joined/${cp.id}`}>
+                        <h2 className="font-extrabold text-gray-900 overflow-hidden text-ellipsis md:text-[2.4cqi] text-[6.8cqi] md:mb-[0.5cqi] mb-[2.5cqi] leading-[1.3] cursor-pointer" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          {cp.title}
+                        </h2>
+                      </Link>
+                      <p className="font-bold text-slate-700 md:text-[1.8cqi] text-[6cqi] md:mt-[0.5cqi] mt-[2.5cqi] leading-[1.5]">
+                        Goal: <span className="text-[#14ABD1] font-black">{formatCurrency(cp.fundingGoalAmount)} VND</span>
+                      </p>
+
+                      <div className="relative w-full md:max-w-[36cqi] md:mt-[1cqi] mt-[3.5cqi]">
+                        <input
+                          type="text"
+                          readOnly
+                          value={`Start at: ${formatDate(cp.startAt)}`}
+                          className="w-full border border-gray-200 bg-gray-50/30 text-gray-400 font-medium outline-none cursor-pointer md:rounded-[1.6cqi] md:px-[1.4cqi] md:py-[0.8cqi] md:pr-[3.5cqi] px-[4cqi] py-[3cqi] pr-[9cqi] md:text-[1.4cqi] text-[4.5cqi] rounded-[3cqi]"
+                        />
+                        <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none md:right-[1.2cqi] right-[3.5cqi]">
+                          <Calendar className="text-gray-400 md:w-[1.6cqi] md:h-[1.6cqi] w-[5cqi] h-[5cqi]" />
+                        </div>
+                      </div>
                     </div>
-                    <Link href={`/joined/${cp.id}`} className="text-blue-500 font-bold text-sm flex items-center gap-1 transition-all active:scale-95 hover:underline hover:text-blue-600">
-                      View Detail
-                      <ChevronRight className="w-4 h-4 transition-all" />
-                    </Link>
+
+                    <div className="flex flex-wrap items-center justify-between border-t border-gray-100 md:p-0 md:pt-[1cqi] md:mt-[0.8cqi] p-[3.5cqi] mt-[3.5cqi] gap-[3cqi] md:gap-[1cqi] md:flex-row flex-col md:items-center items-start">
+                      <div className="flex items-center italic text-gray-400 md:text-[1.4cqi] text-[4.5cqi] gap-[1.5cqi] md:gap-[0.5cqi]">
+                        <Clock className="shrink-0 md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
+                        <span>
+                          Joined at: <span className="not-italic text-gray-900 md:ml-[0.2cqi] ml-[0.5cqi]">{formatTime(cp.joinedAt)}</span>
+                        </span>
+                      </div>
+                      <Link href={`/joined/${cp.id}`} className="inline-flex items-center font-bold text-blue-500 no-underline hover:underline hover:text-blue-600 transition-all md:text-[1.4cqi] text-[4cqi] gap-[0.2cqi]">
+                        View Detail
+                        <ChevronRight className="md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>

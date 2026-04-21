@@ -268,13 +268,23 @@ export function useCampaignDetail(id: string, currentUser: any) {
         }
 
         const parentId = replyingTo?.id ?? null;
+        let commentText = newComment.trim();
 
-        let finalContent = newComment.trim();
+        let finalContent = commentText;
         if (replyingTo) {
-            const replyName = replyingTo.user?.profile?.firstName
-                ? `${replyingTo.user.profile.firstName} ${replyingTo.user.profile.lastName || ""}`.trim()
+            const name = replyingTo.user?.profile?.firstName
+                ? `${replyingTo.user.profile.firstName} ${replyingTo.user.profile.lastName ?? ""}`.trim()
                 : replyingTo.user?.username;
-            finalContent = `@[${replyName}] ${finalContent}`;
+            const tag = `@${name}`;
+            
+            // If user still has the tag at start, we replace it with @[Name] for backend
+            if (commentText.startsWith(tag)) {
+                const messageOnly = commentText.slice(tag.length).trim();
+                finalContent = `@[${name}] ${messageOnly}`;
+            } else {
+                // They deleted the tag, but we ARE still replying to this parent, just no @ tag
+                finalContent = commentText;
+            }
         }
 
         setIsCommenting(true);

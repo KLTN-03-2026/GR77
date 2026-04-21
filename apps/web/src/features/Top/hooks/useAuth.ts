@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { authService } from "../services/authService";
-import { validatePasswordsMatch } from "../utils/validation";
+import { validateEmail, validatePassword } from "@/lib/validation/auth";
 import { useTimer } from "./useTimer";
 
 export const useAuth = () => {
@@ -13,15 +13,23 @@ export const useAuth = () => {
 
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const { timeLeft: cooldown, setTimeLeft: setCooldown } = useTimer(0, true);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    setFieldErrors({});
 
-    const validationError = validatePasswordsMatch(password, confirmPassword);
-    if (validationError) {
-      setError(validationError);
+    const emailErr = validateEmail(email);
+    const passErr = validatePassword(password);
+    let confirmErr = "";
+    if (password !== confirmPassword) {
+      confirmErr = "Passwords do not match.";
+    }
+
+    if (emailErr || passErr || confirmErr) {
+      setFieldErrors({ email: emailErr, password: passErr, confirmPassword: confirmErr });
       setIsLoading(false);
       return;
     }
@@ -62,6 +70,7 @@ export const useAuth = () => {
     confirmPassword, setConfirmPassword,
     isLoading, isLoadingResend: isLoading,
     error, success,
+    fieldErrors, setFieldErrors,
     handleRegister,
     handleResendEmail,
     cooldown, attemptsUsed

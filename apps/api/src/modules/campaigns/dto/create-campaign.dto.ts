@@ -10,9 +10,9 @@ export class CreateCampaignDto {
     @IsString()
     description: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
-    category: string;
+    category?: string;
 
     @IsNotEmpty()
     @IsString()

@@ -16,6 +16,8 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
+import { EkycModule } from './modules/ekyc/ekyc.module';
+import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
     DonationsModule,
     WalletModule,
     WithdrawalsModule,
+    EkycModule,
+    AdminDashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

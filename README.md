@@ -122,5 +122,4 @@ Khi làm việc với Database, bạn cần sử dụng các lệnh sau (chạy 
 ## 🤝 Đóng góp dự án
 Nếu bạn gặp vấn đề hoặc muốn đề xuất tính năng mới, vui lòng tạo Issue hoặc gửi Pull Request. Cảm ơn bạn đã tham gia phát triển **Kindlink**!
 
-## Cổng Backend : http://localhost:3001 : cd apps/api run pnpm start:dev
-## Cổng Frontend : http://localhost:3000 : run pnpm dev:web
+## Wellcome Kindlink: https://kindlink-web.vercel.app

@@ -77,7 +77,7 @@ export class PasswordService {
         }
 
         // Check if new password is the same as the current one
-        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        const isSamePassword = user.password ? await bcrypt.compare(newPassword, user.password) : false;
         if (isSamePassword) {
             throw new ConflictException('You have used this password recently. Please choose a different password.');
         }

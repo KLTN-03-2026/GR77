@@ -1,0 +1,9 @@
+/* ================================================================
+   CampaignCard Style System
+   Most styles have been migrated to Tailwind CSS for efficiency.
+   This file is now minimal.
+   ================================================================ */
+
+/* Container Queries are handled via Tailwind arbitrary values in JSX:
+   [container-type:inline-size] [container-name:hcard]
+*/

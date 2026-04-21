@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Trash2, AlertCircle, MessageSquare } from "lucide-react";
+import { UserIcon } from "@heroicons/react/24/outline";
 import { CommentComposer } from "./CommentComposer";
 
 function getRelativeTime(dateString?: string) {
@@ -69,88 +70,83 @@ export function CommentItem({
     const isCreator = comment.userId === campaign?.creatorUserId;
     const isOwn = currentUser?.id === comment.userId;
 
-    const avatarSize = depth === 0 ? "w-10 h-10" : "w-8 h-8";
-    const bubbleText = depth === 0 ? "text-sm" : "text-xs";
+    const avatarSize = depth === 0 ? "w-9 h-9" : "w-7 h-7";
+    const bubbleText = depth === 0 ? "text-[13.5px]" : "text-[12.5px]";
 
     return (
-        <div className={`flex gap-3 group ${depth > 0 ? "mt-1" : ""}`}>
-            <img
-                src={getAvatar(comment.user)}
-                className={`${avatarSize} shrink-0 rounded-full border border-gray-200 object-cover mt-0.5`}
-                alt={displayName}
-            />
+        <div className={`flex gap-2 group ${depth > 0 ? "mt-2" : ""}`}>
+            {getAvatar(comment.user) && !getAvatar(comment.user).includes('dicebear') ? (
+                <img
+                    src={getAvatar(comment.user)}
+                    className={`${avatarSize} shrink-0 rounded-full object-cover mt-0.5 bg-white`}
+                    alt={displayName}
+                />
+            ) : (
+                <div className={`${avatarSize} shrink-0 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mt-0.5`}>
+                    <UserIcon className="w-1/2 h-1/2 text-cyan-300" />
+                </div>
+            )}
             <div className="flex-1 min-w-0">
-                {/* Header: Name and Actions */}
-                <div className="flex items-center justify-between gap-2 mb-1.5 pl-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`font-bold text-gray-900 ${bubbleText}`}>{displayName}</span>
-                        {(() => {
-                            const match = comment.content.match(/^@\[([^\]]+)\] /);
-                            if (match && depth > 0) {
-                                return (
-                                    <>
-                                        <span className="text-gray-400 text-xs">›</span>
-                                        <span className="font-bold text-blue-500 text-sm">{match[1]}</span>
-                                    </>
-                                );
-                            }
-                            return null;
-                        })()}
-                        {isCreator && (
-                            <span className="text-[9px] bg-blue-100 text-blue-600 px-2 py-0.5 font-black uppercase tracking-wider ml-1">
-                                Creator
-                            </span>
-                        )}
+                {/* Bubble - Facebook style row with Actions */}
+                <div className="flex items-center gap-2 group/bubble max-w-full">
+                    <div className="bg-[#f0f2f5] px-3 py-2 rounded-[18px] inline-block max-w-[calc(100%-32px)]">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="font-bold text-gray-900 text-[13px]">{displayName}</span>
+                            {isCreator && (
+                                <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0 rounded-[4px] font-black uppercase tracking-tight">
+                                    Creator
+                                </span>
+                            )}
+                        </div>
+                        <p className={`text-gray-800 ${bubbleText} leading-snug whitespace-pre-wrap break-words`}>
+                            {(() => {
+                                // Match @[Name] or @Name and make it bold
+                                const tagRegex = /^(@\[[^\]]+\]|@[^\s]+)/;
+                                const match = comment.content.match(tagRegex);
+                                if (match) {
+                                    const fullTag = match[1];
+                                    const rest = comment.content.slice(fullTag.length);
+                                    // Strip @ and []
+                                    const cleanName = fullTag.replace(/^@\[?|\]$/g, '');
+                                    return (
+                                        <>
+                                            <b className="text-[#1877f2] mr-1">{cleanName}</b>
+                                            {rest}
+                                        </>
+                                    );
+                                }
+                                return comment.content;
+                            })()}
+                        </p>
                     </div>
-                    {/* Actions */}
-                    <div className="flex gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                    {/* Quick Reactions/Actions - In-flow for stable layout */}
+                    <div className="flex gap-1 opacity-50 sm:opacity-0 group-hover/bubble:opacity-100 transition-opacity shrink-0">
                         {isOwn ? (
-                            <button
-                                onClick={() => onDelete(comment.id)}
-                                className="p-1 text-red-400 hover:bg-red-50 transition-colors"
-                                title="Xóa"
-                            >
+                            <button onClick={() => onDelete(comment.id)} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
                                 <Trash2 className="w-3.5 h-3.5" />
                             </button>
                         ) : (
-                            <button
-                                onClick={() => onReport(comment.id)}
-                                className="p-1 text-gray-300 hover:text-yellow-500 hover:bg-yellow-50 transition-colors"
-                                title="Báo cáo"
-                            >
+                            <button onClick={() => onReport(comment.id)} className="p-1 text-gray-400 hover:text-yellow-600 transition-colors">
                                 <AlertCircle className="w-3.5 h-3.5" />
                             </button>
                         )}
                     </div>
                 </div>
 
-                {/* Bubble - Sharp box */}
-                <div className="bg-white border border-gray-200 px-5 py-3 rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.02)] inline-block w-full max-w-full">
-                    <p className={`text-gray-700 ${bubbleText} leading-relaxed whitespace-pre-wrap`}>
-                        {(() => {
-                            const match = comment.content.match(/^@\[([^\]]+)\] ([\s\S]*)/);
-                            if (match) {
-                                return <>{match[2]}</>;
-                            }
-                            return comment.content;
-                        })()}
-                    </p>
-                </div>
-
-                {/* Reaction bar */}
-                <div className="flex items-center gap-4 mt-2 ml-2 flex-wrap">
-                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-                        {getRelativeTime(comment.createdAt)}
+                {/* Sub-bar: Time & Reply button */}
+                <div className="flex flex-wrap items-center gap-3 mt-1 ml-3">
+                    <span className="text-[11px] font-medium text-gray-500 uppercase whitespace-nowrap">
+                        {getRelativeTime(comment.createdAt).replace(" TRƯỚC", "")}
                     </span>
                     <button
                         onClick={() => {
                             setShowReplies(true);
                             onReply(comment);
                         }}
-                        data-reply-action="true"
-                        className="text-[10px] uppercase font-bold text-blue-500 hover:text-blue-700 tracking-wider transition-colors"
+                        className="text-[11px] font-bold text-gray-600 hover:underline tracking-tight transition-colors whitespace-nowrap"
                     >
-                        TRẢ LỜI
+                        Trả lời
                     </button>
                 </div>
 
