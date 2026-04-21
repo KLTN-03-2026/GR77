@@ -20,6 +20,7 @@ import NotificationBell from './NotificationBell';
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 import { useGlobalAuth } from '@/contexts/AuthContext';
 import { API_BASE_URL } from '@/lib/constants/endpoints';
+import UserAvatar from '@/components/common/UserAvatar';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -245,35 +246,23 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center justify-center p-0.5 rounded-full border-2 border-[#47c9e5] hover:shadow-md transition-all overflow-hidden"
+                  className="flex items-center justify-center transition-all"
                 >
-                  {userAvatar ? (
-                    <img src={userAvatar} alt="Avatar" className="h-6 w-6 sm:h-10 sm:w-10 rounded-full object-cover bg-white relative z-0" />
-                  ) : (
-                    <div className="h-6 w-6 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-                      <UserIcon className="w-4 h-4 sm:w-6 sm:h-6 text-cyan-300" />
-                    </div>
-                  )}
+                  <UserAvatar src={userAvatar} role={user?.role} className="sm:scale-x-110 sm:scale-y-110" />
                 </button>
+
 
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Header: User Info - Compact */}
                     <div className="px-5 py-4 flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
-                        {userAvatar ? (
-                          <img src={userAvatar} alt="Avatar" className="h-full w-full object-cover bg-white" />
-                        ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-                            <UserIcon className="w-6 h-6 text-cyan-300" />
-                          </div>
-                        )}
-                      </div>
+                      <UserAvatar src={userAvatar} role={user?.role} size="md" />
                       <div className="overflow-hidden">
                         <p className="text-base font-bold text-[#1d2951] truncate leading-tight">{userName}</p>
                         <p className="text-xs font-medium text-[#8ea1c1] truncate mt-0.5">{user?.email}</p>
                       </div>
                     </div>
+
 
                     <div className="border-t border-gray-50"></div>
 

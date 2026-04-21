@@ -14,6 +14,7 @@ model User {
   provider           AuthProvider          @default(LOCAL)
   googleId           String?               @unique
   role               Role                  @default(USER)
+  permissions        String[]              @default([])
   createdAt          DateTime              @default(now()) @map("created_at")
   updatedAt          DateTime              @updatedAt @map("updated_at")
   isVerified         Boolean               @default(false) @map("is_verified")

@@ -5,6 +5,9 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../auth/permissions.decorator';
+import { AdminPermission } from '../../constants/permissions';
 
 @Controller('ekyc')
 @UseGuards(JwtAuthGuard)
@@ -29,22 +32,25 @@ export class EkycController {
 
     // Admin endpoints
     @Get('pending')
-    @UseGuards(RolesGuard)
+    @UseGuards(RolesGuard, PermissionsGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @RequirePermissions(AdminPermission.USERS_VIEW)
     async getAll(@Query('status') status?: string) {
         return this.ekycService.getAll(status);
     }
 
     @Patch('approve/:userId')
-    @UseGuards(RolesGuard)
+    @UseGuards(RolesGuard, PermissionsGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @RequirePermissions(AdminPermission.EKYC_APPROVE)
     async approve(@Param('userId') userId: string) {
         return this.ekycService.approve(userId);
     }
 
     @Patch('reject/:userId')
-    @UseGuards(RolesGuard)
+    @UseGuards(RolesGuard, PermissionsGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @RequirePermissions(AdminPermission.EKYC_APPROVE)
     async reject(@Param('userId') userId: string, @Body('reason') reason: string) {
         return this.ekycService.reject(userId, reason);
     }
