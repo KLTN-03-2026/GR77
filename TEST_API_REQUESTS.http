@@ -1,0 +1,168 @@
+// eKYC Verification Feature - Test Requests
+// Copy & paste these into your API testing tool (Postman, Insomnia, etc.)
+// Or use the curl commands provided
+
+// ============================================================
+// TEST 1: Create Campaign WITHOUT eKYC Verification
+// Expected: 403 Forbidden
+// ============================================================
+
+POST http://localhost:3001/campaigns
+Authorization: Bearer {YOUR_JWT_TOKEN}
+Content-Type: application/json
+
+{
+  "title": "Test Campaign",
+  "description": "This should fail - user not eKYC verified",
+  "category": "Healthcare",
+  "locationText": "Hanoi, Vietnam",
+  "fundingGoalAmount": 1000000,
+  "minimumDonationAmount": 10000,
+  "startAt": "2026-04-15T00:00:00Z",
+  "endAt": "2026-05-15T00:00:00Z",
+  "autoCloseWhenGoalReached": true
+}
+
+// Expected Response (403 Forbidden):
+// {
+//   "message": "You must complete eKYC verification to create a campaign",
+//   "error": "Forbidden",
+//   "statusCode": 403
+// }
+
+// ============================================================
+// TEST 2: Check User eKYC Status
+// Expected: 200 OK with isKycVerified field
+// ============================================================
+
+GET http://localhost:3001/auth/me
+Authorization: Bearer {YOUR_JWT_TOKEN}
+
+// Expected Response (200 OK):
+// {
+//   "id": "user-uuid",
+//   "email": "user@example.com",
+//   "username": "username",
+//   "isVerified": true,
+//   "isKycVerified": false,  // ← This is the field we check
+//   "role": "USER",
+//   "createdAt": "2026-04-12T10:00:00Z",
+//   "updatedAt": "2026-04-12T10:00:00Z",
+//   "profile": { ... },
+//   "wallet": { ... },
+//   ...
+// }
+
+// ============================================================
+// TEST 3: Update User eKYC Status (Admin/Database Only)
+// In a real system, this would be done through FaceID/ID verification
+// For testing, you can manually update the database:
+// ============================================================
+
+-- Connect to your database and run:
+-- UPDATE users SET is_kyc_verified = true 
+-- WHERE email = 'your-test-email@example.com';
+
+-- Then verify:
+-- SELECT id, email, is_kyc_verified FROM users 
+-- WHERE email = 'your-test-email@example.com';
+
+// ============================================================
+// TEST 4: Create Campaign WITH eKYC Verification
+// Expected: 201 Created with campaign object
+// ============================================================
+
+POST http://localhost:3001/campaigns
+Authorization: Bearer {YOUR_JWT_TOKEN}
+Content-Type: application/json
+
+{
+  "title": "Successful Campaign",
+  "description": "This should succeed - user IS eKYC verified",
+  "category": "Healthcare",
+  "locationText": "Hanoi, Vietnam",
+  "fundingGoalAmount": 5000000,
+  "minimumDonationAmount": 50000,
+  "startAt": "2026-04-15T00:00:00Z",
+  "endAt": "2026-06-15T00:00:00Z",
+  "autoCloseWhenGoalReached": true,
+  "galleryUrls": [
+    "https://example.com/image1.jpg",
+    "https://example.com/image2.jpg"
+  ]
+}
+
+// Expected Response (201 Created):
+// {
+//   "id": "campaign-uuid",
+//   "title": "Successful Campaign",
+//   "description": "...",
+//   "status": "PENDING",  // Pending admin review
+//   "creatorUserId": "user-uuid",
+//   "createdAt": "2026-04-12T10:30:45Z",
+//   ...
+// }
+
+// ============================================================
+// CURL Commands for Quick Testing
+// ============================================================
+
+// 1. Login to get token:
+curl -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+
+// 2. Test eKYC rejection (without verification):
+curl -X POST http://localhost:3001/campaigns \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title":"Test",
+    "description":"Test",
+    "category":"Healthcare",
+    "locationText":"Hanoi",
+    "fundingGoalAmount":1000000,
+    "minimumDonationAmount":10000,
+    "startAt":"2026-04-15T00:00:00Z",
+    "endAt":"2026-05-15T00:00:00Z"
+  }'
+
+// 3. Get user info to check eKYC status:
+curl -X GET http://localhost:3001/auth/me \
+  -H "Authorization: Bearer {TOKEN}"
+
+// ============================================================
+// Error Scenarios to Test
+// ============================================================
+
+// Scenario 1: Invalid JWT Token
+// Expected: 401 Unauthorized
+POST http://localhost:3001/campaigns
+Authorization: Bearer invalid.token.here
+Content-Type: application/json
+{ "title": "Test", ... }
+
+// Response: 401 Unauthorized
+
+// ============================================================
+// Scenario 2: No Authorization Header
+// Expected: 401 Unauthorized
+POST http://localhost:3001/campaigns
+Content-Type: application/json
+{ "title": "Test", ... }
+
+// Response: 401 Unauthorized
+
+// ============================================================
+// Success Metrics
+// ============================================================
+
+// ✅ Test Pass Conditions:
+// 1. User NOT verified: GET 403 with "eKYC verification" message
+// 2. User IS verified: GET 201 with campaign ID
+// 3. /auth/me returns isKycVerified field correctly
+// 4. Form is disabled in UI when isKycVerified = false
+// 5. Banner shows in UI when isKycVerified = false
+// 6. Submit button disabled until eKYC complete
+
+// ============================================================
