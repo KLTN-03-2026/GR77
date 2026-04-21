@@ -11,14 +11,14 @@ model User {
   email              String                @unique
   username           String
   password           String?
-  provider           AuthProvider          @default(LOCAL)
-  googleId           String?               @unique
   role               Role                  @default(USER)
-  permissions        String[]              @default([])
   createdAt          DateTime              @default(now()) @map("created_at")
   updatedAt          DateTime              @updatedAt @map("updated_at")
   isVerified         Boolean               @default(false) @map("is_verified")
+  googleId           String?               @unique
+  provider           AuthProvider          @default(LOCAL)
   isKycVerified      Boolean               @default(false) @map("is_kyc_verified")
+  permissions        String[]              @default([])
   participations     CampaignParticipant[]
   viewHistories      CampaignViewHistory[]
   createdCampaigns   Campaign[]            @relation("CampaignCreator")
@@ -31,10 +31,10 @@ model User {
   reportsSubmitted   Report[]              @relation("ReportSubmitter")
   reportsReceived    Report[]              @relation("ReportTarget")
   actionLogs         UserActionLog[]
+  ekyc               UserEkyc?
   profile            UserProfile?
   security           UserSecurity?
   wallet             UserWallet?
-  ekyc               UserEkyc?
   walletTransactions WalletTransaction[]
 
   @@map("users")
@@ -391,6 +391,26 @@ model UserActionLog {
   @@map("user_action_logs")
 }
 
+model UserEkyc {
+  id              String     @id @default(uuid())
+  userId          String     @unique @map("user_id")
+  status          EkycStatus @default(PENDING)
+  idNumber        String?    @map("id_number") @db.VarChar(20)
+  fullName        String?    @map("full_name") @db.VarChar(255)
+  dob             String?    @map("dob") @db.VarChar(20)
+  gender          String?    @db.VarChar(10)
+  address         String?    @db.VarChar(500)
+  frontImageUrl   String?    @map("front_image_url") @db.VarChar(500)
+  backImageUrl    String?    @map("back_image_url") @db.VarChar(500)
+  selfieImageUrl  String?    @map("selfie_image_url") @db.VarChar(500)
+  rejectionReason String?    @map("rejection_reason") @db.VarChar(500)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_ekyc")
+}
+
 enum WithdrawalMethod {
   WALLET
   BANK
@@ -476,6 +496,7 @@ enum ReportStatus {
   RESOLVED
   DISMISSED
 }
+
 enum AuthProvider {
   LOCAL
   GOOGLE
@@ -485,24 +506,4 @@ enum EkycStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-model UserEkyc {
-  id              String     @id @default(uuid())
-  userId          String     @unique @map("user_id")
-  status          EkycStatus @default(PENDING)
-  idNumber        String?    @map("id_number") @db.VarChar(20)
-  fullName        String?    @map("full_name") @db.VarChar(255)
-  dob             String?    @map("dob") @db.VarChar(20)
-  gender          String?    @db.VarChar(10)
-  address         String?    @db.VarChar(500)
-  frontImageUrl   String?    @map("front_image_url") @db.VarChar(500)
-  backImageUrl    String?    @map("back_image_url") @db.VarChar(500)
-  selfieImageUrl  String?    @map("selfie_image_url") @db.VarChar(500)
-  rejectionReason String?    @map("rejection_reason") @db.VarChar(500)
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_ekyc")
 }
