@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Trash2, AlertCircle, MessageSquare } from "lucide-react";
+import { UserIcon } from "@heroicons/react/24/outline";
 import { CommentComposer } from "./CommentComposer";
 
 function getRelativeTime(dateString?: string) {
@@ -74,11 +75,17 @@ export function CommentItem({
 
     return (
         <div className={`flex gap-2 group ${depth > 0 ? "mt-2" : ""}`}>
-            <img
-                src={getAvatar(comment.user)}
-                className={`${avatarSize} shrink-0 rounded-full object-cover mt-0.5`}
-                alt={displayName}
-            />
+            {getAvatar(comment.user) && !getAvatar(comment.user).includes('dicebear') ? (
+                <img
+                    src={getAvatar(comment.user)}
+                    className={`${avatarSize} shrink-0 rounded-full object-cover mt-0.5 bg-white`}
+                    alt={displayName}
+                />
+            ) : (
+                <div className={`${avatarSize} shrink-0 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mt-0.5`}>
+                    <UserIcon className="w-1/2 h-1/2 text-cyan-300" />
+                </div>
+            )}
             <div className="flex-1 min-w-0">
                 {/* Bubble - Facebook style row with Actions */}
                 <div className="flex items-center gap-2 group/bubble max-w-full">

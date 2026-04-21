@@ -1,133 +1,236 @@
 'use client';
 
-import { mockCampaigns } from '@/lib/mock';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CalendarIcon } from '@heroicons/react/24/outline';
-import styles from '@/components/campaign/CampaignCard.module.css';
+import {
+  CalendarIcon,
+  HeartIcon,
+  ClockIcon,
+  UserGroupIcon,
+  ArrowTrendingUpIcon,
+  ArrowRightIcon,
+  MagnifyingGlassIcon,
+  StarIcon,
+  BriefcaseIcon
+} from '@heroicons/react/24/outline';
+import { useGlobalAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/lib/constants/endpoints';
+
+const HERO_IMAGES = [
+  '/images/banner-top.jpg',
+  '/images/background-login.jpg',
+  '/images/hero-home.png'
+];
 
 export default function CampaignsPage() {
-  const favoriteCampaigns = mockCampaigns.slice(0, 4);
-  const activityCampaigns = mockCampaigns.slice(1, 5);
-  const joinedCampaigns = mockCampaigns.slice(2, 6);
-  const myCampaigns = mockCampaigns.slice(0, 4);
+  const { user } = useGlobalAuth();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [favoriteCampaigns, setFavoriteCampaigns] = useState<any[]>([]);
 
-  const sections = [
-    {
-      title: 'Favorite Campaigns',
-      icon: (
-        <svg className="w-5 h-5 sm:w-7 sm:h-7 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
-      ),
-      campaigns: favoriteCampaigns,
-      borderColor: '#f58cc2ff',
-      shadowColor: '#f58cc2ff',
-      bgColor: '#FFDBED',
-      linkHref: '/favorites',
-      linkText: 'View favorite campaigns',
-      linkColor: 'text-pink-500 hover:text-pink-600',
-    },
-    {
-      title: 'Activity History',
-      icon: (
-        <svg className="w-5 h-5 sm:w-7 sm:h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      campaigns: activityCampaigns,
-      borderColor: '#76b2fdff',
-      shadowColor: '#76b2fdff',
-      bgColor: '#D9E5FF',
-      linkHref: '/activity',
-      linkText: 'View activity history',
-      linkColor: 'text-blue-500 hover:text-blue-600',
-    },
-    {
-      title: 'Joined Campaigns',
-      icon: (
-        <svg className="w-5 h-5 sm:w-7 sm:h-7 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      campaigns: joinedCampaigns,
-      borderColor: '#31b61fff',
-      shadowColor: '#31b61fff',
-      bgColor: '#D9F3D7',
-      linkHref: '/joined',
-      linkText: 'View joined campaigns',
-      linkColor: 'text-green-500 hover:text-green-600',
-    },
-    {
-      title: 'My Campaigns',
-      icon: (
-        <svg className="w-5 h-5 sm:w-7 sm:h-7 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-      campaigns: myCampaigns,
-      borderColor: '#C688EB',
-      shadowColor: '#C688EB',
-      bgColor: '#E8D9FF',
-      linkHref: '/creator/campaigns',
-      linkText: 'View my campaigns',
-      linkColor: 'text-purple-500 hover:text-purple-600',
-    },
-  ];
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+  const [activityHistory, setActivityHistory] = useState<any[]>([]);
+  const [joinedCampaigns, setJoinedCampaigns] = useState<any[]>([]);
+  const [myCampaigns, setMyCampaigns] = useState<any[]>([]);
+  const [trendingCampaigns, setTrendingCampaigns] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      setIsLoading(true);
+      try {
+        const headers = { 'Authorization': `Bearer ${token}` };
+        const apiUrl = API_BASE_URL;
+
+        const mapCampaign = (c: any) => ({
+          id: c.id,
+          title: c.title,
+          image: c.coverImageUrl || c.image || 'https://via.placeholder.com/600x400',
+          amountRaised: Number(c.currentRaisedAmount || c.currentAmount || c.stats?.totalAmount || 0),
+          startDate: c.startAt || c.createdAt,
+          targetAmount: Number(c.fundingGoalAmount || c.targetAmount || 0),
+        });
+
+        const mapList = (data: any) => {
+          const items = Array.isArray(data) ? data : (data.items || []);
+          return items.map((item: any) => mapCampaign(item.campaign || item));
+        };
+
+        const [favRes, actRes, joinRes, myRes, trendRes] = await Promise.all([
+          fetch(`${apiUrl}/favorites?limit=4`, { headers }),
+          fetch(`${apiUrl}/view-histories?limit=4`, { headers }),
+          fetch(`${apiUrl}/participants/me?limit=4`, { headers }),
+          fetch(`${apiUrl}/campaigns/me/list?limit=4`, { headers }),
+          fetch(`${apiUrl}/campaigns?limit=4&sortBy=trending`, { headers }),
+        ]);
+
+        if (favRes.ok) setFavoriteCampaigns(mapList(await favRes.json()));
+        if (actRes.ok) setActivityHistory(mapList(await actRes.json()));
+        if (joinRes.ok) setJoinedCampaigns(mapList(await joinRes.json()));
+        if (myRes.ok) setMyCampaigns(mapList(await myRes.json()));
+        if (trendRes.ok) setTrendingCampaigns(mapList(await trendRes.json()));
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-slate-50">
+        <div className="relative">
+          <div className="animate-ping absolute inset-0 rounded-full h-12 w-12 bg-indigo-400 opacity-20"></div>
+          <div className="relative rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeSections = [
+    { title: 'Trending Missions', data: trendingCampaigns, color: 'indigo', icon: ArrowTrendingUpIcon, link: '/campaigns' },
+    { title: 'Saved for Later', data: favoriteCampaigns, color: 'pink', icon: HeartIcon, link: '/favorites' },
+    { title: 'Your Communities', data: joinedCampaigns, color: 'emerald', icon: UserGroupIcon, link: '/joined' },
+    { title: 'Managed by You', data: myCampaigns, color: 'purple', icon: BriefcaseIcon, link: '/creator/campaigns' },
+  ].filter(section => section.data.length > 0);
+
+  const hasContent = activeSections.length > 0;
 
   return (
-    <div className="w-full">
-      {sections.map((section, idx) => (
-        <div key={idx} className="mb-20">
-          {/* Section Title */}
-          <div className="flex items-center gap-1.5 sm:gap-3 mb-3 sm:mb-5 pl-2 sm:pl-0">
-            {section.icon}
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{section.title}</h2>
+    <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 ${hasContent ? 'space-y-16' : 'h-[calc(100vh-120px)] flex flex-col justify-between'} bg-slate-50/50`}>
+
+      {/* 1. Hero / Welcome Section */}
+      <section className="relative group flex-shrink-0">
+        <div className="absolute inset-0 bg-slate-950 rounded-[2.5rem] overflow-hidden shadow-xl">
+          {HERO_IMAGES.map((src, idx) => (
+            <Image
+              key={src}
+              src={src}
+              alt={`Impact Banner ${idx + 1}`}
+              fill
+              priority={idx === 0}
+              className={`object-cover transition-all duration-1000 ease-in-out ${idx === currentSlide ? 'opacity-60 scale-100' : 'opacity-0 scale-105'
+                }`}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/40 to-transparent"></div>
+        </div>
+
+        <div className="relative z-10 px-6 pt-10 pb-6 sm:px-12 sm:pt-16 sm:pb-8 flex flex-col md:flex-row gap-8 items-center justify-between min-h-[220px] sm:min-h-[280px]">
+          <div className="flex-1 space-y-2 text-center md:text-left">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-white leading-tight tracking-tight drop-shadow-md">
+              Hello, <span className="italic text-indigo-200">
+                {user?.profile?.firstName || user?.username || 'Challenger'}
+              </span> !
+            </h1>
+            <p className="text-slate-300 text-sm font-medium max-w-lg leading-relaxed mx-auto md:mx-0">
+              Welcome back to Kindlink. Let's continue making magic together.
+            </p>
           </div>
 
-          {/* Card Container */}
-          <div
-            className="px-4 sm:px-8 pt-6 sm:pt-9 pb-3"
-            style={{
-              borderTop: `2px solid ${section.borderColor}`,
-              borderLeft: `2px solid ${section.borderColor}`,
-              borderRight: `2px solid ${section.borderColor}`,
-              borderRadius: '1.5rem 0 0 0',
-              boxShadow: `inset 0 4px 4px 0 ${section.shadowColor}`,
-              background: section.bgColor,
-            }}
-          >
-            {/* Cards — responsive carousel on mobile, grid on desktop */}
-            <div className="flex sm:grid overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none flex-nowrap sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-[3%] mb-0 sm:mb-[2%] pb-2 sm:pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {section.campaigns.map((campaign) => (
-                <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className="block shrink-0 w-[70vw] sm:w-auto snap-center sm:snap-align-none [container-type:inline-size] [container-name:vcard]">
-                  <div className="overflow-hidden shadow-sm hover:shadow-xl transition-all duration-200 hover:scale-[1.02] rounded-[5cqi]" style={{ background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255, 255, 255, 0.73)' }}>
-                    <div className="relative w-full aspect-[3/2]">
-                      <Image
-                        src={campaign.image}
-                        alt={campaign.title}
-                        fill
-                        className="object-cover"
+          <div className="flex-shrink-0 flex flex-wrap gap-3 justify-center">
+            {[
+              { icon: HeartIcon, val: favoriteCampaigns.length, color: 'text-pink-400' },
+              { icon: UserGroupIcon, val: joinedCampaigns.length, color: 'text-emerald-400' },
+              { icon: BriefcaseIcon, val: myCampaigns.length, color: 'text-orange-300' }
+            ].map((stat, i) => (
+              <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 p-3 px-5 rounded-2xl flex items-center gap-2">
+                <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                <div className="text-lg font-semibold text-white">{stat.val}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Search / Discover Shortcut */}
+      <div className="flex justify-center -mt-6 relative z-20 px-4 flex-shrink-0">
+        <div className="w-full max-w-2xl bg-slate-50 p-1.5 rounded-full shadow-[0_30px_60px_-20px_rgba(0,0,0,0.15)] border border-slate-200 flex items-center gap-2 hover:-translate-y-1 transition-all duration-300">
+          <div className="flex-1 flex items-center gap-3 pl-6">
+            <MagnifyingGlassIcon className="w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm chiến dịch..."
+              className="w-full bg-transparent outline-none text-slate-800 placeholder:text-slate-400 font-medium py-2 text-xs"
+            />
+          </div>
+          <button className="px-6 py-2 bg-blue-600 text-white text-xs font-semibold rounded-full hover:bg-blue-700 transition-all active:scale-95">
+            Tìm ngay
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Content Sections */}
+      {hasContent ? (
+        activeSections.map((section, idx) => (
+          <section key={idx} className="space-y-8">
+            <div className="flex items-end justify-between px-2">
+              <div className="space-y-1">
+                <div className={`flex items-center gap-2`}>
+                  <section.icon className={`w-5 h-5 text-blue-500`} />
+                  <h2 className="text-2xl font-semibold tracking-tight text-slate-800">{section.title}</h2>
+                </div>
+                <div className="h-0.5 w-12 bg-blue-100 rounded-full overflow-hidden">
+                  <div className={`h-full w-2/3 bg-blue-400 rounded-full`}></div>
+                </div>
+              </div>
+              <Link href={section.link} className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors group">
+                Xem tất cả
+                <ArrowRightIcon className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {section.data.map((c: any) => (
+                <Link key={c.id} href={`/home/${c.id}`} className="group/card block h-full hover:-translate-y-1.5 transition-transform duration-500">
+                  <div className="relative h-full flex flex-col bg-white rounded-2xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 overflow-hidden hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)]">
+                    <div className="relative aspect-[16/11] overflow-hidden bg-slate-50">
+                      <img
+                        src={c.image}
+                        alt={c.title}
+                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-700"
                       />
                     </div>
 
-                    <div className="text-center flex flex-col p-[5cqi] gap-[3cqi]">
-                      <h3 className="font-extrabold text-black overflow-hidden text-ellipsis whitespace-nowrap text-[7.5cqi] leading-[1.3]">
-                        {campaign.title}
+                    <div className="p-5 flex flex-col flex-1 space-y-4">
+                      <h3 className="text-lg font-medium text-slate-800 leading-snug line-clamp-2 min-h-[3rem] group-hover/card:text-blue-600 transition-colors">
+                        {c.title}
                       </h3>
 
-                      <div>
-                        <div className="flex items-center justify-center gap-[1.5cqi]">
-                          <span className="text-slate-700 font-bold text-[5.5cqi]">Goal:</span>
-                          <span className="font-black text-[#14ABD1] text-[7cqi]">
-                            ${campaign.amountRaised.toLocaleString()}
-                          </span>
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between items-end">
+                            <span className="text-[9px] font-medium uppercase tracking-wider text-slate-400">Tiến độ</span>
+                            <span className="text-sm font-semibold text-slate-700">
+                              ${c.amountRaised.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                              style={{ width: `${Math.min(100, c.targetAmount ? (c.amountRaised / c.targetAmount) * 100 : 0)}%` }}
+                            ></div>
+                          </div>
                         </div>
 
-                        <div className="flex items-center justify-center mt-[4cqi]">
-                          <div className="inline-flex items-center bg-black/[0.08] border border-black/15 text-black/70 gap-[2cqi] rounded-full p-[2cqi_4cqi] text-[5cqi]">
-                            <CalendarIcon className="w-[5cqi] h-[5cqi]" />
-                            <span>{campaign.startDate ? new Date(campaign.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}</span>
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                            <CalendarIcon className="w-3.5 h-3.5" />
+                            {c.startDate ? new Date(c.startDate).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' }) : 'Sớm nhất'}
+                          </div>
+                          <div className="text-[10px] font-semibold text-blue-500 italic pb-0.5 border-b border-blue-100">
+                            Chi tiết
                           </div>
                         </div>
                       </div>
@@ -136,22 +239,31 @@ export default function CampaignsPage() {
                 </Link>
               ))}
             </div>
-
-            {/* View link */}
-            <div className="text-right mt-1 sm:mt-4 pb-1 sm:pb-2">
-              <Link
-                href={section.linkHref}
-                className={`${section.linkColor} font-medium inline-flex items-center gap-2 text-sm`}
-              >
-                {section.linkText}
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+          </section>
+        ))
+      ) : (
+        /* 4. Empty State Message */
+        <section className="relative transition-all flex-1 flex flex-col items-center justify-center mt-8 pb-12">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] h-[300px] bg-blue-50/40 blur-[100px] rounded-full -z-10"></div>
+          <div className="max-w-2xl px-6 text-center space-y-6">
+            <div className="flex justify-center mb-6">
+              <div className="text-6xl animate-bounce hover:scale-125 transition-transform duration-300 cursor-default drop-shadow-sm">
+                😉
+              </div>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-medium text-slate-700 leading-tight">
+              Chưa có chiến dịch nào đang diễn ra, <br />
+              <span className="italic text-blue-500/80">hãy quay lại sau nhé!</span>
+            </h2>
+            <div className="flex items-center justify-center gap-3">
+              <div className="h-px w-8 bg-slate-100"></div>
+              <span className="text-[10px] font-medium italic text-slate-400">Kindlink Community</span>
+              <div className="h-px w-8 bg-slate-100"></div>
             </div>
           </div>
-        </div>
-      ))}
+        </section>
+      )}
+
     </div>
   );
 }

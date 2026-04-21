@@ -6,12 +6,12 @@ import { API_BASE_URL } from "@/lib/constants/endpoints";
 
 export function useCampaignComments(campaignId: string) {
     const router = useRouter();
-    
+
     const [comments, setComments] = useState<any[]>([]);
     const [newComment, setNewComment] = useState("");
     const [replyingTo, setReplyingTo] = useState<any>(null);
     const [isCommenting, setIsCommenting] = useState(false);
-    
+
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
     const [reportReason, setReportReason] = useState("");
@@ -102,7 +102,7 @@ export function useCampaignComments(campaignId: string) {
     };
 
     const getAvatar = (user: any) => {
-        return user?.profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}`;
+        return user?.profile?.avatarUrl || null;
     };
 
     return {

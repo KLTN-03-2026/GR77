@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
+    UserIcon,
     ArrowLeftIcon,
     MapPinIcon,
     TagIcon,
@@ -141,7 +142,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
         ? `${campaign.creatorUser.profile.firstName || ''} ${campaign.creatorUser.profile.lastName || ''}`.trim() || campaign.creatorUser.username
         : campaign.creatorUser?.username || 'Người dùng';
 
-    const creatorAvatar = campaign.creatorUser?.profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${campaign.creatorUserId}`;
+    const creatorAvatar = campaign.creatorUser?.profile?.avatarUrl || null;
 
     const nextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -276,11 +277,17 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         {/* Input Area */}
                         <div>
                             <div className="flex gap-4">
-                                <img
-                                    src={creatorAvatar}
-                                    alt="Your Avatar"
-                                    className="h-12 w-12 rounded-full object-cover ring-4 ring-white shadow-md border border-gray-100"
-                                />
+                                {creatorAvatar ? (
+                                    <img
+                                        src={creatorAvatar}
+                                        alt="Your Avatar"
+                                        className="h-12 w-12 rounded-full object-cover ring-4 ring-white shadow-md border border-gray-100 bg-white"
+                                    />
+                                ) : (
+                                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center ring-4 ring-white shadow-md border border-gray-100">
+                                        <UserIcon className="w-6 h-6 text-cyan-300" />
+                                    </div>
+                                )}
                                 <div className="flex-1 space-y-4">
                                     <input
                                         type="text"
@@ -374,7 +381,13 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         <div className="pt-8 border-t border-gray-100 text-left">
                             <div className="flex items-center gap-4 group">
                                 <div className="relative">
-                                    <img src={creatorAvatar} alt={creatorName} className="h-14 w-14 rounded-full object-cover shadow-lg border-2 border-white transition-transform group-hover:scale-105" />
+                                    {creatorAvatar ? (
+                                        <img src={creatorAvatar} alt={creatorName} className="h-14 w-14 rounded-full object-cover shadow-lg border-2 border-white transition-transform group-hover:scale-105 bg-white" />
+                                    ) : (
+                                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center shadow-lg border-2 border-white transition-transform group-hover:scale-105">
+                                            <UserIcon className="w-7 h-7 text-cyan-300" />
+                                        </div>
+                                    )}
                                     {campaign.creatorUser?.isVerified && (
                                         <div className="absolute -bottom-1.5 -right-1.5 bg-blue-500 rounded-full p-1 shadow-md border-2 border-white">
                                             <CheckBadgeIcon className="h-3.5 w-3.5 text-white" />
