@@ -214,6 +214,7 @@ export default function AdminCampaignsPage() {
           <table className="w-full text-sm text-left border-collapse">
             <thead>
               <tr className="bg-white border-b border-gray-300">
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Chiến dịch</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Lĩnh vực</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Người tạo</th>
@@ -225,9 +226,12 @@ export default function AdminCampaignsPage() {
             </thead>
             <tbody className="divide-y divide-gray-300">
               {loading ? (
-                <tr><td colSpan={7} className="py-20 text-center text-gray-400 italic font-medium">Đang đồng bộ dữ liệu chiến dịch...</td></tr>
-              ) : filteredCampaigns.map((campaign) => (
+                <tr><td colSpan={8} className="py-20 text-center text-gray-400 italic font-medium">Đang đồng bộ dữ liệu chiến dịch...</td></tr>
+              ) : filteredCampaigns.map((campaign, index) => (
                 <tr key={campaign.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors group">
+                  <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">
+                    {index + 1}
+                  </td>
                   <td className="px-5 py-3 border-r border-gray-300"><span className="font-black text-gray-800 leading-snug">{campaign.title}</span></td>
                   <td className="px-4 py-3 border-r border-gray-300">
                     <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-black uppercase">
