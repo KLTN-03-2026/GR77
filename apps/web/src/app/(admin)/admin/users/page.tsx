@@ -396,6 +396,7 @@ export default function AdminUsersPage() {
             <table className="w-full text-sm text-left border-collapse">
               <thead>
                 <tr className="bg-white border-b border-gray-300">
+                  <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
                   <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Danh tính</th>
                   <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Vai trò</th>
                   <th className="px-4 py-3 font-bold text-black border-r border-gray-300">KYC</th>
@@ -406,11 +407,14 @@ export default function AdminUsersPage() {
               <tbody className="divide-y divide-gray-300">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu…</td>
+                    <td colSpan={6} className="px-5 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu…</td>
                   </tr>
                 ) : (
-                  paginatedUsers.map((user) => (
+                  paginatedUsers.map((user, index) => (
                     <tr key={user.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors">
+                      <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
                       <td className="px-5 py-3 border-r border-gray-300">
                         <div className="flex items-center gap-3">
                           <UserAvatar role={user.rawRole} src={user.avatarUrl} />
