@@ -288,6 +288,7 @@ export default function AdminsPage() {
                     <table className="w-full text-sm text-left border-collapse">
                         <thead>
                             <tr className="bg-white border-b border-gray-300">
+                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px] text-center w-16">ID</th>
                                 <th className="px-6 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px]">Danh tính</th>
                                 <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px]">Vai trò</th>
                                 <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px]">Trạng thái</th>
@@ -297,9 +298,10 @@ export default function AdminsPage() {
                         </thead>
                         <tbody className="divide-y divide-gray-300">
                             {loading ? (
-                                <tr><td colSpan={5} className="px-6 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu...</td></tr>
-                            ) : filteredAdmins.length > 0 ? filteredAdmins.map((admin) => (
+                                <tr><td colSpan={6} className="px-6 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu...</td></tr>
+                            ) : filteredAdmins.length > 0 ? filteredAdmins.map((admin, index) => (
                                 <tr key={admin.id} className="bg-[#fbfbfb] hover:bg-white transition-colors group">
+                                    <td className="px-4 py-4 text-center font-bold text-gray-500">{index + 1}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-4">
                                             <UserAvatar role={admin.rawRole} src={admin.avatarUrl} />
@@ -354,7 +356,7 @@ export default function AdminsPage() {
                                     </td>
                                 </tr>
                             )) : (
-                                <tr><td colSpan={5} className="px-6 py-32 text-center text-gray-400">Không tìm thấy quản trị viên nào phù hợp</td></tr>
+                                <tr><td colSpan={6} className="px-6 py-32 text-center text-gray-400">Không tìm thấy quản trị viên nào phù hợp</td></tr>
                             )}
                         </tbody>
                     </table>

@@ -358,6 +358,7 @@ export default function AdminReportsPage() {
             <table className="w-full text-sm text-left border-collapse">
               <thead>
                 <tr className="bg-white border-b border-gray-300">
+                  <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
                   <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Người báo cáo</th>
                   <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Người bị báo cáo</th>
                   <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Loại</th>
@@ -370,11 +371,14 @@ export default function AdminReportsPage() {
               <tbody className="divide-y divide-gray-300">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-20 text-center text-gray-400 italic">Đang tải danh sách báo cáo…</td>
+                    <td colSpan={8} className="px-5 py-20 text-center text-gray-400 italic">Đang tải danh sách báo cáo…</td>
                   </tr>
                 ) : (
-                  paginatedReports.map((report) => (
+                  paginatedReports.map((report, index) => (
                     <tr key={report.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors">
+                      <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
                       <td className="px-5 py-3 border-r border-gray-300">
                         <div>
                           <p className="font-bold text-gray-800 leading-tight">{report.submitterName}</p>
