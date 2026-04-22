@@ -8,6 +8,7 @@ import Logo from "@/components/common/logo";
 import { useAuth } from "@/features/Top/hooks/useAuth";
 import RegisterForm from "@/features/Top/components/RegisterForm";
 import OTPInput from "@/features/Top/components/OTPInput";
+import CampaignListSection from "@/features/campaigns/components/CampaignListSection";
 
 const islandMoments = Island_Moments({
   weight: "400",
@@ -143,42 +144,42 @@ export default function Home() {
         <div className="max-w-[1240px] mx-auto px-4 relative z-10">
 
           {/* Stats Overlay Content */}
-          <div className="relative min-h-[400px] lg:min-h-[600px] flex flex-col justify-center gap-10 lg:gap-16 lg:pl-10 pb-20 lg:pb-0">
+          <div className="relative min-h-[400px] lg:min-h-[600px] flex flex-col justify-center gap-8 lg:gap-16 lg:pl-10 pb-20 lg:pb-0">
             {/* Stat 1 */}
             <div className="flex flex-col">
-              <div className="flex items-center gap-4">
-                <h3 className="text-4xl lg:text-5xl font-black text-[#001D4A]">99+</h3>
-                <span className="text-xl lg:text-3xl font-extrabold text-[#001D4A]">Campaigns Launched</span>
+              <div className="flex items-center gap-3 lg:gap-4">
+                <h3 className="text-3xl lg:text-5xl font-black text-[#001D4A]">99+</h3>
+                <span className="text-lg lg:text-3xl font-extrabold text-[#001D4A]">Campaigns Launched</span>
               </div>
-              <p className="text-lg lg:text-2xl italic font-bold text-gray-800 ml-16 mt-1">Building impact through blockchain</p>
+              <p className="text-sm sm:text-base lg:text-2xl italic font-bold text-gray-800 ml-8 lg:ml-16 mt-1">Building impact through blockchain</p>
             </div>
 
             {/* Stat 2 */}
             <div className="flex flex-col">
-              <div className="flex items-center gap-4">
-                <h3 className="text-4xl lg:text-5xl font-black text-[#001D4A]">99+</h3>
-                <span className="text-xl lg:text-3xl font-extrabold text-[#001D4A]">Global Communities</span>
+              <div className="flex items-center gap-3 lg:gap-4">
+                <h3 className="text-3xl lg:text-5xl font-black text-[#001D4A]">99+</h3>
+                <span className="text-lg lg:text-3xl font-extrabold text-[#001D4A]">Global Communities</span>
               </div>
-              <p className="text-lg lg:text-2xl italic font-bold text-gray-800 ml-16 mt-1">Connecting donors worldwide</p>
+              <p className="text-sm sm:text-base lg:text-2xl italic font-bold text-gray-800 ml-8 lg:ml-16 mt-1">Connecting donors worldwide</p>
             </div>
 
             {/* Stat 3 */}
             <div className="flex flex-col">
-              <div className="flex items-center gap-4">
-                <h3 className="text-4xl lg:text-5xl font-black text-[#001D4A]">$99M+</h3>
-                <span className="text-xl lg:text-3xl font-extrabold text-[#001D4A]">Raised Securely</span>
+              <div className="flex items-center gap-3 lg:gap-4">
+                <h3 className="text-3xl lg:text-5xl font-black text-[#001D4A]">$99M+</h3>
+                <span className="text-lg lg:text-3xl font-extrabold text-[#001D4A]">Raised Securely</span>
               </div>
-              <p className="text-lg lg:text-2xl italic font-bold text-gray-800 ml-16 mt-4">Transparent Decentralized Trusted</p>
+              <p className="text-sm sm:text-base lg:text-2xl italic font-bold text-gray-800 ml-8 lg:ml-16 mt-2 lg:mt-4">Transparent Decentralized Trusted</p>
             </div>
 
             {/* Button - Enhanced size and effects */}
             <div className="relative mt-8 lg:mt-0 lg:absolute lg:top-1/2 lg:-translate-y-1/2 right-0 lg:right-16 group flex justify-center lg:block">
               <button
                 onClick={() => document.getElementById('signup-form')?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-10 lg:px-14 py-4 lg:py-6 bg-white border-2 border-cyan-400 text-gray-900 font-black italic text-lg lg:text-3xl rounded-full flex items-center gap-4 shadow-2xl hover:scale-110 active:scale-95 transition-all animate-glow group-hover:bg-cyan-50"
+                className="px-8 lg:px-14 py-3 lg:py-6 bg-white border-2 border-cyan-400 text-gray-900 font-black italic text-base lg:text-3xl rounded-full flex items-center gap-2 lg:gap-4 shadow-2xl hover:scale-110 active:scale-95 transition-all animate-glow group-hover:bg-cyan-50"
               >
                 go to donate
-                <span className="text-yellow-400 text-2xl lg:text-4xl transition-transform animate-star inline-block">★</span>
+                <span className="text-yellow-400 text-xl lg:text-4xl transition-transform animate-star inline-block">★</span>
               </button>
             </div>
           </div>
@@ -193,7 +194,7 @@ export default function Home() {
           <div className="absolute bottom-[35%] right-[28%] w-20 h-20 bg-[#F0706A] rounded-full z-0 hidden lg:block" />
           <div className="absolute bottom-[20%] right-[38%] w-10 h-16 bg-[#77CC88] rounded-full z-0 hidden lg:block" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 lg:gap-x-12 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-y-8 lg:gap-x-12 relative z-10">
             {kpiCards.map((card, idx) => (
               <div
                 key={idx}
@@ -206,12 +207,12 @@ export default function Home() {
                   ${idx === 5 ? "rounded-[30px] lg:rounded-none lg:rounded-br-[100px]" : ""}
                 `}
               >
-                <h4 className="text-lg lg:text-xl font-black text-gray-900 mb-6 text-center lg:text-left leading-tight">
+                <h4 className="text-base sm:text-lg lg:text-xl font-black text-gray-900 mb-4 lg:mb-6 text-center lg:text-left leading-tight">
                   {card.title.split(' ').map((word, i) => (
                     <span key={i} className="block">{word}</span>
                   ))}
                 </h4>
-                <div className="text-4xl lg:text-6xl font-black text-[#F8E300] text-center lg:text-left mt-auto">
+                <div className="text-3xl sm:text-4xl lg:text-6xl font-black text-[#F8E300] text-center lg:text-left mt-auto">
                   {card.value}
                 </div>
               </div>
@@ -220,10 +221,13 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 6b. Campaign List Section */}
+      <CampaignListSection />
+
       {/* 7. Sign Up Section - Increased right gap, centered elements */}
-      <section id="signup-form" className="relative py-12 lg:py-20 bg-white">
+      <section id="signup-form" className="relative py-10 lg:py-20 bg-white">
         <div className="w-full lg:w-[90%] mr-auto group">
-          <div className="relative w-full lg:min-h-[550px] rounded-tr-[100px] rounded-br-[100px] lg:rounded-tr-[150px] lg:rounded-br-[150px] overflow-hidden shadow-2xl flex items-center transition-all duration-700 ease-out hover:scale-[1.01] hover:-translate-y-3 hover:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]">
+          <div className="relative w-[95%] mx-auto lg:mx-0 lg:w-full lg:min-h-[550px] rounded-[30px] lg:rounded-none lg:rounded-tr-[150px] lg:rounded-br-[150px] overflow-hidden shadow-2xl flex items-center transition-all duration-700 ease-out hover:scale-[1.01] hover:-translate-y-3 hover:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]">
             {/* Background */}
             <div className="absolute inset-0">
               <Image
@@ -235,7 +239,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400 mix-blend-multiply opacity-90" />
             </div>
 
-            <div className="relative z-10 w-full p-8 lg:p-16 lg:pl-24 text-white">
+            <div className="relative z-10 w-full p-6 sm:p-8 lg:p-16 lg:pl-24 text-white">
               {success ? (
                 <OTPInput
                   email={email}
