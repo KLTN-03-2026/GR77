@@ -238,6 +238,7 @@ export default function AdminKycPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-white">
+                <th className="text-center px-4 py-3.5 font-semibold text-gray-700 w-16">ID</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-700">User Name</th>
                 <th className="text-left px-4 py-3.5 font-semibold text-gray-700">CCCD Number</th>
                 <th className="text-left px-4 py-3.5 font-semibold text-gray-700">Status</th>
@@ -247,8 +248,11 @@ export default function AdminKycPage() {
             </thead>
             <tbody>
               {paginatedData.length > 0 ? (
-                paginatedData.map((row) => (
+                paginatedData.map((row, index) => (
                   <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/80 transition-colors group">
+                    <td className="px-4 py-4 text-center font-bold text-gray-500">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
                     <td className="px-5 py-4">
                       <p className="font-semibold text-gray-800">{row.fullName}</p>
                     </td>
@@ -269,7 +273,7 @@ export default function AdminKycPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-5 py-8 text-center text-gray-500">
                     No records found.
                   </td>
                 </tr>
