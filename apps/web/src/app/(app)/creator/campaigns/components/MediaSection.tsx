@@ -67,9 +67,9 @@ export function MediaSection({
                             accept="image/*"
                             className="hidden"
                         />
-                        {fieldErrors.coverImage && (
-                            <p className="text-red-500 text-xs font-semibold mt-1 ml-1">{fieldErrors.coverImage}</p>
-                        )}
+                        <p className={`text-red-500 text-xs font-semibold mt-1 ml-1 min-h-[16px] transition-opacity ${fieldErrors.coverImage ? 'opacity-100' : 'opacity-0'}`}>
+                            {fieldErrors.coverImage || ' '}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -113,9 +113,9 @@ export function MediaSection({
                         multiple
                         className="hidden"
                     />
-                    {fieldErrors.gallery && (
-                        <p className="text-red-500 text-xs font-semibold mt-2 ml-1">{fieldErrors.gallery}</p>
-                    )}
+                    <p className={`text-red-500 text-xs font-semibold mt-2 ml-1 min-h-[16px] transition-opacity ${fieldErrors.gallery ? 'opacity-100' : 'opacity-0'}`}>
+                        {fieldErrors.gallery || ' '}
+                    </p>
                 </div>
             </div>
         </>

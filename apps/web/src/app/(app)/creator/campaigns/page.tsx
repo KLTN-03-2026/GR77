@@ -60,6 +60,12 @@ export default function CreatorCampaignsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     useEffect(() => {
         const fetchCampaigns = async () => {
@@ -104,6 +110,8 @@ export default function CreatorCampaignsPage() {
         campaign.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
+    const paginatedCampaigns = filteredCampaigns.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
         <div className="w-full pb-10">
@@ -162,13 +170,15 @@ export default function CreatorCampaignsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredCampaigns.map((camp, index) => (
+                                    {paginatedCampaigns.map((camp, index) => {
+                                        const globalIndex = (currentPage - 1) * itemsPerPage + index;
+                                        return (
                                         <tr
                                             key={camp.id}
-                                            onClick={() => router.push(`/creator/campaigns/${camp.id}?idx=${index + 1}`)}
+                                            onClick={() => router.push(`/creator/campaigns/${camp.id}?idx=${globalIndex + 1}`)}
                                             className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors cursor-pointer"
                                         >
-                                            <td className="border-r border-white font-bold">#{index + 1}</td>
+                                            <td className="border-r border-white font-bold">#{globalIndex + 1}</td>
                                             <td className="border-r border-white px-4 text-left overflow-hidden">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
@@ -212,10 +222,31 @@ export default function CreatorCampaignsPage() {
                                                 </button>
                                             </td>
                                         </tr>
-                                    ))}
+                                    )})}
                                 </tbody>
                             </table>
                         </div>
+                        {totalPages > 1 && (
+                            <div className="flex justify-center items-center gap-2 mt-6">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-bold text-gray-600 disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-sm font-medium text-gray-600 mx-2">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-bold text-gray-600 disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="flex justify-center items-center py-24 mb-14 text-slate-500 font-medium text-lg border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
