@@ -47,6 +47,24 @@ function decodeJwt(token: string): { role?: string; sub?: string; username?: str
     }
 }
 
+function getPageNumbers(current: number, total: number) {
+    const delta = 1;
+    const range: (number | string)[] = [];
+    const rangeWithDots: (number | string)[] = [];
+    let last: number | undefined;
+    for (let i = 1; i <= total; i++) {
+        if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+            range.push(i);
+        }
+    }
+    for (const i of range) {
+        if (last !== undefined && typeof i === 'number' && i - last > 1) rangeWithDots.push('...');
+        rangeWithDots.push(i);
+        if (typeof i === 'number') last = i;
+    }
+    return rangeWithDots;
+}
+
 // ── Sub-components ──────────────────────────────────────────────────
 function StatCard({ label, value, icon, color = 'bg-[#7598C1]' }: { label: string; value: string; icon: React.ReactNode; color?: string }) {
     return (
@@ -82,6 +100,8 @@ export default function AdminsPage() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     // Create modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -230,6 +250,12 @@ export default function AdminsPage() {
         });
     }, [users, searchQuery, roleFilter]);
 
+    const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
+    const paginatedAdmins = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredAdmins.slice(start, start + itemsPerPage);
+    }, [filteredAdmins, currentPage]);
+
     const isSuperAdmin = callerRole === 'SUPER_ADMIN';
 
     return (
@@ -259,7 +285,7 @@ export default function AdminsPage() {
                             placeholder="Tìm kiếm admin..."
                             className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl w-72 text-sm outline-none focus:border-blue-400 transition-all bg-white"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                         />
                     </div>
 
@@ -267,7 +293,7 @@ export default function AdminsPage() {
                         <select
                             className="py-2 pl-3 pr-8 border border-gray-300 rounded-xl text-sm bg-white text-gray-700 outline-none hover:border-gray-400 cursor-pointer appearance-none min-w-[160px]"
                             value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value)}
+                            onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
                         >
                             <option value="All">Tất cả vai trò</option>
                             <option value="Admin">Admin</option>
@@ -299,9 +325,9 @@ export default function AdminsPage() {
                         <tbody className="divide-y divide-gray-300">
                             {loading ? (
                                 <tr><td colSpan={6} className="px-6 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu...</td></tr>
-                            ) : filteredAdmins.length > 0 ? filteredAdmins.map((admin, index) => (
+                            ) : paginatedAdmins.length > 0 ? paginatedAdmins.map((admin, index) => (
                                 <tr key={admin.id} className="bg-[#fbfbfb] hover:bg-white transition-colors group">
-                                    <td className="px-4 py-4 text-center font-bold text-gray-500">{index + 1}</td>
+                                    <td className="px-4 py-4 text-center font-bold text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-4">
                                             <UserAvatar role={admin.rawRole} src={admin.avatarUrl} />
@@ -362,6 +388,30 @@ export default function AdminsPage() {
                     </table>
                 </div>
             </div>
+
+            {/* ── PAGINATION ── */}
+            {totalPages > 1 && (
+                <div className="flex flex-col items-center gap-4 mt-8">
+                    <div className="flex justify-center items-center gap-2 flex-wrap">
+                        {getPageNumbers(currentPage, totalPages).map((item, idx) =>
+                            typeof item === 'number' ? (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentPage(Math.max(1, Math.min(item, totalPages)))}
+                                    className={`w-11 h-11 flex items-center justify-center rounded-xl font-black transition-all transform active:scale-95 ${currentPage === item
+                                        ? 'bg-[#7598C1] text-black shadow-lg scale-110'
+                                        : 'border border-gray-200 text-gray-400 hover:bg-white hover:border-[#7598C1] hover:text-[#7598C1] bg-white'
+                                        }`}
+                                >
+                                    {item}
+                                </button>
+                            ) : (
+                                <span key={idx} className="px-2 text-gray-400 font-black">{item}</span>
+                            )
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* ── CREATE ADMIN MODAL ── */}
             {isModalOpen && (

@@ -93,7 +93,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     if (isLoggingOut) return;
     setIsLoggingOut(true);
 
-    const isAdminLogout = pathname.startsWith('/admin') || roleLabel === 'ADMIN';
+    const isAdminLogout = pathname.startsWith('/admin') || roleLabel === 'ADMIN' || roleLabel === 'SUPER ADMIN';
 
     try {
       const refreshToken = localStorage.getItem(isAdminLogout ? 'adminRefreshToken' : 'refreshToken');
@@ -129,7 +129,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     }
   };
 
-  const isAdmin = roleLabel === 'ADMIN';
+  const isAdmin = roleLabel === 'ADMIN' || roleLabel === 'SUPER ADMIN';
 
   // Render breadcrumbs based on pathname
   const renderBreadcrumbs = () => {
@@ -228,7 +228,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
             {isAdmin ? translate('header.welcome') : 'Welcome back,'}{' '}
             <span
               style={{
-                color: roleLabel === 'ADMIN' ? '#24305E' : '#F6349B',
+                color: isAdmin ? '#24305E' : '#F6349B',
                 fontWeight: 'bold'
               }}
             >
