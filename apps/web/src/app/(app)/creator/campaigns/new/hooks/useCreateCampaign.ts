@@ -25,6 +25,7 @@ export function useCreateCampaign() {
 
         if (name === 'description') {
             if (!value.trim()) err = 'Vui lòng nhập mô tả chiến dịch';
+            else if (value.trim().length < 50) err = 'Mô tả chiến dịch phải có ít nhất 50 ký tự';
         } else if (name === 'title') {
             if (!value.trim()) err = 'Vui lòng nhập tên chiến dịch';
         } else if (name === 'locationText') {

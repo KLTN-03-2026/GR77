@@ -23,8 +23,8 @@ export function BasicInfoSection({ campaign = {}, categories, selectedCategoryId
     return (
         <>
             {/* Campaign Title */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-3">
                     Campaign Title <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="sm:w-3/4">
@@ -36,9 +36,9 @@ export function BasicInfoSection({ campaign = {}, categories, selectedCategoryId
                         disabled={isLocked}
                         className={`w-full bg-gray-50 border ${fieldErrors.title ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:ring-4 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100`}
                     />
-                    {fieldErrors.title && (
-                        <p className="text-red-500 text-xs font-semibold mt-1.5 ml-1">{fieldErrors.title}</p>
-                    )}
+                    <p className={`text-red-500 text-xs font-semibold mt-1.5 ml-1 min-h-[16px] transition-opacity ${fieldErrors.title ? 'opacity-100' : 'opacity-0'}`}>
+                        {fieldErrors.title || ' '}
+                    </p>
                 </div>
             </div>
 
@@ -55,15 +55,15 @@ export function BasicInfoSection({ campaign = {}, categories, selectedCategoryId
                         required
                         className={`w-full bg-gray-50 border ${fieldErrors.description ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:ring-4 outline-none transition-all resize-none shadow-sm`}
                     ></textarea>
-                    {fieldErrors.description && (
-                        <p className="text-red-500 text-xs font-semibold mt-1.5 ml-1">{fieldErrors.description}</p>
-                    )}
+                    <p className={`text-red-500 text-xs font-semibold mt-1.5 ml-1 min-h-[16px] transition-opacity ${fieldErrors.description ? 'opacity-100' : 'opacity-0'}`}>
+                        {fieldErrors.description || ' '}
+                    </p>
                 </div>
             </div>
 
             {/* Category */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-8">
-                <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">Category <span className="text-red-500 ml-1">*</span></label>
+            <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6 mt-8">
+                <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-3">Category <span className="text-red-500 ml-1">*</span></label>
                 <div className="sm:w-3/4">
                     <select
                         name="categoryId"
@@ -79,15 +79,15 @@ export function BasicInfoSection({ campaign = {}, categories, selectedCategoryId
                             </option>
                         ))}
                     </select>
-                    {fieldErrors.categoryId && (
-                        <p className="text-red-500 text-xs font-semibold mt-1.5 ml-1">{fieldErrors.categoryId}</p>
-                    )}
+                    <p className={`text-red-500 text-xs font-semibold mt-1.5 ml-1 min-h-[16px] transition-opacity ${fieldErrors.categoryId ? 'opacity-100' : 'opacity-0'}`}>
+                        {fieldErrors.categoryId || ' '}
+                    </p>
                 </div>
             </div>
 
             {/* Location */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-8">
-                <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6 mt-8">
+                <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-3">
                     Location <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="sm:w-3/4">
@@ -98,9 +98,9 @@ export function BasicInfoSection({ campaign = {}, categories, selectedCategoryId
                         required
                         className={`w-full sm:w-96 bg-gray-50 border ${fieldErrors.locationText ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl px-5 py-3 text-sm text-[#000000] font-medium focus:bg-white focus:ring-4 outline-none transition-all`}
                     />
-                    {fieldErrors.locationText && (
-                        <p className="text-red-500 text-xs font-semibold mt-1.5 ml-1">{fieldErrors.locationText}</p>
-                    )}
+                    <p className={`text-red-500 text-xs font-semibold mt-1.5 ml-1 min-h-[16px] transition-opacity ${fieldErrors.locationText ? 'opacity-100' : 'opacity-0'}`}>
+                        {fieldErrors.locationText || ' '}
+                    </p>
                 </div>
             </div>
         </>

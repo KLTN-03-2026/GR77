@@ -117,7 +117,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 10;
 
   // Create modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -478,9 +478,6 @@ export default function AdminUsersPage() {
       {/* ── PAGINATION ── */}
       {totalPages > 1 && (
         <div className="flex flex-col items-center gap-4 mt-8">
-          <p className="text-sm text-gray-500 font-bold uppercase tracking-widest opacity-60">
-            Hiển thị {filteredUsers.length} thành viên
-          </p>
           <div className="flex justify-center items-center gap-2 flex-wrap">
             {getPageNumbers(currentPage, totalPages).map((item, idx) =>
               typeof item === 'number' ? (

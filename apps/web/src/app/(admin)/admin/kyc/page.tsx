@@ -83,7 +83,7 @@ export default function AdminKycPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 10;
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('adminAccessToken') : null;
 

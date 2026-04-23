@@ -46,7 +46,7 @@ export function TimelineSection({ campaign = {}, fieldErrors = {} }: TimelineSec
     return (
         <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
             <label className="text-[14px] font-black text-gray-900 uppercase tracking-widest mb-4 block">Campaign Timeline</label>
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-wrap items-start gap-6">
                 <div className="flex flex-col gap-1.5">
                     <span className="text-[10px] font-bold text-gray-400 uppercase ml-1">Start Date <span className="text-red-500 ml-1">*</span></span>
                     <input
@@ -59,11 +59,11 @@ export function TimelineSection({ campaign = {}, fieldErrors = {} }: TimelineSec
                         disabled={isLocked}
                         className={`w-full sm:w-44 bg-white border ${fieldErrors.startAt ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:ring-4 outline-none transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100`}
                     />
-                    {fieldErrors.startAt && (
-                        <p className="text-red-500 text-xs font-semibold mt-1 ml-1 max-w-[176px] leading-tight">{fieldErrors.startAt}</p>
-                    )}
+                    <p className={`text-red-500 text-xs font-semibold mt-1 ml-1 leading-tight min-h-[16px] whitespace-nowrap transition-opacity ${fieldErrors.startAt ? 'opacity-100' : 'opacity-0'}`}>
+                        {fieldErrors.startAt || ' '}
+                    </p>
                 </div>
-                <div className="hidden sm:block h-0.5 w-4 bg-gray-300 rounded-full mt-5"></div>
+                <div className="hidden sm:block h-0.5 w-4 bg-gray-300 rounded-full mt-9"></div>
                 <div className="flex flex-col gap-1.5 w-full sm:w-auto">
                     <span className="text-[10px] font-bold text-gray-400 uppercase ml-1">End Date <span className="text-red-500 ml-1">*</span></span>
                     <input
@@ -75,12 +75,12 @@ export function TimelineSection({ campaign = {}, fieldErrors = {} }: TimelineSec
                         required
                         className={`w-full sm:w-44 bg-white border ${fieldErrors.endAt ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:ring-4 outline-none transition-all shadow-sm`}
                     />
-                    {fieldErrors.endAt && (
-                        <p className="text-red-500 text-xs font-semibold mt-1 ml-1 max-w-[176px] leading-tight">{fieldErrors.endAt}</p>
-                    )}
+                    <p className={`text-red-500 text-xs font-semibold mt-1 ml-1 leading-tight min-h-[16px] whitespace-nowrap transition-opacity ${fieldErrors.endAt ? 'opacity-100' : 'opacity-0'}`}>
+                        {fieldErrors.endAt || ' '}
+                    </p>
                 </div>
 
-                <label className="flex items-center gap-3 ml-auto bg-white px-5 py-3 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors mt-4 sm:mt-0">
+                <label className="flex items-center gap-3 ml-auto bg-white px-5 py-3 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors mt-4 sm:mt-5">
                     <input
                         type="checkbox"
                         name="autoCloseWhenGoalReached"

@@ -27,6 +27,8 @@ export default function EditCampaignClient({ id }: { id: string }) {
         removeGalleryImage,
         handleGalleryChange,
         handleSubmit,
+        handleFormChange,
+        fieldErrors,
         router
     } = useEditCampaign(id);
 
@@ -81,13 +83,14 @@ export default function EditCampaignClient({ id }: { id: string }) {
                     </div>
                 )}
 
-                <form className="space-y-8" onSubmit={handleSubmit}>
+                <form className="space-y-8" onSubmit={handleSubmit} onChange={handleFormChange}>
 
                     <BasicInfoSection
                         campaign={campaign}
                         categories={categories}
                         selectedCategoryId={selectedCategoryId}
                         setSelectedCategoryId={setSelectedCategoryId}
+                        fieldErrors={fieldErrors}
                     />
 
                     <MediaSection
@@ -99,11 +102,12 @@ export default function EditCampaignClient({ id }: { id: string }) {
                         galleryInputRef={galleryInputRef}
                         removeGalleryImage={removeGalleryImage}
                         handleGalleryChange={handleGalleryChange}
+                        fieldErrors={fieldErrors}
                     />
 
-                    <FundingSection campaign={campaign} />
+                    <FundingSection campaign={campaign} fieldErrors={fieldErrors} />
 
-                    <TimelineSection campaign={campaign} />
+                    <TimelineSection campaign={campaign} fieldErrors={fieldErrors} />
 
                     {error && (
                         <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium flex items-center gap-3 shadow-sm anim-up-0">
