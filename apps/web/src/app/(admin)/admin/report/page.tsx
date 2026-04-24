@@ -21,7 +21,8 @@ export interface ReportedUser {
   id: string;
   name: string;
   email: string;
-  role: 'Donor' | 'Admin' | 'Super Admin' | 'Organizer';
+  role: string;
+  rawRole?: string;
   avatarUrl?: string;
   isLocked?: boolean;
   lockReason?: string;
@@ -55,20 +56,20 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon: 
   );
 }
 
-function StatusBadge({ status }: { status: ReportData['status'] }) {
+function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     'PENDING': 'bg-amber-50 text-amber-700 border-amber-100',
     'RESOLVED': 'bg-green-50 text-green-700 border-green-100',
   };
-  
+
   const labels: Record<string, string> = {
     'PENDING': 'Chưa duyệt',
     'RESOLVED': 'Đã duyệt',
   };
 
   return (
-    <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight border ${styles[status]}`}>
-      {labels[status]}
+    <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight border ${styles[status] || styles['PENDING']}`}>
+      {labels[status] || status}
     </span>
   );
 }
@@ -135,112 +136,73 @@ export default function AdminReportsPage() {
   const [isUserDetailOpen, setIsUserDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // ── Bootstrap / Mock Data ─────────────────────────────────────────
-  useEffect(() => {
-    const fetchReports = async () => {
+  // ── Bootstrap / Fetch Data ─────────────────────────────────────────
+  const fetchReports = async () => {
+    try {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const mockReports: ReportData[] = [
-        {
-          id: '1',
-          submitterName: 'Nguyễn Văn A',
-          submitterEmail: 'vana@gmail.com',
-          targetType: 'Campaign',
-          targetName: 'Cứu trợ miền Trung 2024',
-          reason: 'Nội dung gây hiểu lầm',
-          details: 'Chiến dịch này sử dụng hình ảnh từ năm 2020 để kêu gọi quyên góp cho hiện tại.',
-          status: 'PENDING',
-          createdAt: '2024-03-20T10:00:00Z',
-          reportedUser: {
-            id: 'u1',
-            name: 'Lê Văn C',
-            email: 'vanc@gmail.com',
-            role: 'Organizer',
-            isLocked: false,
-          }
-        },
-        {
-          id: '2',
-          submitterName: 'Trần Thị B',
-          submitterEmail: 'thib@gmail.com',
-          targetType: 'Comment',
-          targetName: 'Bình luận xúc phạm',
-          reason: 'Hành vi quấy rối',
-          details: 'Người dùng này liên tục nhắn tin rác vào các bài đăng của tôi.',
-          status: 'RESOLVED',
-          createdAt: '2024-03-19T15:30:00Z',
-          reportedUser: {
-            id: 'u2',
-            name: 'Phạm Minh H',
-            email: 'minhh@gmail.com',
-            role: 'Donor',
-            isLocked: true,
-            lockReason: 'Vi phạm quy tắc cộng đồng',
-          }
-        },
-        {
-          id: '3',
-          submitterName: 'Lê Hoàng D',
-          submitterEmail: 'hoangd@gmail.com',
-          targetType: 'Comment',
-          targetName: 'Bình luận trong "Xây trường cho em"',
-          reason: 'Ngôn từ thù ghét',
-          details: 'Bình luận xúc phạm dân tộc và vùng miền.',
-          status: 'PENDING',
-          createdAt: '2024-03-18T09:15:00Z',
-          reportedUser: {
-            id: 'u3',
-            name: 'Đỗ Mạnh G',
-            email: 'manhg@gmail.com',
-            role: 'Donor',
-            isLocked: false,
-          }
-        },
-        {
-          id: '4',
-          submitterName: 'Phạm Minh E',
-          submitterEmail: 'minhe@gmail.com',
-          targetType: 'Campaign',
-          targetName: 'Hỗ trợ phẫu thuật tim',
-          reason: 'Lừa đảo',
-          details: 'Tôi đã liên hệ với bệnh viện nhưng họ nói không có bệnh nhân nào như mô tả.',
-          status: 'PENDING',
-          createdAt: '2024-03-21T11:20:00Z',
-          reportedUser: {
-            id: 'u4',
-            name: 'Ngô Bảo K',
-            email: 'baok@gmail.com',
-            role: 'Organizer',
-            isLocked: false,
-          }
-        },
-        {
-          id: '5',
-          submitterName: 'Hoàng Kim F',
-          submitterEmail: 'kimf@gmail.com',
-          targetType: 'Campaign',
-          targetName: 'Học bổng cho trẻ em nghèo',
-          reason: 'Mạo danh',
-          details: 'Người này mạo danh tổ chức từ thiện Heart-to-Heart.',
-          status: 'RESOLVED',
-          createdAt: '2024-03-17T14:45:00Z',
-          reportedUser: {
-            id: 'u5',
-            name: 'Vũ Thị L',
-            email: 'thil@gmail.com',
-            role: 'Organizer',
-            isLocked: false,
-          }
-        }
-      ];
-      
-      setReports(mockReports);
-      setLoading(false);
-    };
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/reports`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch reports');
+      const data = await res.json();
 
+      const formattedData = data.map((item: any) => {
+        const roleStr = item.reportedUser.role;
+        let displayRole = 'User';
+        if (roleStr === 'ORGANIZER') displayRole = 'Organizer';
+        if (roleStr === 'ADMIN') displayRole = 'Admin';
+        if (roleStr === 'SUPER_ADMIN') displayRole = 'Super Admin';
+
+        return {
+          ...item,
+          reportedUser: {
+            ...item.reportedUser,
+            role: displayRole,
+            rawRole: roleStr,
+          }
+        };
+      });
+      setReports(formattedData);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchReports();
   }, []);
+
+  // ── API Helpers ───────────────────────────────────────────────────
+  const authFetch = (url: string, options: RequestInit = {}) =>
+    fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`,
+        ...(options.headers || {}),
+      },
+    });
+
+  const handleUpdateStatus = async (id: string, newStatus: 'RESOLVED') => {
+    if (!confirm(`Bạn có chắc chắn muốn chuyển trạng thái thành: Đã duyệt?`)) return;
+    try {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/reports/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Lỗi cập nhật trạng thái báo cáo');
+
+      // Cập nhật state
+      setReports((prev) => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+      if (selectedReport?.id === id) {
+        setSelectedReport(prev => prev ? { ...prev, status: newStatus } : null);
+      }
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
 
   // ── Filter / Pagination ─────────────────────────────────────────
   const filteredReports = useMemo(() => {
@@ -281,14 +243,14 @@ export default function AdminReportsPage() {
     const rangeWithDots: (number | string)[] = [];
     let last: number | undefined;
     for (let i = 1; i <= total; i++) {
-        if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
-            range.push(i);
-        }
+      if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+        range.push(i);
+      }
     }
     for (const i of range) {
-        if (last !== undefined && typeof i === 'number' && i - last > 1) rangeWithDots.push('...');
-        rangeWithDots.push(i);
-        if (typeof i === 'number') last = i;
+      if (last !== undefined && typeof i === 'number' && i - last > 1) rangeWithDots.push('...');
+      rangeWithDots.push(i);
+      if (typeof i === 'number') last = i;
     }
     return rangeWithDots;
   };
@@ -386,7 +348,7 @@ export default function AdminReportsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3 border-r border-gray-300">
-                        <button 
+                        <button
                           onClick={() => handleViewUserDetails(report.reportedUser)}
                           className="group text-left flex items-center gap-3"
                         >
@@ -419,11 +381,8 @@ export default function AdminReportsPage() {
                           </button>
                           {report.status === 'PENDING' && (
                             <>
-                              <button title="Duyệt báo cáo" className="text-green-500 hover:text-green-700 transition-colors">
+                              <button title="Duyệt báo cáo" onClick={() => handleUpdateStatus(report.id, 'RESOLVED')} className="text-green-500 hover:text-green-700 transition-colors">
                                 <CheckBadgeIcon className="w-5 h-5" />
-                              </button>
-                              <button title="Bỏ qua" className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <NoSymbolIcon className="w-5 h-5" />
                               </button>
                             </>
                           )}
@@ -510,17 +469,17 @@ export default function AdminReportsPage() {
               <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100">
                 <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest mb-3">Người bị báo cáo</p>
                 <div className="flex items-center gap-4">
-                    <Avatar role={selectedReport.reportedUser.role} />
-                    <div>
-                        <p className="text-lg font-black text-gray-900">{selectedReport.reportedUser.name}</p>
-                        <p className="text-sm text-gray-500">{selectedReport.reportedUser.email}</p>
-                        <button 
-                            onClick={() => handleViewUserDetails(selectedReport.reportedUser)}
-                            className="mt-2 text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
-                        >
-                            Xem hồ sơ đầy đủ <EyeIcon className="w-3 h-3" />
-                        </button>
-                    </div>
+                  <Avatar role={selectedReport.reportedUser.role} />
+                  <div>
+                    <p className="text-lg font-black text-gray-900">{selectedReport.reportedUser.name}</p>
+                    <p className="text-sm text-gray-500">{selectedReport.reportedUser.email}</p>
+                    <button
+                      onClick={() => handleViewUserDetails(selectedReport.reportedUser)}
+                      className="mt-2 text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      Xem hồ sơ đầy đủ <EyeIcon className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -554,19 +513,17 @@ export default function AdminReportsPage() {
 
             {/* Footer actions */}
             <div className="p-6 border-t bg-gray-50 flex gap-3">
-              {selectedReport.status !== 'RESOLVED' && (
+              {selectedReport.status === 'PENDING' && (
                 <>
-                  <button className="flex-1 py-4 bg-green-600 text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:bg-green-700 transition-all">
+                  <button onClick={() => handleUpdateStatus(selectedReport.id, 'RESOLVED')} className="flex-1 py-4 bg-green-600 text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:bg-green-700 transition-all">
                     <CheckBadgeIcon className="w-5 h-5" /> Duyệt & Xử lý
-                  </button>
-                  <button className="flex-1 py-4 bg-red-50 text-red-600 border border-red-100 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-100 transition-all">
-                    <NoSymbolIcon className="w-5 h-5" /> Bỏ qua báo cáo
                   </button>
                 </>
               )}
-              {selectedReport.status === 'RESOLVED' && (
-                <div className="w-full flex items-center justify-center gap-2 py-4 text-green-600 font-black text-xs uppercase tracking-widest">
-                  <ShieldCheckIcon className="w-6 h-6" /> Báo cáo này đã được xử lý
+              {selectedReport.status !== 'PENDING' && (
+                <div className="w-full flex items-center justify-center gap-2 py-4 font-black text-xs uppercase tracking-widest text-gray-500">
+                  <ShieldCheckIcon className="w-6 h-6" />
+                  Báo cáo này đã được: <span className="text-green-600">Đã duyệt</span>
                 </div>
               )}
             </div>
@@ -631,50 +588,12 @@ export default function AdminReportsPage() {
                   )}
                 </div>
               )}
-              
-              {activeTab === 'activity' && (
-                <div className="relative border-l-2 border-gray-100 ml-4 space-y-8 pl-8 pt-2">
-                  {[
-                    { id: 1, action: 'LOGIN', details: 'Đăng nhập thành công từ IP 1.2.3.4', createdAt: '2024-03-20T08:00:00Z' },
-                    { id: 2, action: 'UPDATE_PROFILE', details: 'Cập nhật ảnh đại diện', createdAt: '2024-03-15T14:20:00Z' },
-                    { id: 3, action: 'CREATE_COMMENT', details: 'Bình luận trong chiến dịch Trẻ em nghèo', createdAt: '2024-03-10T09:45:00Z' },
-                  ].map((log) => (
-                    <div key={log.id} className="relative">
-                      <div className="absolute -left-[41px] top-1 bg-white border-2 border-slate-900 w-4 h-4 rounded-full shadow-sm" />
-                      <p className="text-sm font-black text-gray-800 uppercase">{log.action}</p>
-                      <p className="text-[12px] text-gray-500 mt-1">"{log.details}"</p>
-                      <p className="text-[10px] font-bold text-gray-400 mt-1">
-                        {new Date(log.createdAt).toLocaleString('vi-VN')}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
 
-              {activeTab === 'reports' && (
-                <div className="space-y-4">
-                  {[
-                    { id: '101', reason: 'Ngôn từ thù ghét', status: 'RESOLVED', createdAt: '2024-01-15T10:00:00Z' },
-                    { id: '102', reason: 'Spam nội dung', status: 'PENDING', createdAt: '2024-02-20T11:30:00Z' },
-                  ].map((rep) => (
-                    <div key={rep.id} className="p-4 bg-gray-50 border rounded-xl flex justify-between items-center">
-                      <div>
-                        <p className="text-sm font-bold text-gray-800">{rep.reason}</p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">{new Date(rep.createdAt).toLocaleDateString('vi-VN')}</p>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${rep.status === 'RESOLVED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {rep.status === 'RESOLVED' ? 'Đã xử lý' : 'Đang chờ'}
-                      </span>
-                    </div>
-                  ))}
+              {(activeTab === 'campaigns' || activeTab === 'donations' || activeTab === 'activity' || activeTab === 'reports') && (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 opacity-50">
+                  <MagnifyingGlassIcon className="w-12 h-12" />
+                  <p className="font-bold uppercase text-xs tracking-widest">Chưa có dữ liệu lịch sử</p>
                 </div>
-              )}
-
-              {(activeTab === 'campaigns' || activeTab === 'donations') && (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 opacity-50">
-                      <MagnifyingGlassIcon className="w-12 h-12" />
-                      <p className="font-bold uppercase text-xs tracking-widest">Chưa có dữ liệu lịch sử</p>
-                  </div>
               )}
             </div>
 
