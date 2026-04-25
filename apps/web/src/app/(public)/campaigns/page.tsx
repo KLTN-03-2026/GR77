@@ -129,15 +129,15 @@ export default function CampaignsPage() {
             </p>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
-              <div className="flex items-center justify-center gap-2.5 w-36 sm:w-40 py-2 rounded-full border-2 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5" style={{ borderColor: '#FFC4A4', backgroundColor: 'white' }}>
+              <div className="flex items-center justify-center gap-2.5 w-36 sm:w-40 py-2 rounded-full border-2 shadow-sm transition-all hover:-translate-y-0.5" style={{ borderColor: '#FFC4A4', backgroundColor: 'white' }}>
                 <ShieldCheck size={16} strokeWidth={2.5} style={{ color: '#f49a69ff' }} />
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: '#d86a3cff' }}>Transparent</span>
               </div>
-              <div className="flex items-center justify-center gap-2.5 w-36 sm:w-40 py-2 rounded-full border-2 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5" style={{ borderColor: '#FBA2D0', backgroundColor: 'white' }}>
+              <div className="flex items-center justify-center gap-2.5 w-36 sm:w-40 py-2 rounded-full border-2 shadow-sm transition-all hover:-translate-y-0.5" style={{ borderColor: '#FBA2D0', backgroundColor: 'white' }}>
                 <HandHeart size={16} strokeWidth={2.5} style={{ color: '#f37ebaff' }} />
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: '#b11f6aff' }}>Reliable</span>
               </div>
-              <div className="flex items-center justify-center gap-2.5 w-36 sm:w-40 py-2 rounded-full border-2 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5" style={{ borderColor: '#C688EB', backgroundColor: 'white' }}>
+              <div className="flex items-center justify-center gap-2.5 w-36 sm:w-40 py-2 rounded-full border-2 shadow-sm transition-all hover:-translate-y-0.5" style={{ borderColor: '#C688EB', backgroundColor: 'white' }}>
                 <Leaf size={16} strokeWidth={2.5} style={{ color: '#b453ecff' }} />
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: '#7a10c2ff' }}>Sustainable</span>
               </div>
@@ -161,7 +161,7 @@ export default function CampaignsPage() {
       {/* end intro banner */}
 
       {/* Main content */}
-      <main className="flex-1 py-10 lg:py-16">
+      <main className="flex-1 py-4 lg:py-6">
         <div className="max-w-[1200px] mx-auto px-4">
 
           {/* Breadcrumb */}
@@ -172,7 +172,7 @@ export default function CampaignsPage() {
           </div>
 
           {/* Page header */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
               All Campaigns
             </h1>
@@ -182,7 +182,7 @@ export default function CampaignsPage() {
           </div>
 
           {/* Filters */}
-          <div className="mb-8 w-full">
+          <div className="mb-6 w-full">
             <CampaignFilter
               filter={filter}
               categories={categories}

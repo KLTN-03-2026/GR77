@@ -51,7 +51,7 @@ export function CampaignPublicCard({ campaign }: { campaign: PublicCampaign }) {
   return (
     <div
       onClick={handleCardClick}
-      className="group cursor-pointer flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-blue-200"
+      className="group cursor-pointer flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.01] hover:border-blue-300 relative z-0 hover:z-10"
     >
       {/* Cover image */}
       <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-blue-50 to-cyan-50 flex-shrink-0">
@@ -121,7 +121,7 @@ export function CampaignPublicCard({ campaign }: { campaign: PublicCampaign }) {
           <div className="relative p-[2px] rounded-full overflow-hidden flex items-center justify-center">
             {/* Spinning background */}
             <div
-              className="absolute inset-[-300%] bg-[conic-gradient(from_0deg_at_50%_50%,#77E4FF_0%,#FBA2D1_20%,#FF834D_40%,#94E029_60%,#77E4FF_100%)]"
+              className="absolute inset-[-300%] bg-[conic-gradient(from_0deg_at_50%_50%,#579DFF_0%,#FF5252_25%,#FFD033_50%,#46D369_75%,#579DFF_100%)]"
               style={{ animation: 'spin 3s linear infinite' }}
             />
 
@@ -129,10 +129,11 @@ export function CampaignPublicCard({ campaign }: { campaign: PublicCampaign }) {
             <button
               type="button"
               onClick={handleDonateClick}
-              className="relative z-10 w-full py-2 bg-white rounded-full text-[#146175] font-black text-lg hover:bg-cyan-100 transition-colors focus:outline-none"
+              className="relative z-10 w-full py-2 bg-white rounded-full text-[#146175] font-black text-lg hover:bg-white/40 backdrop-blur-lg hover:text-black active:scale-95 active:shadow-inner transition-transform transition-colors focus:outline-none"
             >
               Donate Now
             </button>
+
           </div>
         </div>
       </div>
