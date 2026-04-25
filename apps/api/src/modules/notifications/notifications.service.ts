@@ -39,15 +39,23 @@ export class NotificationsService {
         });
     }
 
-    async notifyAdmins(data: { title: string; message: string; type: string; link?: string }) {
-        const admins = await this.prisma.user.findMany({
-            where: { role: 'ADMIN' },
+    async notifyAdmins(data: { title: string; message: string; type: string; link?: string }, requiredPermission?: string) {
+        const users = await this.prisma.user.findMany({
+            where: {
+                OR: [
+                    { role: 'SUPER_ADMIN' },
+                    {
+                        role: 'ADMIN',
+                        ...(requiredPermission ? { permissions: { has: requiredPermission } } : {})
+                    }
+                ]
+            },
         });
 
         return Promise.all(
-            admins.map((admin) =>
+            users.map((u) =>
                 this.create({
-                    userId: admin.id,
+                    userId: u.id,
                     ...data,
                 }),
             ),
