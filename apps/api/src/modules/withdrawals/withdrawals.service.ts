@@ -1,10 +1,15 @@
 import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { AdminPermission } from '../../constants/permissions';
 
 @Injectable()
 export class WithdrawalsService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly notificationsService: NotificationsService,
+    ) { }
 
     async createRequest(userId: string, campaignId: string, dto: CreateWithdrawalDto) {
         const campaign = await (this.prisma as any).campaign.findUnique({
@@ -45,7 +50,7 @@ export class WithdrawalsService {
             }
         }
 
-        return (this.prisma as any).withdrawalRequest.create({
+        const request = await (this.prisma as any).withdrawalRequest.create({
             data: {
                 campaignId,
                 amount: dto.amount,
@@ -58,6 +63,16 @@ export class WithdrawalsService {
                 status: 'PENDING'
             }
         });
+
+        // Notify Admins
+        await this.notificationsService.notifyAdmins({
+            title: 'New Withdrawal Request',
+            message: `Campaign "${campaign.title}" requested a withdrawal of ${dto.amount.toLocaleString()} VNĐ.`,
+            type: 'WITHDRAWAL_REQUESTED',
+            link: `/admin/withdrawals?id=${request.id}`
+        }, AdminPermission.WITHDRAWALS_APPROVE);
+
+        return request;
     }
 
     async listForCampaign(userId: string, campaignId: string) {

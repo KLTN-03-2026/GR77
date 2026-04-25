@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
+import { AdminPermission } from '../../constants/permissions';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 /**
@@ -359,7 +360,7 @@ export class CampaignsService {
       message: `"${campaign.creatorUser.username || campaign.creatorUser.email}" submitted a new campaign: "${campaign.title}"`,
       type: 'CAMPAIGN_SUBMITTED',
       link: `/admin/campaigns?id=${campaign.id}`
-    });
+    }, AdminPermission.CAMPAIGNS_APPROVE);
 
     return campaign;
   }
