@@ -18,9 +18,9 @@ import { useGlobalAuth } from '@/contexts/AuthContext';
 import { API_BASE_URL } from '@/lib/constants/endpoints';
 
 const HERO_IMAGES = [
-  '/images/banner-top.jpg',
-  '/images/background-login.jpg',
-  '/images/hero-home.png'
+  '/images/background/banner-top.svg',
+  '/images/background/background-login.svg',
+  '/images/background/banner-top3.svg',
 ];
 
 export default function CampaignsPage() {
@@ -127,7 +127,7 @@ export default function CampaignsPage() {
   const hasContent = filteredSections.length > 0;
 
   return (
-    <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 ${hasContent ? 'space-y-16' : 'h-[calc(100vh-120px)] flex flex-col justify-between'} bg-slate-50/50`}>
+    <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 ${hasContent ? 'space-y-16' : 'h-[calc(100vh-120px)] flex flex-col justify-between'} bg-white`}>
 
       {/* 1. Hero / Welcome Section */}
       <section className="relative group flex-shrink-0">
