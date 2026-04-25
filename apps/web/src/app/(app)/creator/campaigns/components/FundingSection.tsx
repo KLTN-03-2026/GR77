@@ -31,6 +31,10 @@ export function FundingSection({ campaign = {}, fieldErrors = {} }: FundingSecti
                                     e.preventDefault();
                                 }
                             }}
+                            onInput={(e) => {
+                                const input = e.currentTarget;
+                                input.value = input.value.replace(/[^0-9]/g, '');
+                            }}
                             className={`w-full bg-gray-50 border ${fieldErrors.fundingGoalAmount ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl pl-5 pr-14 py-3 text-sm text-[#000000] font-bold focus:bg-white focus:ring-4 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100`}
                         />
                         <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">VND</span>
@@ -57,6 +61,10 @@ export function FundingSection({ campaign = {}, fieldErrors = {} }: FundingSecti
                                 if (['e', 'E', '+', '-', '.'].includes(e.key)) {
                                     e.preventDefault();
                                 }
+                            }}
+                            onInput={(e) => {
+                                const input = e.currentTarget;
+                                input.value = input.value.replace(/[^0-9]/g, '');
                             }}
                             className={`w-full bg-gray-50 border ${fieldErrors.minimumDonationAmount ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl pl-5 pr-14 py-3 text-sm text-[#000000] font-bold focus:bg-white focus:ring-4 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100`}
                         />
