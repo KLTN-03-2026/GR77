@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { CampaignPublicCard } from './CampaignPublicCard';
 import { useCampaignList } from '../hooks/useCampaignList';
@@ -25,7 +24,7 @@ export default function CampaignListSection() {
   const { paginated, isLoading, error } = useCampaignList({ itemsPerPage: 4 });
 
   return (
-    <section id="campaigns" className="py-16 lg:py-24 bg-white">
+    <section id="campaigns" className="pt-4 pb-4 lg:pt-2 lg:pb-10 bg-white">
       <div className="max-w-[1200px] mx-auto px-4">
 
         {/* Section header */}

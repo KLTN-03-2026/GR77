@@ -1,5 +1,5 @@
 "use client";
-
+import React, { useState, useEffect } from 'react';
 import "@/styles/animations.css";
 import Image from "next/image";
 import { Island_Moments } from "next/font/google";
@@ -16,6 +16,12 @@ const islandMoments = Island_Moments({
   display: "swap",
 });
 
+const BANNER_IMAGES = [
+  "/images/background/banner-top.svg",
+  "/images/background/banner-top2.svg",
+  "/images/background/banner-top3.svg",
+];
+
 export default function Home() {
   const {
     email, setEmail,
@@ -26,6 +32,15 @@ export default function Home() {
     handleRegister, handleResendEmail,
     cooldown, attemptsUsed
   } = useAuth();
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % BANNER_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   const partnerLogos = [
     { src: "/images/or1.jpg", name: "Partner 1" },
@@ -52,15 +67,15 @@ export default function Home() {
   ];
 
   const bankLogos = [
-    { name: "Vietcombank", src: "/images/bankicon/vcb.jpg" },
-    { name: "BIDV", src: "/images/bankicon/bidv.jpg" },
-    { name: "Vietinbank", src: "/images/bankicon/vtb.jpg" },
-    { name: "Agribank", src: "/images/bankicon/agrib.jpg" },
-    { name: "BIDC", src: "/images/bankicon/bidc.jpg" },
-    { name: "ASB", src: "/images/bankicon/asb.jpg" },
-    { name: "HDBank", src: "/images/bankicon/hdb.jpg" },
-    { name: "Vingroup", src: "/images/bankicon/vingroup.jpg" },
-    { name: "VNPay", src: "/images/bankicon/vnpay.jpg" },
+    { name: "Vietcombank", src: "/images/bankicon/vcb.svg" },
+    { name: "BIDV", src: "/images/bankicon/bidv.svg" },
+    { name: "Vietinbank", src: "/images/bankicon/vtb.svg" },
+    { name: "Agribank", src: "/images/bankicon/agrib.svg" },
+    { name: "BIDC", src: "/images/bankicon/bidc.svg" },
+    { name: "ASB", src: "/images/bankicon/asb.svg" },
+    { name: "HDBank", src: "/images/bankicon/hdb.svg" },
+    { name: "Vingroup", src: "/images/bankicon/vingr.svg" },
+    { name: "VNPay", src: "/images/bankicon/vnpay.svg" },
   ];
 
   const allBankLogos = [...bankLogos, ...bankLogos]; // Double for infinite scroll
@@ -71,20 +86,24 @@ export default function Home() {
       <section className="relative w-full h-[450px] lg:h-[550px] flex items-center overflow-hidden bg-white">
         {/* Background Image Container - Removed border-l to eliminate left spacing */}
         <div className="absolute inset-0 rounded-bl-[80px] lg:rounded-bl-[150px] overflow-hidden border-b-[15px] border-white">
-          <Image
-            src="/images/banner-top.jpg"
-            alt="Giving Heart Background"
-            fill
-            className="object-cover object-left lg:object-center"
-            priority
-          />
+          {BANNER_IMAGES.map((src, idx) => (
+            <Image
+              key={src}
+              src={src}
+              alt={`Giving Heart Background ${idx + 1}`}
+              fill
+              className={`object-cover object-left lg:object-center transition-all duration-1000 ease-in-out ${idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+                }`}
+              priority={idx === 0}
+            />
+          ))}
           {/* Subtle overlay for mobile readability */}
           <div className="absolute inset-0 bg-white/10 lg:bg-transparent" />
         </div>
 
         <div className="max-w-[1200px] mx-auto px-4 w-full relative z-10">
           <div className="flex justify-end">
-            <div className="w-full lg:w-1/2 flex flex-col space-y-3 lg:space-y-5 text-center lg:text-left bg-white/40 backdrop-blur-md lg:bg-transparent p-6 rounded-[30px] lg:p-0">
+            <div className="w-full lg:w-1/2 flex flex-col space-y-3 lg:space-y-5 text-center lg:text-left bg-white/40 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none p-10 rounded-xl lg:p-0">
               <div className="flex justify-center lg:justify-start">
                 <Logo height={58} />
               </div>
@@ -99,9 +118,14 @@ export default function Home() {
 
               {/* Pagination Dots */}
               <div className="flex justify-center lg:justify-start gap-2 pt-4 lg:pt-6">
-                <div className="w-2 h-2 rounded-full bg-blue-200" />
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <div className="w-2 h-2 rounded-full bg-blue-200" />
+                {BANNER_IMAGES.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentSlide ? 'bg-blue-500 w-4' : 'bg-blue-200'
+                      }`}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -109,7 +133,7 @@ export default function Home() {
       </section>
 
       {/* 2. Partner Logos Strip - Infinite Slider */}
-      <section className="py-8 lg:py-12 bg-white overflow-hidden">
+      <section className="py-8 lg:py-10 bg-white overflow-hidden">
         <div className="flex w-fit animate-scroll">
           {allPartnerLogos.map((logo, idx) => (
             <div key={idx} className="relative h-10 w-28 lg:h-12 lg:w-36 mx-8 flex-shrink-0 cursor-pointer">
@@ -120,16 +144,16 @@ export default function Home() {
       </section>
 
       {/* 3. Quote Section */}
-      <section className="py-12 lg:py-24 bg-zinc-50 border-y border-gray-100">
+      <section className="py-10 lg:py-18 bg-white border-t border-gray-100">
         <div className="max-w-[1200px] mx-auto px-4 text-center">
-          <h2 className={`${islandMoments.className} text-4xl lg:text-5xl text-gray-800 leading-tight max-w-4xl mx-auto px-6`}>
+          <h2 className={`${islandMoments.className} text-4xl lg:text-6xl text-gray-800 leading-tight max-w-4xl mx-auto px-6`}>
             "Our platform leverages blockchain technology to ensure transparency, trust, and accountability in every charitable contribution."
           </h2>
         </div>
       </section>
 
       {/* 4 & 5. World Map Section & Stats */}
-      <section className="relative w-full py-12 lg:py-24 overflow-hidden bg-white">
+      <section className="relative w-full py-12 lg:py-20 overflow-hidden bg-white">
         {/* Background Map */}
         <div className="absolute inset-0 flex items-center justify-center z-0 px-4">
           <Image
@@ -187,7 +211,7 @@ export default function Home() {
       </section>
 
       {/* 6. KPI Cards - Redesigned for exact shapes and decorative circles */}
-      <section className="relative py-12 lg:py-20 bg-white overflow-hidden">
+      <section className="relative pt-0 pb-6 lg:py-12 bg-white overflow-hidden">
         <div className="max-w-[1200px] mx-auto px-4 relative">
           {/* Decorative Circles from Design */}
           <div className="absolute top-[30%] left-[28%] w-24 h-24 bg-[#6699DD] rounded-full z-0 hidden lg:block" />
@@ -225,13 +249,13 @@ export default function Home() {
       <CampaignListSection />
 
       {/* 7. Sign Up Section - Increased right gap, centered elements */}
-      <section id="signup-form" className="relative py-10 lg:py-20 bg-white">
+      <section id="signup-form" className="relative py-12 lg:pt-6 lg:pb-14 bg-white">
         <div className="w-full lg:w-[90%] mr-auto group">
-          <div className="relative w-[95%] mx-auto lg:mx-0 lg:w-full lg:min-h-[550px] rounded-[30px] lg:rounded-none lg:rounded-tr-[150px] lg:rounded-br-[150px] overflow-hidden shadow-2xl flex items-center transition-all duration-700 ease-out hover:scale-[1.01] hover:-translate-y-3 hover:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]">
+          <div className="relative w-[95%] mx-auto lg:mx-0 lg:w-full lg:min-h-[550px] rounded-[30px] lg:rounded-none lg:rounded-tr-[150px] lg:rounded-br-[150px] overflow-hidden flex items-center transition-all duration-900 hover:scale-[1.01]">
             {/* Background */}
             <div className="absolute inset-0">
               <Image
-                src="/images/background-login.jpg"
+                src="/images/background/background-login.svg"
                 alt="Background Form"
                 fill
                 className="object-cover transition-transform duration-1000 group-hover:scale-110"
