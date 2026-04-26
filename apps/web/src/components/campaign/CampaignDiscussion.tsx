@@ -48,8 +48,28 @@ export function CampaignDiscussion({
         if (listRef.current) listRef.current.scrollTop = 0;
     }, [comments.length]);
 
+    // Handle initial scroll to #discussion if present
+    useEffect(() => {
+        const handleInitialScroll = () => {
+            if (window.location.hash === "#discussion") {
+                const el = document.getElementById("discussion");
+                if (el) {
+                    // Small delay to ensure content layout is stable
+                    setTimeout(() => {
+                        el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 800);
+                }
+            }
+        };
+
+        handleInitialScroll();
+        // Also listen for hash changes in case of same-page navigation
+        window.addEventListener('hashchange', handleInitialScroll);
+        return () => window.removeEventListener('hashchange', handleInitialScroll);
+    }, []);
+
     return (
-        <section className="pb-20 text-gray-900">
+        <section id="discussion" className="pb-20 text-gray-900">
             {/* Header */}
             <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-3">

@@ -114,7 +114,12 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
     const handleNotificationClick = (n: Notification) => {
         if (!n.isRead) markAsRead(n.id);
         if (n.link) {
-            router.push(normalizeLink(n.link));
+            let targetLink = normalizeLink(n.link);
+            // Auto-append #discussion for comment notifications if not present
+            if (n.type === 'COMMENT' && !targetLink.includes('#')) {
+                targetLink += '#discussion';
+            }
+            router.push(targetLink);
             setIsOpen(false);
         }
     };
@@ -179,8 +184,8 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                             <button
                                 onClick={() => setFilter('all')}
                                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${filter === 'all'
-                                        ? 'bg-[#E0F0FA] text-[#2ba6e1]'
-                                        : 'text-gray-500 hover:bg-gray-100'
+                                    ? 'bg-[#E0F0FA] text-[#2ba6e1]'
+                                    : 'text-gray-500 hover:bg-gray-100'
                                     }`}
                             >
                                 All
@@ -188,8 +193,8 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                             <button
                                 onClick={() => setFilter('unread')}
                                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${filter === 'unread'
-                                        ? 'bg-[#E0F0FA] text-[#2ba6e1]'
-                                        : 'text-gray-500 hover:bg-gray-100'
+                                    ? 'bg-[#E0F0FA] text-[#2ba6e1]'
+                                    : 'text-gray-500 hover:bg-gray-100'
                                     }`}
                             >
                                 Unread
@@ -221,14 +226,14 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                                         key={n.id}
                                         onClick={() => handleNotificationClick(n)}
                                         className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${n.isRead
-                                                ? 'hover:bg-gray-50'
-                                                : 'bg-[#E0F0FA]/30 hover:bg-[#E0F0FA]/50'
+                                            ? 'hover:bg-gray-50'
+                                            : 'bg-[#E0F0FA]/30 hover:bg-[#E0F0FA]/50'
                                             }`}
                                     >
                                         {/* Avatar / Icon */}
                                         <div className={`shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center ${n.type.includes('CAMPAIGN')
-                                                ? 'bg-orange-50 text-orange-500'
-                                                : 'bg-blue-50 text-blue-500'
+                                            ? 'bg-orange-50 text-orange-500'
+                                            : 'bg-blue-50 text-blue-500'
                                             }`}>
                                             {n.type.includes('CAMPAIGN') ? <ArchiveBoxArrowDownIcon className="w-4 h-4 stroke-[2]" /> : <BellIcon className="w-4 h-4 stroke-[2]" />}
                                         </div>

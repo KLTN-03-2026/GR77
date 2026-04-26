@@ -19,6 +19,11 @@ import {
     ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
+import { useRouter } from 'next/navigation';
+import { useGlobalAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/lib/constants/endpoints';
+import { CampaignDiscussion } from '@/components/campaign/CampaignDiscussion';
+import { CampaignModals } from '@/app/(app)/home/[id]/_components/CampaignModals';
 
 export default function CampaignDetailClient({ id }: { id: string }) {
     const [campaign, setCampaign] = useState<any>(null);
@@ -34,6 +39,28 @@ export default function CampaignDetailClient({ id }: { id: string }) {
     const [accountNumber, setAccountNumber] = useState('');
     const [accountOwner, setAccountOwner] = useState('');
     const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
+
+    const { user: currentUser } = useGlobalAuth();
+    const router = useRouter();
+
+    // Comment states
+    const [comments, setComments] = useState<any[]>([]);
+    const [newComment, setNewComment] = useState("");
+    const [replyingTo, setReplyingTo] = useState<any>(null);
+    const [isCommenting, setIsCommenting] = useState(false);
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+    const [reportReason, setReportReason] = useState("");
+
+    const fetchComments = async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/comments/campaign/${id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setComments(data);
+            }
+        } catch (err) { }
+    };
 
     useEffect(() => {
         const fetchCampaign = async () => {
@@ -55,8 +82,84 @@ export default function CampaignDetailClient({ id }: { id: string }) {
 
         if (id) {
             fetchCampaign();
+            fetchComments();
         }
     }, [id]);
+
+    const handleSubmitComment = async () => {
+        if (!newComment.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("Vui lòng đăng nhập để bình luận");
+            router.push("/login");
+            return;
+        }
+
+        setIsCommenting(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/comments`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    campaignId: id,
+                    content: newComment,
+                    parentId: replyingTo?.id || null,
+                }),
+            });
+
+            if (res.ok) {
+                setNewComment("");
+                setReplyingTo(null);
+                fetchComments();
+            } else {
+                const data = await res.json();
+                alert(data.message || "Không thể gửi bình luận");
+            }
+        } catch (err) {
+            alert("Lỗi kết nối");
+        } finally {
+            setIsCommenting(false);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+        const token = localStorage.getItem("accessToken");
+        try {
+            const res = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) fetchComments();
+        } catch (err) { }
+    };
+
+    const handleReportComment = async () => {
+        if (!reportReason.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        try {
+            const res = await fetch(`${API_BASE_URL}/comments/${reportingCommentId}/report`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ reason: reportReason }),
+            });
+            if (res.ok) {
+                alert("Đã gửi báo cáo bình luận.");
+                setReportModalOpen(false);
+                setReportReason("");
+            }
+        } catch (err) { }
+    };
+
+    const getAvatar = (user: any) => {
+        return user?.profile?.avatarUrl || null;
+    };
 
     const handleWithdrawalSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -258,56 +361,23 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         </div>
                     </div>
 
-                    {/* Updates Section */}
-                    <div className="bg-white rounded-2xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-                        <div className="flex items-center gap-3 mb-10">
-                            <div className="p-3 bg-blue-50 rounded-xl">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-blue-500">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900 leading-none mb-1.5">Post an Update</h2>
-                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                                    Notify your supporters
-                                </p>
-                            </div>
-                        </div>
 
-                        {/* Input Area */}
-                        <div>
-                            <div className="flex gap-4">
-                                {creatorAvatar ? (
-                                    <img
-                                        src={creatorAvatar}
-                                        alt="Your Avatar"
-                                        className="h-12 w-12 rounded-full object-cover ring-4 ring-white shadow-md border border-gray-100 bg-white"
-                                    />
-                                ) : (
-                                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center ring-4 ring-white shadow-md border border-gray-100">
-                                        <UserIcon className="w-6 h-6 text-cyan-300" />
-                                    </div>
-                                )}
-                                <div className="flex-1 space-y-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Update Title (e.g., Purchased 100 warm coats)"
-                                        className="w-full bg-gray-50 border-gray-100 rounded-xl py-3 px-5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold shadow-sm"
-                                    />
-                                    <textarea
-                                        placeholder="Write your detailed update here. This will be visible to all supporters in the Updates channel..."
-                                        rows={4}
-                                        className="w-full bg-gray-50 border-gray-100 rounded-xl py-4 px-6 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-y shadow-sm"
-                                    ></textarea>
-                                    <div className="flex justify-end pt-2">
-                                        <button className="bg-cyan-50 border-2 border-cyan-500 text-cyan-700 text-sm font-bold px-8 py-3 rounded-full hover:bg-cyan-100 transition-all shadow-sm active:scale-95">
-                                            Publish Update
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Discussion Section */}
+                    <CampaignDiscussion
+                        comments={comments}
+                        campaign={campaign}
+                        currentUser={currentUser}
+                        newComment={newComment}
+                        setNewComment={setNewComment}
+                        replyingTo={replyingTo}
+                        setReplyingTo={setReplyingTo}
+                        isCommenting={isCommenting}
+                        handleSubmitComment={handleSubmitComment}
+                        handleDeleteComment={handleDeleteComment}
+                        setReportingCommentId={setReportingCommentId}
+                        setReportModalOpen={setReportModalOpen}
+                        getAvatar={getAvatar}
+                    />
                 </div>
 
                 {/* Right Column: Status, Funding, Wallet Button, Creator */}
@@ -399,6 +469,48 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                     <div className="text-sm font-black text-gray-900 group-hover:text-blue-500 transition-colors">{creatorName}</div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Updates Section - Moved to Sidebar */}
+                    <div className="bg-white rounded-xl p-6 sm:p-8 mt-8 shadow-[0_20px_50px_rgba(8,112,184,0.07)] border border-blue-50/50">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="p-2.5 bg-blue-50 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 text-blue-500">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900 leading-none mb-1">Post an Update</h2>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    Notify your supporters
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex gap-3">
+                                {creatorAvatar ? (
+                                    <img src={creatorAvatar} alt="Your Avatar" className="h-10 w-10 rounded-full object-cover shadow-sm bg-white" />
+                                ) : (
+                                    <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+                                        <UserIcon className="w-5 h-5 text-blue-300" />
+                                    </div>
+                                )}
+                                <input
+                                    type="text"
+                                    placeholder="Update Title..."
+                                    className="flex-1 bg-gray-50 border-gray-100 rounded-xl py-2.5 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold"
+                                />
+                            </div>
+                            <textarea
+                                placeholder="Write your update here..."
+                                rows={3}
+                                className="w-full bg-gray-50 border-gray-100 rounded-xl py-3 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-none"
+                            ></textarea>
+                            <button className="w-full bg-blue-500 border-2 border-blue-500 text-white text-[11px] font-black py-3.5 rounded-full hover:bg-blue-600 transition-all shadow-lg shadow-blue-100 active:scale-95 uppercase tracking-widest">
+                                Publish Update
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -582,6 +694,31 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                     </div>
                 )}
             </div>
+
+            {/* Reuse Modals for Report etc. */}
+            <CampaignModals
+                donateOpen={false}
+                setDonateOpen={() => { }}
+                donateAmount=""
+                setDonateAmount={() => { }}
+                isDonating={false}
+                donated={false}
+                setDonated={() => { }}
+                donationMethod="PAYOS"
+                setDonationMethod={() => { }}
+                blockchainLoading={false}
+                blockchainError={null}
+                setBlockchainError={() => { }}
+                handleDonate={() => { }}
+                handleBlockchainDonate={() => { }}
+                QUICK_AMOUNTS={[]}
+
+                reportModalOpen={reportModalOpen}
+                setReportModalOpen={setReportModalOpen}
+                reportReason={reportReason}
+                setReportReason={setReportReason}
+                handleReportComment={handleReportComment}
+            />
         </div >
     );
 }

@@ -150,7 +150,7 @@ export default function JoinedCampaignDetailPage({
                     </div>
 
                     {/* Container 2: Multi-Tab Area */}
-                    <CampaignTabs />
+                    <CampaignTabs campaign={campaign} currentUser={currentUser} />
 
                     {/* Container 3: Community Discussion */}
                     <div className="px-4 sm:px-8 pb-12 max-w-7xl mx-auto mt-4">
@@ -198,7 +198,7 @@ export default function JoinedCampaignDetailPage({
             />
 
             {/* --- LEAVE MODAL --- */}
-            <LeaveCampaignModal 
+            <LeaveCampaignModal
                 showLeaveModal={showLeaveModal}
                 setShowLeaveModal={setShowLeaveModal}
                 handleLeave={handleLeave}
