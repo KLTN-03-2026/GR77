@@ -135,7 +135,12 @@ export function NotificationsView({ isAdmin }: { isAdmin?: boolean }) {
     const handleNotificationClick = (n: Notification) => {
         if (!n.isRead) markAsRead(n.id);
         if (n.link) {
-            router.push(normalizeLink(n.link));
+            let targetLink = normalizeLink(n.link);
+            // Auto-append #discussion for comment notifications if not present
+            if (n.type === 'COMMENT' && !targetLink.includes('#')) {
+                targetLink += '#discussion';
+            }
+            router.push(targetLink);
         }
     };
 
