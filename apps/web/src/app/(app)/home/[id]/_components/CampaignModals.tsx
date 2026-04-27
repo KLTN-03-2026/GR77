@@ -23,6 +23,12 @@ interface CampaignModalsProps {
     reportReason: string;
     setReportReason: (reason: string) => void;
     handleReportComment: () => void;
+
+    campaignReportModalOpen: boolean;
+    setCampaignReportModalOpen: (open: boolean) => void;
+    campaignReportReason: string;
+    setCampaignReportReason: (reason: string) => void;
+    handleReportCampaign: () => void;
 }
 
 export function CampaignModals({
@@ -47,6 +53,12 @@ export function CampaignModals({
     reportReason,
     setReportReason,
     handleReportComment,
+
+    campaignReportModalOpen,
+    setCampaignReportModalOpen,
+    campaignReportReason,
+    setCampaignReportReason,
+    handleReportCampaign,
 }: CampaignModalsProps) {
     return (
         <>
@@ -73,7 +85,17 @@ export function CampaignModals({
                 setReportModalOpen={setReportModalOpen}
                 reportReason={reportReason}
                 setReportReason={setReportReason}
-                handleReportComment={handleReportComment}
+                handleReport={handleReportComment}
+                title="Report Comment"
+            />
+
+            <ReportModal
+                reportModalOpen={campaignReportModalOpen}
+                setReportModalOpen={setCampaignReportModalOpen}
+                reportReason={campaignReportReason}
+                setReportReason={setCampaignReportReason}
+                handleReport={handleReportCampaign}
+                title="Report Campaign"
             />
         </>
     );

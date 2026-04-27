@@ -4,6 +4,7 @@ import { CampaignsService } from './campaigns.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
+import { ReportCampaignDto } from './dto/report-campaign.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -117,5 +118,16 @@ export class CampaignsController {
   ) {
     const userId = req.user.userId || req.user.sub;
     return this.campaignsService.update(userId, id, updateCampaignDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/report')
+  report(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: ReportCampaignDto,
+  ) {
+    const userId = req.user.userId || req.user.sub;
+    return this.campaignsService.report(userId, id, dto);
   }
 }
