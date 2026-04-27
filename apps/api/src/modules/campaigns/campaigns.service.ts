@@ -251,6 +251,94 @@ export class CampaignsService {
     }));
   }
 
+  async getMyStats(userId: string) {
+    const now = new Date();
+
+    // === 1. Area Chart: total donations per day for last 7 days ===
+    // Get all campaigns owned by user
+    const myCampaigns = await this.prisma.campaign.findMany({
+      where: { creatorUserId: userId },
+      select: { id: true },
+    });
+    const myCampaignIds = myCampaigns.map((c: any) => c.id);
+
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const last7Days: { name: string; value: number; date: Date }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      last7Days.push({ name: dayLabels[d.getDay()], value: 0, date: d });
+    }
+
+    if (myCampaignIds.length > 0) {
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
+      const donations = await (this.prisma as any).donation.findMany({
+        where: {
+          campaignId: { in: myCampaignIds },
+          status: 'SUCCESS',
+          donatedAt: { gte: sevenDaysAgo },
+        },
+        select: { amount: true, donatedAt: true },
+      });
+
+      for (const don of donations) {
+        const donDate = new Date(don.donatedAt);
+        donDate.setHours(0, 0, 0, 0);
+        const slot = last7Days.find(
+          (d) => d.date.toDateString() === donDate.toDateString(),
+        );
+        if (slot) slot.value += Number(don.amount);
+      }
+    }
+
+    const areaChart = last7Days.map((d) => ({ name: d.name, value: d.value }));
+
+    // === 2. Bar Chart: campaigns created per day this week ===
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weeklyCampaigns = await (this.prisma as any).campaign.findMany({
+      where: {
+        creatorUserId: userId,
+        createdAt: { gte: startOfWeek },
+      },
+      select: { createdAt: true, status: true },
+    });
+
+    const barMap: Record<string, { active: number; pending: number }> = {};
+    for (const label of dayLabels) {
+      barMap[label] = { active: 0, pending: 0 };
+    }
+    for (const camp of weeklyCampaigns) {
+      const label = dayLabels[new Date(camp.createdAt).getDay()];
+      if (camp.status === 'ACTIVE') barMap[label].active += 1;
+      else barMap[label].pending += 1;
+    }
+    const barChart = dayLabels.map((label) => ({
+      name: label,
+      active: barMap[label].active,
+      pending: barMap[label].pending,
+    }));
+
+    // === 3. Total Raised & Goal ===
+    const aggregated = await (this.prisma as any).campaign.aggregate({
+      where: { creatorUserId: userId },
+      _sum: { currentRaisedAmount: true, fundingGoalAmount: true },
+      _count: { id: true },
+    });
+
+    const totalRaised = Number(aggregated._sum.currentRaisedAmount || 0);
+    const totalGoal = Number(aggregated._sum.fundingGoalAmount || 0);
+    const campaignCount = aggregated._count.id || 0;
+
+    return { areaChart, barChart, totalRaised, totalGoal, campaignCount };
+  }
+
   async detail(id: string) {
     const campaign = await this.prisma.campaign.findUnique({
       where: { id },
