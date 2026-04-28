@@ -15,6 +15,7 @@ export interface PublicCampaign {
   favoritesCount?: number;
   participantsCount?: number;
   donorsCount?: number;
+  progress?: number;
   categoryRel?: { id: string; name: string };
   category?: string;
   creator?: {

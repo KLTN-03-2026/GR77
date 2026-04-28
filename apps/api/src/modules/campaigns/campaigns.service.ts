@@ -61,6 +61,8 @@ export class CampaignsService {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
       items: items.map((c: any) => ({
         ...c,
+        currentRaisedAmount: Number(c.currentRaisedAmount || 0),
+        fundingGoalAmount: Number(c.fundingGoalAmount || 0),
         amountRaised: Number(c.currentRaisedAmount || 0),
         progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
         donationsCount: c._count.donations,
@@ -210,6 +212,8 @@ export class CampaignsService {
       },
       items: items.map((c: any) => ({
         ...c,
+        currentRaisedAmount: Number(c.currentRaisedAmount || 0),
+        fundingGoalAmount: Number(c.fundingGoalAmount || 0),
         amountRaised: Number(c.currentRaisedAmount || 0),
         progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
         favoritesCount: c._count.favorites,
@@ -245,6 +249,8 @@ export class CampaignsService {
 
     return items.map((c: any) => ({
       ...c,
+      currentRaisedAmount: Number(c.currentRaisedAmount || 0),
+      fundingGoalAmount: Number(c.fundingGoalAmount || 0),
       amountRaised: Number(c.currentRaisedAmount || 0),
       progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
       favoritesCount: c._count.favorites,
@@ -423,6 +429,9 @@ export class CampaignsService {
 
     return {
       ...campaign,
+      currentRaisedAmount: Number(campaign.currentRaisedAmount || 0),
+      fundingGoalAmount: Number(campaign.fundingGoalAmount || 0),
+      minimumDonationAmount: Number(campaign.minimumDonationAmount || 0),
       amountRaised: Number(campaign.currentRaisedAmount || 0),
       progress: Number(campaign.fundingGoalAmount) > 0 ? (Number(campaign.currentRaisedAmount || 0) / Number(campaign.fundingGoalAmount)) * 100 : 0,
       favoritesCount: campaign._count.favorites,

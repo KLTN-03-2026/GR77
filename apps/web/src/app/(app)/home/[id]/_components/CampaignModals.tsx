@@ -17,6 +17,8 @@ interface CampaignModalsProps {
     handleDonate: () => void;
     handleBlockchainDonate: (amountVnd: number, forceDemo?: boolean) => void;
     QUICK_AMOUNTS: number[];
+    message: string;
+    setMessage: (val: string) => void;
 
     reportModalOpen: boolean;
     setReportModalOpen: (open: boolean) => void;
@@ -47,7 +49,9 @@ export function CampaignModals({
     handleDonate,
     handleBlockchainDonate,
     QUICK_AMOUNTS,
-    
+    message,
+    setMessage,
+
     reportModalOpen,
     setReportModalOpen,
     reportReason,
@@ -78,6 +82,8 @@ export function CampaignModals({
                 handleDonate={handleDonate}
                 handleBlockchainDonate={handleBlockchainDonate}
                 QUICK_AMOUNTS={QUICK_AMOUNTS}
+                message={message}
+                setMessage={setMessage}
             />
 
             <ReportModal

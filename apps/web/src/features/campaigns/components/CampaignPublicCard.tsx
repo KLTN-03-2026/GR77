@@ -25,7 +25,7 @@ function formatDate(d?: string) {
 
 /* ─── reusable campaign card ─── */
 export function CampaignPublicCard({ campaign }: { campaign: PublicCampaign }) {
-  const pct = progressPct(campaign.currentRaisedAmount, campaign.fundingGoalAmount);
+  const pct = campaign.progress !== undefined ? Math.round(campaign.progress) : progressPct(campaign.currentRaisedAmount, campaign.fundingGoalAmount);
   const categoryName = campaign.categoryRel?.name ?? campaign.category ?? '';
   const router = useRouter();
 

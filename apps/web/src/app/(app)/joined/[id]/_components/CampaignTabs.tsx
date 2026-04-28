@@ -56,29 +56,44 @@ export function CampaignTabs({ campaign, currentUser }: CampaignTabsProps) {
                         <div className="space-y-4">
                             {donations.length > 0 ? (
                                 donations.map((donation: any) => {
-                                    const donorName = donation.user
-                                        ? `${donation.user.profile?.firstName || ''} ${donation.user.profile?.lastName || ''}`.trim() || donation.user.username
-                                        : "Anonymous";
+                                    const profile = donation.user?.profile;
                                     const isMe = donation.userId === currentUser?.id;
+                                    const accountName = donation.user?.username || "Khách vãng lai";
+                                    const fullNameArr = profile ? [profile.lastName, profile.firstName].filter(Boolean) : [];
+                                    const fullName = fullNameArr.join(' ');
+
+                                    let baseName = accountName;
+                                    if (fullName && fullName.toLowerCase() !== accountName.toLowerCase()) {
+                                        baseName = `${fullName} (${accountName})`;
+                                    }
+
+                                    const donorName = isMe ? `${baseName} ( Tôi )` : baseName;
 
                                     return (
-                                        <div key={donation.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold overflow-hidden">
-                                                    {donation.user?.profile?.avatarUrl ? (
-                                                        <img src={donation.user.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        donorName.charAt(0)
-                                                    )}
+                                        <div key={donation.id} className="p-5 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200 shadow-sm">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center font-bold overflow-hidden border border-blue-100 shadow-sm">
+                                                        {donation.user?.profile?.avatarUrl ? (
+                                                            <img src={donation.user.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span className="text-base uppercase">{donorName.charAt(0)}</span>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-black text-gray-900 group-hover:text-blue-600 transition-colors">
+                                                            {donorName}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{formatDate(donation.donatedAt || donation.createdAt)}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900">
-                                                        {donorName} {isMe && <span className="text-cyan-600 font-medium">( tôi )</span>}
-                                                    </p>
-                                                    <p className="text-sm text-gray-500">{formatDate(donation.createdAt)}</p>
-                                                </div>
+                                                <span className="font-black text-green-600 text-lg">+{formatCurrency(Number(donation.amount))} VND</span>
                                             </div>
-                                            <span className="font-black text-green-600">+{formatCurrency(Number(donation.amount))} VND</span>
+                                            {donation.message && (
+                                                <div className="ml-16 mt-2 p-3 bg-white/60 rounded-xl border border-gray-100 text-sm text-gray-600 italic leading-relaxed">
+                                                    "{donation.message}"
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })
