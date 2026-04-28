@@ -7,7 +7,6 @@ import {
     MagnifyingGlassIcon,
     ArrowDownTrayIcon,
     EllipsisVerticalIcon,
-    ChevronDownIcon,
     DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import {
@@ -16,43 +15,41 @@ import {
     PieChart, Pie
 } from 'recharts';
 
-const areaData = [
-    { name: 'Sunday', value: 200 },
-    { name: 'Monday', value: 400 },
-    { name: 'Tuesday', value: 300 },
-    { name: 'Wednesday', value: 650 },
-    { name: 'Thursday', value: 400 },
-    { name: 'Friday', value: 458 },
-    { name: 'Saturday', value: 500 },
-];
-
-const barData = [
-    { name: 'Sun', value: 60, isRed: true },
-    { name: 'Sun ', value: 80, isRed: false },
-    { name: 'Sun  ', value: 40, isRed: true },
-    { name: 'Sun   ', value: 60, isRed: false },
-    { name: 'Sun    ', value: 50, isRed: true },
-    { name: 'Sun     ', value: 50, isRed: false },
-    { name: 'Sun      ', value: 60, isRed: true },
-];
-
-const donutData = [
-    { name: 'Raised', value: 80 },
-    { name: 'Remaining', value: 20 },
-];
+function formatVND(value: number): string {
+    if (value >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+    if (value >= 1_000_000) return (value / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (value >= 1_000) return (value / 1_000).toFixed(0) + 'K';
+    return value.toLocaleString('vi-VN');
+}
 
 // Custom Tooltip for Area Chart
 const AreaTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white px-4 py-2 rounded-xl shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] border border-gray-100 flex flex-col items-center">
-                <span className="text-gray-900 font-bold text-sm">{payload[0].value} Order</span>
-                <span className="text-gray-400 text-xs mt-0.5">Oct 10th 2010</span>
+                <span className="text-gray-900 font-bold text-sm">{formatVND(payload[0].value)} ₫</span>
+                <span className="text-gray-400 text-xs mt-0.5">{label}</span>
             </div>
         );
     }
     return null;
 };
+
+const ChartSkeleton = () => (
+    <div className="h-full w-full flex items-end gap-2 px-2 animate-pulse">
+        {[40, 65, 50, 80, 55, 70, 45].map((h, i) => (
+            <div key={i} className="flex-1 bg-gray-100 rounded-t-md" style={{ height: `${h}%` }} />
+        ))}
+    </div>
+);
+
+interface ChartStats {
+    areaChart: { name: string; value: number }[];
+    barChart: { name: string; active: number; pending: number }[];
+    totalRaised: number;
+    totalGoal: number;
+    campaignCount: number;
+}
 
 export default function CreatorCampaignsPage() {
     const router = useRouter();
@@ -62,6 +59,8 @@ export default function CreatorCampaignsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [chartStats, setChartStats] = useState<ChartStats | null>(null);
+    const [isStatsLoading, setIsStatsLoading] = useState(true);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -105,6 +104,28 @@ export default function CreatorCampaignsPage() {
 
         fetchCampaigns();
     }, [router]);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            setIsStatsLoading(true);
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) return;
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/me/stats`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                setChartStats(data);
+            } catch (e) {
+                console.error('Failed to fetch chart stats', e);
+            } finally {
+                setIsStatsLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
 
     const filteredCampaigns = campaigns.filter(campaign =>
         campaign.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -260,7 +281,7 @@ export default function CreatorCampaignsPage() {
                 <div className="flex justify-between items-start mb-8">
                     <div>
                         <h2 className="text-lg font-bold text-gray-900 leading-none">Chart Donate</h2>
-                        <p className="text-xs text-gray-400 mt-2 font-medium">Lorem ipsum dolor sit amet, consectetur adip</p>
+                        <p className="text-xs text-gray-400 mt-2 font-medium">Tổng tiền donate vào campaigns của bạn – 7 ngày qua</p>
                     </div>
                     <button className="flex items-center gap-2 px-4 py-2 border border-[#9fd3f2] text-[#6bbceb] rounded-[10px] text-xs font-bold hover:bg-blue-50 transition-colors">
                         <ArrowDownTrayIcon className="h-4 w-4" strokeWidth={2.5} />
@@ -269,35 +290,46 @@ export default function CreatorCampaignsPage() {
                 </div>
 
                 <div className="h-[240px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={areaData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#81cbf1" stopOpacity={0.4} />
-                                    <stop offset="95%" stopColor="#81cbf1" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                            <XAxis
-                                dataKey="name"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                                dy={15}
-                            />
-                            <YAxis hide domain={['dataMin - 100', 'dataMax + 100']} />
-                            <Tooltip content={<AreaTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                            <Area
-                                type="monotone"
-                                dataKey="value"
-                                stroke="#81cbf1"
-                                strokeWidth={3}
-                                fillOpacity={1}
-                                fill="url(#colorValue)"
-                                activeDot={{ r: 6, fill: '#81cbf1', stroke: '#ffffff', strokeWidth: 3 }}
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                    {isStatsLoading ? (
+                        <ChartSkeleton />
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartStats?.areaChart ?? []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#81cbf1" stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor="#81cbf1" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                                <XAxis
+                                    dataKey="name"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
+                                    dy={15}
+                                />
+                                <YAxis
+                                    hide={false}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fill: '#9ca3af', fontWeight: 600 }}
+                                    tickFormatter={(v) => formatVND(v)}
+                                    width={48}
+                                />
+                                <Tooltip content={<AreaTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                                <Area
+                                    type="monotone"
+                                    dataKey="value"
+                                    stroke="#81cbf1"
+                                    strokeWidth={3}
+                                    fillOpacity={1}
+                                    fill="url(#colorValue)"
+                                    activeDot={{ r: 6, fill: '#81cbf1', stroke: '#ffffff', strokeWidth: 3 }}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    )}
                 </div>
             </div>
 
@@ -309,10 +341,16 @@ export default function CreatorCampaignsPage() {
                     <div className="flex justify-between items-center mb-10 mt-2">
                         <h2 className="text-base font-bold text-gray-900">Campaigns Map</h2>
                         <div className="flex items-center gap-3">
-                            <button className="flex items-center gap-1.5 text-[10px] font-bold border border-gray-200 rounded-full px-3 py-1 text-gray-600 hover:bg-gray-50">
-                                Weekly
-                                <ChevronDownIcon className="h-2.5 w-2.5 text-red-400 stroke-[3]" />
-                            </button>
+                            <div className="flex items-center gap-2 text-[10px] font-bold">
+                                <span className="flex items-center gap-1">
+                                    <span className="inline-block w-2 h-2 rounded-full bg-[#ffc42e]"></span>
+                                    Active
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <span className="inline-block w-2 h-2 rounded-full bg-[#ff545e]"></span>
+                                    Pending
+                                </span>
+                            </div>
                             <button className="text-gray-400 hover:text-gray-600 transition-colors">
                                 <EllipsisVerticalIcon className="h-5 w-5" />
                             </button>
@@ -320,62 +358,82 @@ export default function CreatorCampaignsPage() {
                     </div>
 
                     <div className="h-[200px] w-full mt-auto">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barGap={0} barCategoryGap="30%">
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                <XAxis
-                                    dataKey="name"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                                    ticks={[0, 20, 40, 60, 80]}
-                                />
-                                <Tooltip cursor={{ fill: '#f8fafc' }} />
-                                <Bar dataKey="value" radius={[6, 6, 6, 6]} barSize={8}>
-                                    {barData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.isRed ? '#ff545e' : '#ffc42e'} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {isStatsLoading ? (
+                            <ChartSkeleton />
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartStats?.barChart ?? []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barGap={2} barCategoryGap="35%">
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
+                                        allowDecimals={false}
+                                    />
+                                    <Tooltip cursor={{ fill: '#f8fafc' }} formatter={(value, name) => [value, name === 'active' ? 'Active' : 'Pending']} />
+                                    <Bar dataKey="active" name="active" radius={[6, 6, 6, 6]} barSize={8} fill="#ffc42e" />
+                                    <Bar dataKey="pending" name="pending" radius={[6, 6, 6, 6]} barSize={8} fill="#ff545e" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
                 {/* Total Raised Section */}
                 <div className="flex-1 flex flex-col justify-center items-center lg:pl-10 pt-4 lg:pt-0">
-                    <div className="relative w-[180px] h-[180px]">
-                        {/* Inner custom shadows layer for the donut could reside under the SVG */}
-                        <div className="absolute inset-0 rounded-full bg-blue-50/20 blur-xl"></div>
-
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={donutData}
-                                    innerRadius={68}
-                                    outerRadius={90}
-                                    startAngle={90}
-                                    endAngle={-270}
-                                    dataKey="value"
-                                    stroke="none"
-                                    cornerRadius={40} // gives a rounded effect to the pie ends if any
-                                >
-                                    <Cell fill="#dff0fa" />
-                                    <Cell fill="#f6f9fc" />
-                                </Pie>
-                            </PieChart>
-                        </ResponsiveContainer>
-
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-xl sm:text-3xl font-black text-[#fed13f] drop-shadow-sm tracking-wide">80M $</span>
-                        </div>
-                    </div>
+                    {isStatsLoading ? (
+                        <div className="w-[180px] h-[180px] rounded-full bg-gray-100 animate-pulse" />
+                    ) : (() => {
+                        const raised = chartStats?.totalRaised ?? 0;
+                        const goal = chartStats?.totalGoal ?? 0;
+                        const raisedPct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
+                        const remainingPct = 100 - raisedPct;
+                        const donutData = [
+                            { name: 'Raised', value: raisedPct || 1 },
+                            { name: 'Remaining', value: remainingPct > 0 ? remainingPct : 0 },
+                        ];
+                        return (
+                            <div className="relative w-[180px] h-[180px]">
+                                <div className="absolute inset-0 rounded-full bg-blue-50/20 blur-xl"></div>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={donutData}
+                                            innerRadius={68}
+                                            outerRadius={90}
+                                            startAngle={90}
+                                            endAngle={-270}
+                                            dataKey="value"
+                                            stroke="none"
+                                            cornerRadius={40}
+                                        >
+                                            <Cell fill="#dff0fa" />
+                                            <Cell fill="#f6f9fc" />
+                                        </Pie>
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-xl sm:text-2xl font-black text-[#fed13f] drop-shadow-sm tracking-wide">
+                                        {formatVND(raised)}
+                                    </span>
+                                    <span className="text-[9px] text-gray-400 font-bold mt-0.5">VND</span>
+                                </div>
+                            </div>
+                        );
+                    })()}
                     <h3 className="text-gray-900 font-extrabold text-xs tracking-wide uppercase mt-6">Total Raised</h3>
+                    {!isStatsLoading && chartStats && (
+                        <p className="text-[10px] text-gray-400 mt-1">
+                            {chartStats.campaignCount} campaign{chartStats.campaignCount !== 1 ? 's' : ''}
+                        </p>
+                    )}
                 </div>
             </div>
         </div>

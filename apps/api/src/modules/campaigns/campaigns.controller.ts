@@ -68,6 +68,16 @@ export class CampaignsController {
   }
 
   /**
+   * GET /campaigns/me/stats
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/stats')
+  getMyStats(@Request() req: any) {
+    const userId = req.user.userId || req.user.sub;
+    return this.campaignsService.getMyStats(userId);
+  }
+
+  /**
    * GET /campaigns/me/list
    */
   @UseGuards(AuthGuard('jwt'))
