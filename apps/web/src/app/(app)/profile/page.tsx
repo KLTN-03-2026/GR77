@@ -6,6 +6,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   XMarkIcon,
+  PencilIcon,
 } from '@heroicons/react/24/outline';
 import { useAddressData } from './_hooks/useAddressData';
 import { ProfileHeader } from './_components/ProfileHeader';
@@ -44,12 +45,19 @@ export default function MyProfilePage() {
 
   // ─── Profile state ──────────────────────────────────────────
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [province, setProvince] = useState('');
   const [district, setDistrict] = useState('');
   const [ward, setWard] = useState('');
   const [address, setAddress] = useState('');
+  const [originalFirstName, setOriginalFirstName] = useState('');
+  const [originalLastName, setOriginalLastName] = useState('');
+  const [originalProvince, setOriginalProvince] = useState('');
+  const [originalDistrict, setOriginalDistrict] = useState('');
+  const [originalWard, setOriginalWard] = useState('');
+  const [originalAddress, setOriginalAddress] = useState('');
 
   const { provincesData, districtsData } = useAddressData(province);
 
@@ -88,12 +96,25 @@ export default function MyProfilePage() {
       const data: UserProfile = await res.json();
       setProfile(data);
       if (data.profile) {
-        setFirstName(data.profile.firstName || '');
-        setLastName(data.profile.lastName || '');
-        setProvince(data.profile.province || '');
-        setDistrict(data.profile.district || '');
-        setWard(data.profile.ward || '');
-        setAddress(data.profile.address || '');
+        const firstName = data.profile.firstName || '';
+        const lastName = data.profile.lastName || '';
+        const province = data.profile.province || '';
+        const district = data.profile.district || '';
+        const ward = data.profile.ward || '';
+        const address = data.profile.address || '';
+        
+        setFirstName(firstName);
+        setLastName(lastName);
+        setProvince(province);
+        setDistrict(district);
+        setWard(ward);
+        setAddress(address);
+        setOriginalFirstName(firstName);
+        setOriginalLastName(lastName);
+        setOriginalProvince(province);
+        setOriginalDistrict(district);
+        setOriginalWard(ward);
+        setOriginalAddress(address);
         setAvatarPreview(data.profile.avatarUrl || null);
         setCoverPreview(data.profile.coverImageUrl || null);
       }
@@ -110,6 +131,21 @@ export default function MyProfilePage() {
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  // ─── Edit mode handlers ────────────────────────────────────────────────────────────────────
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setFirstName(originalFirstName);
+    setLastName(originalLastName);
+    setProvince(originalProvince);
+    setDistrict(originalDistrict);
+    setWard(originalWard);
+    setAddress(originalAddress);
+    setIsEditing(false);
   };
 
   // ─── Image handlers ─────────────────────────────────────────
@@ -188,8 +224,17 @@ export default function MyProfilePage() {
       setProfile((prev) => prev ? { ...prev, ...data.user } : prev);
       updateUser(data.user);
 
+      // Update original values after successful save
+      setOriginalFirstName(firstName);
+      setOriginalLastName(lastName);
+      setOriginalProvince(province);
+      setOriginalDistrict(district);
+      setOriginalWard(ward);
+      setOriginalAddress(address);
+
       setAvatarFile(null);
       setCoverFile(null);
+      setIsEditing(false);
 
       showToast('success', 'Profile updated successfully!');
     } catch (err: any) {
@@ -333,7 +378,8 @@ export default function MyProfilePage() {
             district={district} setDistrict={setDistrict}
             address={address} setAddress={setAddress}
             provincesData={provincesData} districtsData={districtsData}
-            handleSave={handleSave} isSaving={isSaving} fetchProfile={fetchProfile}
+            handleSave={handleSave} isSaving={isSaving} fetchProfile={handleCancel}
+            isEditing={isEditing} setIsEditing={setIsEditing} onEditClick={handleEditClick}
           />
         </div>
       </div>
