@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPinIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 interface PersonalInfoFormProps {
   firstName: string;
@@ -17,6 +17,9 @@ interface PersonalInfoFormProps {
   handleSave: () => void;
   isSaving: boolean;
   fetchProfile: () => void;
+  isEditing: boolean;
+  setIsEditing: (v: boolean) => void;
+  onEditClick: () => void;
 }
 
 export function PersonalInfoForm({
@@ -26,11 +29,23 @@ export function PersonalInfoForm({
   district, setDistrict,
   address, setAddress,
   provincesData, districtsData,
-  handleSave, isSaving, fetchProfile
+  handleSave, isSaving, fetchProfile,
+  isEditing, setIsEditing, onEditClick
 }: PersonalInfoFormProps) {
   return (
     <div className="bg-white rounded-b-xl sm:rounded-b-2xl shadow-sm border border-gray-100 p-5 sm:p-8">
-      <h3 className="text-xl font-bold text-[#1d2951] mb-6">Personal Information</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-[#1d2951]">Personal Information</h3>
+        {!isEditing && (
+          <button
+            onClick={onEditClick}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-sm transition-all transform active:scale-95"
+          >
+            <PencilIcon className="w-4 h-4" />
+            Edit
+          </button>
+        )}
+      </div>
 
       <div className="space-y-6">
         {/* Name Fields */}
@@ -41,8 +56,13 @@ export function PersonalInfoForm({
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
+              disabled={!isEditing}
               placeholder="Enter first name"
-              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
+              className={`w-full px-4 py-3 rounded-2xl border transition-all outline-none ${
+                isEditing
+                  ? 'bg-gray-50 border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100'
+                  : 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed'
+              } text-gray-800 font-medium`}
             />
           </div>
           <div>
@@ -51,8 +71,13 @@ export function PersonalInfoForm({
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
+              disabled={!isEditing}
               placeholder="Enter last name"
-              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
+              className={`w-full px-4 py-3 rounded-2xl border transition-all outline-none ${
+                isEditing
+                  ? 'bg-gray-50 border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100'
+                  : 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed'
+              } text-gray-800 font-medium`}
             />
           </div>
         </div>
@@ -72,7 +97,12 @@ export function PersonalInfoForm({
                   setProvince(e.target.value);
                   setDistrict('');
                 }}
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none appearance-none"
+                disabled={!isEditing}
+                className={`w-full px-4 py-3 rounded-2xl border transition-all outline-none appearance-none ${
+                  isEditing
+                    ? 'bg-gray-50 border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100'
+                    : 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed'
+                } text-gray-800 font-medium`}
               >
                 <option value="">-- Select Province / City --</option>
                 {provincesData.map((p: any) => (
@@ -85,8 +115,12 @@ export function PersonalInfoForm({
               <select
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
-                disabled={!province}
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isEditing || !province}
+                className={`w-full px-4 py-3 rounded-2xl border transition-all outline-none appearance-none ${
+                  !isEditing || !province
+                    ? 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed opacity-50'
+                    : 'bg-gray-50 border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100'
+                } text-gray-800 font-medium`}
               >
                 <option value="">-- Select Ward / Commune --</option>
                 {districtsData.map((d: any) => (
@@ -101,32 +135,39 @@ export function PersonalInfoForm({
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              disabled={!isEditing}
               placeholder="House number, street name, building..."
-              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 text-gray-800 font-medium transition-all outline-none"
+              className={`w-full px-4 py-3 rounded-2xl border transition-all outline-none ${
+                isEditing
+                  ? 'bg-gray-50 border-transparent focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100'
+                  : 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed'
+              } text-gray-800 font-medium`}
             />
           </div>
         </div>
 
         {/* Save Actions */}
-        <div className="pt-6 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 border-t border-gray-200">
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="w-full sm:w-[160px] py-2.5 rounded-full font-bold text-[#319C04] border-2 border-[#319C04] bg-white hover:bg-[#319C04]/20 transition-all transform active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center text-[15px]"
-          >
-            {isSaving ? (
-              <div className="w-5 h-5 border-2 border-[#319C04]/30 border-t-[#319C04] rounded-full animate-spin" />
-            ) : (
-              'Save change'
-            )}
-          </button>
-          <button
-            onClick={fetchProfile}
-            className="w-full sm:w-[140px] py-2.5 rounded-full font-bold text-[#BC4639] border-2 border-[#BC4639] bg-white hover:bg-[#BC4639]/20 transition-all transform active:scale-95 flex items-center justify-center text-[15px]"
-          >
-            Cancel
-          </button>
-        </div>
+        {isEditing && (
+          <div className="pt-6 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 border-t border-gray-200">
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full sm:w-[160px] py-2.5 rounded-full font-bold text-[#319C04] border-2 border-[#319C04] bg-white hover:bg-[#319C04]/20 transition-all transform active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center text-[15px]"
+            >
+              {isSaving ? (
+                <div className="w-5 h-5 border-2 border-[#319C04]/30 border-t-[#319C04] rounded-full animate-spin" />
+              ) : (
+                'Save change'
+              )}
+            </button>
+            <button
+              onClick={fetchProfile}
+              className="w-full sm:w-[140px] py-2.5 rounded-full font-bold text-[#BC4639] border-2 border-[#BC4639] bg-white hover:bg-[#BC4639]/20 transition-all transform active:scale-95 flex items-center justify-center text-[15px]"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
