@@ -26,7 +26,7 @@ export default function CampaignCard({ campaign, isFavorited, onFavoriteToggle }
 
     return (
         <div
-            className="group [container-type:inline-size] [container-name:acard] md:aspect-[4.6/1] aspect-auto overflow-hidden bg-white rounded-[2cqi] md:rounded-[1.5cqi] border border-gray-200 shadow-sm hover:shadow-lg transition-shadow duration-300"
+            className="group [container-type:inline-size] [container-name:acard] md:aspect-[4.6/1] aspect-auto overflow-hidden bg-white rounded-[3cqi] md:rounded-[1cqi] border border-gray-200 shadow-sm hover:shadow-lg transition-shadow duration-300"
         >
             <div className="flex w-full h-full overflow-hidden md:flex-row flex-col">
                 {/* ── Image ── */}

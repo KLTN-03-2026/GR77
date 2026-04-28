@@ -40,6 +40,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
 
     const fetchNotifications = async () => {
         try {
+            if (typeof window === 'undefined') return;
             const token = isAdmin ? localStorage.getItem('adminAccessToken') : localStorage.getItem('accessToken');
             if (!token) return;
 
@@ -48,7 +49,12 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
             });
             if (res.ok) {
                 const data = await res.json();
-                setNotifications(data);
+                if (Array.isArray(data)) {
+                    setNotifications(data);
+                } else {
+                    console.error('Expected array of notifications, got:', data);
+                    setNotifications([]);
+                }
             }
         } catch (err) {
             console.error('Failed to fetch notifications', err);
