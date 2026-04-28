@@ -2,9 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { CalendarIcon, MapPinIcon, Bars3CenterLeftIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, Bars3CenterLeftIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { HeartIcon } from '@heroicons/react/24/solid';
 import FavoriteButton from '@/components/campaign/FavoriteButton';
+
+const TEAL = '#0891B2';
 
 interface CampaignCardProps {
     campaign: any;
@@ -14,9 +16,8 @@ interface CampaignCardProps {
 
 export default function CampaignCard({ campaign, isFavorited, onFavoriteToggle }: CampaignCardProps) {
     const formatDate = (dateString?: string) => {
-        if (!dateString) return 'No date';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        if (!dateString) return '—';
+        return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
     };
 
     const formatCurrency = (amount: number | string) => {
@@ -24,79 +25,112 @@ export default function CampaignCard({ campaign, isFavorited, onFavoriteToggle }
     };
 
     return (
-        <Link
-            href={`/home/${campaign.id}`}
-            className="block group [container-type:inline-size] [container-name:hcard] md:aspect-[3.5/1] aspect-auto"
+        <div
+            className="group [container-type:inline-size] [container-name:acard] md:aspect-[4.6/1] aspect-auto overflow-hidden bg-white rounded-[3cqi] md:rounded-[1cqi] border border-gray-200 shadow-sm hover:shadow-lg transition-shadow duration-300"
         >
-            <div className="flex w-full h-full overflow-hidden bg-white rounded-[5cqi] md:rounded-[3.5cqi] border-[1.5px] border-[#e3e9f1] transition-all hover:border-cyan-400 md:flex-row flex-col">
-                {/* Image Section */}
-                <div className="h-full shrink-0 flex items-center md:w-[28cqi] md:min-w-[28cqi] md:p-[1.5cqi] w-full p-0">
-                    <div className="relative w-full overflow-hidden md:aspect-square aspect-[3/2] md:rounded-[2cqi] rounded-t-[5cqi] rounded-b-0">
+            <div className="flex w-full h-full overflow-hidden md:flex-row flex-col">
+                {/* ── Image ── */}
+                <div className="relative shrink-0 md:w-[29cqi] w-full overflow-hidden">
+                    <div className="w-full h-full aspect-[2.2/1] md:aspect-auto">
                         {campaign.coverImageUrl ? (
                             <img
                                 src={campaign.coverImageUrl}
                                 alt={campaign.title}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-100 to-blue-100">
-                                <Bars3CenterLeftIcon className="md:w-[8cqi] md:h-[8cqi] w-[12cqi] h-[12cqi] text-[#496D96]" />
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0D4F4F 0%, #115E59 100%)' }}>
+                                <Bars3CenterLeftIcon className="md:w-[8cqi] md:h-[8cqi] w-12 h-12 text-white/30" />
                             </div>
                         )}
-                        <span className="absolute md:top-[1cqi] md:left-[1cqi] top-[3cqi] left-[3cqi] md:px-[1.4cqi] md:py-[0.4cqi] px-[3cqi] py-[1.5cqi] md:text-[1.3cqi] text-[3.5cqi] font-bold bg-white/90 text-black shadow-sm capitalize rounded-full">
-                            {campaign.categoryRel?.name || campaign.category}
-                        </span>
-                        <span className={`absolute md:top-[1cqi] md:right-[1cqi] top-[3cqi] right-[3cqi] md:px-[1.4cqi] md:py-[0.4cqi] px-[3cqi] py-[1.5cqi] md:text-[1.3cqi] text-[3.5cqi] font-bold uppercase shadow-sm rounded-full ${campaign.status === 'ACTIVE' ? 'bg-green-100/90 text-green-600' : 'bg-yellow-100/90 text-yellow-600'}`}>
+                    </div>
+                    {/* Status + Category badges stacked top-left */}
+                    <div className="absolute md:top-[1cqi] md:left-[1cqi] top-3 left-3 flex flex-col md:gap-[0.5cqi] gap-1">
+                        <span
+                            className={`md:px-[1.2cqi] md:py-[0.4cqi] px-3 py-1 md:text-[1cqi] text-[10px] font-extrabold uppercase tracking-wider rounded-full w-fit ${campaign.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'
+                                }`}
+                        >
                             {campaign.status}
                         </span>
+                        <span className="md:px-[1.2cqi] md:py-[0.4cqi] px-3 py-1 md:text-[1cqi] text-[10px] font-bold bg-white/90 text-gray-800 shadow-sm capitalize rounded-full w-fit">
+                            {campaign.categoryRel?.name || campaign.category || 'General'}
+                        </span>
+                    </div>
+                    {/* Favorite count badge */}
+                    <div className="absolute md:top-[1cqi] md:right-[1cqi] top-3 right-3 md:px-[1cqi] md:py-[0.4cqi] px-2.5 py-1 flex items-center md:gap-[0.4cqi] gap-1 bg-white/95 backdrop-blur-sm rounded-full shadow-sm text-rose-500">
+                        <HeartIcon className="md:w-[1.2cqi] md:h-[1.2cqi] w-3.5 h-3.5" />
+                        <span className="md:text-[1.1cqi] text-[11px] font-bold">{campaign.favoritesCount ?? 0}</span>
                     </div>
                 </div>
 
-                {/* Content Section */}
-                <div className="flex-1 flex flex-col justify-between min-w-0 overflow-hidden md:p-[1.8cqi_3cqi_2cqi] p-[4.5cqi]">
+                {/* ── Content ── */}
+                <div className="flex-1 flex flex-col justify-between min-w-0 overflow-hidden md:p-[1.3cqi_2.5cqi_1.6cqi] p-4">
                     <div>
-                        <h2 className="font-extrabold text-gray-900 overflow-hidden text-ellipsis md:text-[2.4cqi] text-[6.8cqi] md:mb-[0.5cqi] mb-[2.5cqi] leading-[1.3]" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                            {campaign.title}
-                        </h2>
+                        {/* Top row: title — fixed 2-line height */}
+                        <div className="flex items-center md:h-[4.4cqi] h-[44px] md:mb-[1cqi] mb-1">
+                            <h2 className="font-bold md:text-[1.8cqi] text-base text-gray-900 leading-snug overflow-hidden text-ellipsis w-full" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                                {campaign.title}
+                            </h2>
+                        </div>
+
+                        {/* Location */}
                         {campaign.locationText && (
-                            <div className="flex items-center text-gray-400 gap-[1.5cqi] md:gap-[0.5cqi] md:text-[1.4cqi] text-[4cqi] md:mb-[0.5cqi] mb-[2.5cqi]">
-                                <MapPinIcon className="shrink-0 md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
-                                <span>{campaign.locationText}</span>
+                            <div className="flex items-center md:gap-[0.5cqi] gap-1 text-gray-500 md:text-[1.2cqi] text-xs md:mb-[0.6cqi] mb-2">
+                                <MapPinIcon className="shrink-0 md:w-[1.4cqi] md:h-[1.4cqi] w-3.5 h-3.5" style={{ color: TEAL }} />
+                                <span className="truncate">{campaign.locationText}</span>
                             </div>
                         )}
-                        <p className="font-bold text-slate-700 md:text-[1.8cqi] text-[6cqi] md:mt-[0.5cqi] mt-[2.5cqi] leading-[1.5]">
-                            Goal: <span className="font-black text-[#14ABD1]">{formatCurrency(campaign.fundingGoalAmount)} VND</span>
-                        </p>
-                        <p className="font-bold text-gray-400 uppercase md:text-[1.2cqi] text-[4cqi] md:mt-[0.2cqi] mt-[1cqi]">
-                            Min Donation: {formatCurrency(campaign.minimumDonationAmount)} VND
-                        </p>
-                        <div className="flex flex-wrap items-center md:gap-[1cqi] gap-[2cqi] md:mt-[0.4cqi] mt-[3.5cqi]">
-                            <div className="inline-flex items-center text-gray-500 bg-gray-50 border border-gray-100 rounded-[2.5cqi] md:rounded-[1.2cqi] gap-[1.5cqi] md:gap-[0.6cqi] px-[3cqi] py-[1.5cqi] md:px-[1.4cqi] md:py-[0.5cqi] md:text-[1.4cqi] text-[4cqi]">
-                                <CalendarIcon className="text-gray-400 shrink-0 md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
-                                <span className="font-bold">{formatDate(campaign.startAt)}</span>
-                                <span className="text-gray-300 md:mx-[0.2cqi] mx-[1.5cqi]">→</span>
-                                <span className="font-bold">{formatDate(campaign.endAt)}</span>
+                        {/* Timeline */}
+                        <div className="md:mb-[0.8cqi] mb-2">
+                            <p className="md:text-[1.3cqi] text-xs font-medium flex text-gray-500 items-center gap-1">
+                                <CalendarDaysIcon className="shrink-0 md:w-[1.4cqi] md:h-[1.4cqi] w-3.5 h-3.5" style={{ color: TEAL }} />
+                                {formatDate(campaign.startAt)} – {formatDate(campaign.endAt)}
+                            </p>
+                        </div>
+                        {/* Financial row */}
+                        <div className="flex flex-wrap items-end md:gap-x-[3cqi] gap-x-6 gap-y-2 md:mb-[0.5cqi] mb-1.5">
+                            <div>
+                                <p className="md:text-[1cqi] text-[10px] font-semibold uppercase tracking-wider text-gray-500 md:mb-[0.3cqi] mb-0.5">Min Donate</p>
+                                <p className="md:text-[1.4cqi] text-sm font-bold" style={{ color: TEAL }}>
+                                    {formatCurrency(campaign.minimumDonationAmount)} VND
+                                </p>
                             </div>
                         </div>
-                        <div className="flex items-center text-gray-400 gap-[1.5cqi] md:gap-[0.5cqi] md:text-[1.4cqi] text-[4cqi] md:mt-[0.8cqi] mt-[2cqi]">
-                            <HeartIcon className="text-pink-400 shrink-0 md:w-[1.6cqi] md:h-[1.6cqi] w-[4.5cqi] h-[4.5cqi]" />
-                            <span className="font-bold">{campaign.favoritesCount || 0} favorites</span>
-                        </div>
                     </div>
-
-                    <div className="flex items-center gap-[1.5cqi] md:gap-[1cqi] md:mt-[1cqi] mt-[5cqi] flex-wrap">
-                        <span className="md:min-w-[14cqi] flex-1 md:flex-none px-[3cqi] py-[2.2cqi] md:px-[1cqi] md:py-[0.7cqi] md:text-[1.3cqi] text-[4cqi] flex items-center justify-center font-bold border-2 border-[#496D96] bg-transparent text-[#496D96] cursor-pointer text-center whitespace-nowrap hover:bg-[#B2CDEB] rounded-full transition-all">
-                            View Details
-                        </span>
-                        <FavoriteButton
-                            campaignId={campaign.id}
-                            initialFavorited={isFavorited}
-                            onToggle={onFavoriteToggle}
-                            className="md:min-w-[14cqi] flex-1 md:flex-none px-[3cqi] py-[2.2cqi] md:px-[1cqi] md:py-[0.7cqi] md:text-[1.3cqi] text-[4cqi]"
-                        />
+                    {/* Bottom row: buttons */}
+                    <div className="flex md:flex-row flex-col md:items-center justify-between mt-auto md:pt-[1.2cqi] pt-2 border-t border-gray-200 md:gap-[1.5cqi] gap-3">
+                        <div className="flex items-stretch md:gap-[1cqi] gap-2 w-full md:w-auto">
+                            <Link
+                                href={`/home/${campaign.id}`}
+                                className="inline-flex items-center justify-center flex-1 md:flex-none md:w-[13cqi] md:h-[3.5cqi] md:px-[1cqi] md:py-[0.5cqi] md:text-[1.3cqi] h-9 text-xs font-bold bg-white rounded-full border-2 shadow-sm transition-all duration-200 active:scale-95"
+                                style={{
+                                    color: TEAL,
+                                    borderColor: TEAL
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = TEAL;
+                                    e.currentTarget.style.color = '#fff';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#fff';
+                                    e.currentTarget.style.color = TEAL;
+                                }}
+                            >
+                                View Details
+                            </Link>
+                            <div onClick={(e) => e.stopPropagation()} className="flex-1 md:flex-none flex">
+                                <FavoriteButton
+                                    campaignId={campaign.id}
+                                    initialFavorited={isFavorited}
+                                    onToggle={onFavoriteToggle}
+                                    className="w-full md:w-[13cqi] md:h-[3.5cqi] md:px-[1cqi] md:py-[0.5cqi] md:text-[1.3cqi] h-9 text-xs !border-[1.5px]"
+                                    hideIcon={true}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </Link>
+        </div>
     );
 }

@@ -10,6 +10,7 @@ interface FavoriteButtonProps {
     /** Optional callback after toggle succeeds */
     onToggle?: (campaignId: string, favorited: boolean) => void;
     className?: string; // Add className prop
+    hideIcon?: boolean;
 }
 
 /**
@@ -20,6 +21,7 @@ export default function FavoriteButton({
     initialFavorited = false,
     onToggle,
     className = '',
+    hideIcon = false,
 }: FavoriteButtonProps) {
     const [favorited, setFavorited] = useState(initialFavorited);
     const [loading, setLoading] = useState(false);
@@ -88,7 +90,7 @@ export default function FavoriteButton({
                 inline-flex items-center justify-center
                 rounded-full font-bold
                 border-2 border-pink-400
-                transition-all duration-200 select-none
+                transition-all duration-200 select-none active:scale-95
                 ${loading ? 'opacity-60 cursor-wait' : 'cursor-pointer'}
                 ${favorited
                     ? 'bg-pink-500 text-white hover:bg-pink-600'
@@ -96,10 +98,12 @@ export default function FavoriteButton({
                 }
             `}
         >
-            {favorited ? (
-                <HeartIcon className="w-[1.6cqi] h-[1.6cqi] mr-[0.5cqi]" />
-            ) : (
-                <HeartOutline className="w-[1.6cqi] h-[1.6cqi] mr-[0.5cqi]" />
+            {!hideIcon && (
+                favorited ? (
+                    <HeartIcon className="w-4 h-4 mr-1.5" />
+                ) : (
+                    <HeartOutline className="w-4 h-4 mr-1.5" />
+                )
             )}
             {favorited ? 'Saved' : 'Save'}
         </button>

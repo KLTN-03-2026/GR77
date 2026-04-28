@@ -31,12 +31,12 @@ export default function ListCampaignsPage() {
     return (
         <div className="w-full">
             {/* Page header */}
-            <div className="mb-2 sm:mb-8">
+            <div className="mb-4 sm:mb-8">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
-                    <Bars3CenterLeftIcon className="w-5 h-5 sm:w-8 sm:h-8 text-cyan-500" />
+                    <Bars3CenterLeftIcon className="w-5 h-5 sm:w-7 sm:h-7 text-[#0891B2]" />
                     List Campaigns
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-10">Explore and support active campaigns</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-9">Explore and support active campaigns</p>
             </div>
 
             {/* Search + filter bar */}
@@ -59,7 +59,7 @@ export default function ListCampaignsPage() {
 
             {isLoading ? (
                 <div className="flex flex-col justify-center items-center py-24 mb-14 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 gap-4">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500"></div>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0891B2]"></div>
                     <p className="text-gray-400 font-medium text-sm">Loading campaigns...</p>
                 </div>
             ) : error ? (
@@ -68,21 +68,21 @@ export default function ListCampaignsPage() {
                 </div>
             ) : paginated.length > 0 ? (
                 <>
-                    <div className="space-y-[2vw] mb-[2vw]">
+                    <div className="flex flex-col gap-5 sm:gap-6 mb-8">
                         {paginated.map((campaign) => (
-                            <CampaignCard 
-                                key={campaign.id} 
-                                campaign={campaign} 
-                                isFavorited={favoriteIds.has(campaign.id)} 
-                                onFavoriteToggle={handleFavoriteToggle} 
+                            <CampaignCard
+                                key={campaign.id}
+                                campaign={campaign}
+                                isFavorited={favoriteIds.has(campaign.id)}
+                                onFavoriteToggle={handleFavoriteToggle}
                             />
                         ))}
                     </div>
 
-                    <Pagination 
-                        currentPage={currentPage} 
-                        totalPages={totalPages} 
-                        onPageChange={handlePageChange} 
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
                     />
                 </>
             ) : (

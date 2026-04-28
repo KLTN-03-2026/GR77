@@ -8,7 +8,7 @@ interface CategoryOption {
     name: string;
 }
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 10;
 
 export function useCampaigns() {
     const searchParams = useSearchParams();

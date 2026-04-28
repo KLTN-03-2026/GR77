@@ -1,6 +1,9 @@
 'use client';
 
 import React from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+
+const TEAL = '#0891B2';
 
 interface PaginationProps {
     currentPage: number;
@@ -32,23 +35,51 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     if (totalPages <= 1) return null;
 
     return (
-        <div className="flex justify-center items-center gap-2 mb-8 flex-wrap">
+        <div className="flex justify-center items-center gap-1.5 mb-8">
+            <button
+                disabled={currentPage === 1}
+                onClick={() => onPageChange(currentPage - 1)}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+            >
+                <ChevronLeftIcon className="w-4 h-4" />
+            </button>
+
             {getPageNumbers(currentPage, totalPages).map((item, idx) =>
                 typeof item === 'number' ? (
                     <button
                         key={idx}
                         onClick={() => onPageChange(item)}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-bold transition-all ${currentPage === item
-                            ? 'bg-cyan-400 text-white shadow-lg shadow-cyan-100 scale-110'
-                            : 'border border-gray-100 text-gray-400 hover:bg-gray-50'
-                            }`}
+                        className="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all"
+                        style={
+                            currentPage === item
+                                ? { backgroundColor: TEAL, color: '#fff' }
+                                : { color: '#6B7280' }
+                        }
+                        onMouseEnter={(e) => {
+                            if (currentPage !== item) {
+                                e.currentTarget.style.backgroundColor = '#F3F4F6';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (currentPage !== item) {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                        }}
                     >
                         {item}
                     </button>
                 ) : (
-                    <span key={idx} className="px-2 text-gray-400">{item}</span>
+                    <span key={idx} className="px-1 text-gray-400 text-sm">…</span>
                 )
             )}
+
+            <button
+                disabled={currentPage === totalPages}
+                onClick={() => onPageChange(currentPage + 1)}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+            >
+                <ChevronRightIcon className="w-4 h-4" />
+            </button>
         </div>
     );
 }
