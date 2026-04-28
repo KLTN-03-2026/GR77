@@ -11,14 +11,43 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
     const [donationMethod, setDonationMethod] = useState<'PAYOS' | 'BLOCKCHAIN'>('PAYOS');
     const [blockchainLoading, setBlockchainLoading] = useState(false);
     const [blockchainError, setBlockchainError] = useState<string | null>(null);
+    const [message, setMessage] = useState("");
+
+    const fetchCampaign = () => {
+        // Since we are in a hook, we don't have direct access to setCampaign
+        // but we trigger a page reload or let the parent handle it.
+        // For simplicity, we just reload if status sync is successful
+        window.location.reload();
+    };
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("status") === "success") {
+        const status = urlParams.get("status");
+        const code = urlParams.get("code");
+        if (status === "PAID" || code === "00") {
             setDonated(true);
             setDonateOpen(true);
+
+            const orderCode = urlParams.get("orderCode");
+            window.history.replaceState({}, '', window.location.pathname);
+
+            if (orderCode) {
+                // console.log(`[PayOS Sync] Triggering status check for order: ${orderCode}`);
+                fetch(`${API_BASE_URL}/donations/check-status/${orderCode}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        // console.log("[PayOS Sync] Response from server:", data);
+                        fetchCampaign();
+                    })
+                    .catch(err => {
+                        // console.error("[PayOS Sync] Error during sync:", err);
+                        fetchCampaign();
+                    });
+            } else {
+                fetchCampaign();
+            }
         }
-    }, []);
+    }, [campaignId]);
 
     const formatCurrency = (amount: number | string) => {
         return Number(amount).toLocaleString("vi-VN");
@@ -55,7 +84,7 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
                     "Content-Type": "application/json",
                     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ campaignId, amount: amountVnd, txHash, walletAddress: from }),
+                body: JSON.stringify({ campaignId, amount: amountVnd, txHash, walletAddress: from, message }),
             });
 
             setDonated(true);
@@ -74,7 +103,7 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
     const handleDonate = async () => {
         const amount = Number(donateAmount);
         const minimumDonation = Number(minimumDonationAmount ?? 0);
-        
+
         if (!amount || amount < minimumDonation) {
             alert(`Minimum donation is ${formatCurrency(minimumDonation)} VND`);
             return;
@@ -94,7 +123,7 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
                     "Content-Type": "application/json",
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ campaignId, amount: amount }),
+                body: JSON.stringify({ campaignId, amount: amount, message }),
             });
 
             if (!res.ok) {
@@ -120,6 +149,7 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
         blockchainLoading,
         blockchainError, setBlockchainError,
         handleDonate,
-        handleBlockchainDonate
+        handleBlockchainDonate,
+        message, setMessage
     };
 }

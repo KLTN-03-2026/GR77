@@ -418,8 +418,8 @@ export default function CreatorCampaignsPage() {
                                             stroke="none"
                                             cornerRadius={40}
                                         >
-                                            <Cell fill="#dff0fa" />
-                                            <Cell fill="#f6f9fc" />
+                                            <Cell fill="#0ea5e9" />
+                                            <Cell fill="#f1f5f9" />
                                         </Pie>
                                     </PieChart>
                                 </ResponsiveContainer>

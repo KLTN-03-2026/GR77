@@ -58,7 +58,8 @@ export default function JoinedCampaignDetailPage({
         blockchainLoading,
         blockchainError, setBlockchainError,
         handleDonate,
-        handleBlockchainDonate
+        handleBlockchainDonate,
+        message, setMessage
     } = useDonation(id, campaign?.minimumDonationAmount);
 
     // 3. Comments & Reporting Hooks
@@ -189,6 +190,8 @@ export default function JoinedCampaignDetailPage({
                 handleDonate={handleDonate}
                 handleBlockchainDonate={handleBlockchainDonate}
                 QUICK_AMOUNTS={QUICK_AMOUNTS}
+                message={message}
+                setMessage={setMessage}
 
                 reportModalOpen={reportModalOpen}
                 setReportModalOpen={setReportModalOpen}

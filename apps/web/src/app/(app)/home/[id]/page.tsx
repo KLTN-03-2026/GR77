@@ -15,6 +15,7 @@ import { CampaignOverviewBox } from "./_components/CampaignOverviewBox";
 import { CampaignGalleryBox } from "./_components/CampaignGalleryBox";
 import { CampaignSidebar } from "./_components/CampaignSidebar";
 import { CampaignModals } from "./_components/CampaignModals";
+import { CampaignTabs } from "../../joined/[id]/_components/CampaignTabs";
 
 // Hooks & Utils
 import { useCampaignDetail } from "./_hooks/useCampaignDetail";
@@ -43,29 +44,30 @@ export default function CampaignDetailPage({
     const [fetchError, setFetchError] = useState("");
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-    useEffect(() => {
-        const fetchCampaign = async () => {
-            setIsLoading(true);
-            setFetchError("");
-            try {
-                const token = localStorage.getItem('accessToken');
-                const headers: HeadersInit = {};
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-
-                const res = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
-                    headers,
-                });
-                if (!res.ok) throw new Error("Campaign not found");
-                const data = await res.json();
-                setCampaign(data);
-            } catch (err: any) {
-                setFetchError(err.message || "Something went wrong");
-            } finally {
-                setIsLoading(false);
+    const fetchCampaign = async () => {
+        setIsLoading(true);
+        setFetchError("");
+        try {
+            const token = localStorage.getItem('accessToken');
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
-        };
+
+            const res = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
+                headers,
+            });
+            if (!res.ok) throw new Error("Campaign not found");
+            const data = await res.json();
+            setCampaign(data);
+        } catch (err: any) {
+            setFetchError(err.message || "Something went wrong");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchCampaign();
     }, [id]);
 
@@ -92,6 +94,7 @@ export default function CampaignDetailPage({
 
     const [isJoined, setIsJoined] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
+    const [donationMessage, setDonationMessage] = useState("");
 
     const [comments, setComments] = useState<any[]>([]);
     const [newComment, setNewComment] = useState("");
@@ -116,9 +119,32 @@ export default function CampaignDetailPage({
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("status") === "success") {
+        const status = urlParams.get("status");
+        const code = urlParams.get("code");
+
+        if (status === "PAID" || code === "00") {
             setDonated(true);
             setDonateOpen(true);
+
+            const orderCode = urlParams.get("orderCode");
+            // Clean up URL
+            window.history.replaceState({}, '', window.location.pathname);
+
+            if (orderCode) {
+                // console.log(`[PayOS Sync] Triggering status check for order: ${orderCode}`);
+                fetch(`${API_BASE_URL}/donations/check-status/${orderCode}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        // console.log("[PayOS Sync] Response from server:", data);
+                        fetchCampaign();
+                    })
+                    .catch(err => {
+                        // console.error("[PayOS Sync] Error during sync:", err);
+                        fetchCampaign();
+                    });
+            } else {
+                fetchCampaign();
+            }
         }
 
         const token = localStorage.getItem("accessToken");
@@ -227,7 +253,11 @@ export default function CampaignDetailPage({
                     "Content-Type": "application/json",
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ campaignId: id, amount: amount }),
+                body: JSON.stringify({
+                    campaignId: id,
+                    amount: amount,
+                    message: donationMessage,
+                }),
             });
 
             if (!res.ok) {
@@ -275,7 +305,13 @@ export default function CampaignDetailPage({
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
                 },
-                body: JSON.stringify({ campaignId: id, amount: amountVnd, txHash, walletAddress: from }),
+                body: JSON.stringify({
+                    campaignId: id,
+                    amount: amountVnd,
+                    txHash,
+                    walletAddress: from,
+                    message: donationMessage,
+                }),
             });
 
             setDonated(true);
@@ -402,7 +438,10 @@ export default function CampaignDetailPage({
     /* ── Render ── */
     const fundingGoal = Number(campaign?.fundingGoalAmount ?? 0);
     const totalRaised = Number(campaign?.currentRaisedAmount ?? 0);
-    const raisedPercent = fundingGoal > 0 ? Math.min(Math.round((totalRaised / fundingGoal) * 100), 100) : 0;
+    // Use pre-calculated progress from API if available, otherwise calculate it
+    const raisedPercent = campaign?.progress !== undefined
+        ? Math.min(campaign.progress, 100)
+        : (fundingGoal > 0 ? Math.min((totalRaised / fundingGoal) * 100, 100) : 0);
 
     const coverImage = campaign?.coverImageUrl || (campaign?.images?.length ? campaign.images[0].url : "");
     const galleryImages = campaign?.images?.length
@@ -474,6 +513,11 @@ export default function CampaignDetailPage({
                         </div>
                     </div>
 
+                    <CampaignTabs
+                        campaign={campaign}
+                        currentUser={currentUser}
+                    />
+
                     {/* Container 2: Community Discussion */}
                     <div className="px-4 sm:px-8 pb-12 max-w-7xl mx-auto mt-8">
                         <CampaignDiscussion
@@ -511,6 +555,8 @@ export default function CampaignDetailPage({
                 handleDonate={handleDonate}
                 handleBlockchainDonate={handleBlockchainDonate}
                 QUICK_AMOUNTS={QUICK_AMOUNTS}
+                message={donationMessage}
+                setMessage={setDonationMessage}
 
                 reportModalOpen={reportModalOpen}
                 setReportModalOpen={setReportModalOpen}

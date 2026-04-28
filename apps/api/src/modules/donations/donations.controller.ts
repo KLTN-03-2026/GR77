@@ -2,11 +2,13 @@ import { Controller, Post, Body, Get, UseGuards, Req, Param } from '@nestjs/comm
 import { DonationsService } from './donations.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 
 @Controller('donations')
 export class DonationsController {
     constructor(private readonly donationsService: DonationsService) { }
 
+    @UseGuards(OptionalJwtAuthGuard)
     @Post('/')
     async createDonation(
         @Body() dto: CreateDonationDto,
@@ -20,7 +22,7 @@ export class DonationsController {
     @UseGuards(JwtAuthGuard)
     @Post('/blockchain')
     async recordBlockchainDonation(
-        @Body() dto: { campaignId: string, amount: number, txHash: string, walletAddress: string },
+        @Body() dto: { campaignId: string, amount: number, txHash: string, walletAddress: string, message?: string, isAnonymous?: boolean },
         @Req() req: any
     ) {
         const userId = req.user.id;
@@ -30,11 +32,8 @@ export class DonationsController {
     // PayOS Webhook
     @Post('/payos-webhook')
     async handleWebhook(@Body() webhookBody: any) {
-        // PayOS usually sends data directly (without nested WebhookData) in some cases,
-        // let's just pass body for now.
-        // In production, should use this.payOS.verifyWebhookData(webhookBody)
-        const { orderCode, status } = webhookBody.data || webhookBody;
-        await this.donationsService.handleWebhook(webhookBody.data || webhookBody);
+        // Pass the full webhook body to retain `code` and `success` root properties
+        await this.donationsService.handleWebhook(webhookBody);
         return { status: 'ok' };
     }
 

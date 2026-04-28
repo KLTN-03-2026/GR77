@@ -73,6 +73,7 @@ export class DonationsService {
                         campaignId: dto.campaignId,
                         amount: new Prisma.Decimal(dto.amount),
                         message: dto.message,
+                        isAnonymous: false,
                         paymentMethod: 'WALLET',
                         status: 'SUCCESS',
                     },
@@ -113,6 +114,7 @@ export class DonationsService {
                 campaignId: dto.campaignId,
                 amount: new Prisma.Decimal(dto.amount),
                 message: dto.message,
+                isAnonymous: false,
                 paymentMethod: 'PAYOS',
                 status: 'PENDING',
             },
@@ -125,7 +127,7 @@ export class DonationsService {
                 amount: Number(dto.amount),
                 description: `Donate ${orderCode}`,
                 cancelUrl: `${this.config.get('WEB_URL')}/home/${dto.campaignId}`,
-                returnUrl: `${this.config.get('WEB_URL')}/home/${dto.campaignId}?status=success`,
+                returnUrl: `${this.config.get('WEB_URL')}/home/${dto.campaignId}?status=success&orderCode=${orderCode}`,
             };
 
             const paymentLink = await this.payOS.paymentRequests.create(body);
@@ -150,56 +152,84 @@ export class DonationsService {
     }
 
     async handleWebhook(webhookData: any) {
-        const { orderCode, success, status } = webhookData;
-        const transaction = await (this.prisma as any).paymentTransaction.findUnique({
-            where: { orderId: String(orderCode) },
-            include: { donation: { include: { campaign: true } } }
-        });
+        this.logger.log(`[Webhook] Processing data: ${JSON.stringify(webhookData)}`);
 
-        if (!transaction || transaction.status !== 'PENDING') return;
+        try {
+            const code = webhookData?.code;
+            const success = webhookData?.success;
+            const payload = webhookData?.data || webhookData;
+            const orderCode = payload?.orderCode;
+            const status = String(payload?.status || webhookData?.status || "").toUpperCase();
 
-        if (success && status === 'PAID') {
-            await (this.prisma as any).$transaction(async (tx: any) => {
-                await tx.paymentTransaction.update({
-                    where: { id: transaction.id },
-                    data: { status: 'SUCCESS', paidAt: new Date() }
-                });
-                await tx.donation.update({
-                    where: { id: transaction.donationId },
-                    data: { status: 'SUCCESS', donatedAt: new Date() }
-                });
-                await tx.campaign.update({
-                    where: { id: transaction.donation.campaignId },
-                    data: {
-                        currentRaisedAmount: { increment: transaction.amount },
-                        donationCount: { increment: 1 }
-                    }
-                });
-                await tx.campaignFundLedger.create({
-                    data: {
-                        campaignId: transaction.donation.campaignId,
-                        donationId: transaction.donationId,
-                        amount: transaction.amount,
-                        type: 'DONATION_IN',
-                        note: `PayOS donation from ${transaction.donation.userId || 'Guest'}`
-                    }
-                });
+            if (!orderCode) {
+                this.logger.error("[Webhook] No orderCode found in webhook data!");
+                return;
+            }
+
+            this.logger.log(`[Webhook] Looking for transaction with orderId: ${orderCode}`);
+            const transaction = await (this.prisma as any).paymentTransaction.findUnique({
+                where: { orderId: String(orderCode) },
+                include: { donation: { include: { campaign: true } } }
             });
-        } else if (status === 'CANCELED' || status === 'EXPIRED') {
-            await (this.prisma as any).$transaction([
-                (this.prisma as any).paymentTransaction.update({
-                    where: { id: transaction.id },
-                    data: { status: 'CANCELLED' }
-                }),
-                (this.prisma as any).donation.update({
-                    where: { id: transaction.donationId },
-                    data: { status: 'CANCELLED' }
-                })
-            ]);
+
+            if (!transaction) {
+                this.logger.warn(`[Webhook] Transaction not found for orderId: ${orderCode}`);
+                return;
+            }
+
+            if (transaction.status !== 'PENDING') {
+                this.logger.log(`[Webhook] Transaction ${orderCode} already processed (Status: ${transaction.status})`);
+                return;
+            }
+
+            if (code === '00' || status === 'PAID' || success === true) {
+                this.logger.log(`[Webhook] Payment SUCCESS for order ${orderCode}. Updating database...`);
+                await (this.prisma as any).$transaction(async (tx: any) => {
+                    await tx.paymentTransaction.update({
+                        where: { id: transaction.id },
+                        data: { status: 'SUCCESS', paidAt: new Date() }
+                    });
+                    await tx.donation.update({
+                        where: { id: transaction.donationId },
+                        data: { status: 'SUCCESS', donatedAt: new Date() }
+                    });
+                    await tx.campaign.update({
+                        where: { id: transaction.donation.campaignId },
+                        data: {
+                            currentRaisedAmount: { increment: transaction.amount },
+                            donationCount: { increment: 1 }
+                        }
+                    });
+                    await tx.campaignFundLedger.create({
+                        data: {
+                            campaignId: transaction.donation.campaignId,
+                            donationId: transaction.donationId,
+                            amount: transaction.amount,
+                            type: 'DONATION_IN',
+                            note: `PayOS donation sync - User ${transaction.donation.userId || 'Guest'}`
+                        }
+                    });
+                });
+                this.logger.log(`[Webhook] Database updated successfully for order ${orderCode}`);
+            } else if (status === 'CANCELED' || status === 'EXPIRED') {
+                this.logger.log(`[Webhook] Payment FAILED/CANCELLED for order ${orderCode}. Status: ${status}`);
+                await (this.prisma as any).$transaction([
+                    (this.prisma as any).paymentTransaction.update({
+                        where: { id: transaction.id },
+                        data: { status: 'CANCELLED' }
+                    }),
+                    (this.prisma as any).donation.update({
+                        where: { id: transaction.donationId },
+                        data: { status: 'CANCELLED' }
+                    })
+                ]);
+            }
+        } catch (error) {
+            this.logger.error(`[Webhook] Critical error processing order: ${error.message}`, error.stack);
         }
     }
 
-    async createBlockchainDonation(userId: string | null, dto: { campaignId: string, amount: number, txHash: string, walletAddress: string }) {
+    async createBlockchainDonation(userId: string | null, dto: { campaignId: string, amount: number, txHash: string, walletAddress: string, message?: string, isAnonymous?: boolean }) {
         this.logger.log(`Blockchain donation: Campaign ${dto.campaignId}, Amount ${dto.amount}, Hash ${dto.txHash}`);
 
         return await (this.prisma as any).$transaction(async (tx: any) => {
@@ -208,7 +238,8 @@ export class DonationsService {
                     userId,
                     campaignId: dto.campaignId,
                     amount: new Prisma.Decimal(dto.amount),
-                    message: `Blockchain tx: ${dto.txHash.slice(0, 8)}...`,
+                    message: dto.message || `Blockchain tx: ${dto.txHash.slice(0, 8)}...`,
+                    isAnonymous: false,
                     paymentMethod: 'BLOCKCHAIN',
                     status: 'SUCCESS',
                     donatedAt: new Date()
@@ -238,6 +269,21 @@ export class DonationsService {
     }
 
     async checkStatus(orderId: string) {
-        return this.payOS.paymentRequests.get(Number(orderId));
+        const paymentInfo = await this.payOS.paymentRequests.get(Number(orderId));
+        // this.logger.log(`[PayOS Status Check] Raw response for Order ${orderId}: ${JSON.stringify(paymentInfo, null, 2)}`);
+
+        // If PayOS says it's PAID but our DB might still be PENDING
+        if (paymentInfo.status === 'PAID') {
+            await this.handleWebhook({
+                code: '00',
+                success: true,
+                data: {
+                    orderCode: orderId,
+                    status: 'PAID'
+                }
+            });
+        }
+
+        return paymentInfo;
     }
 }
