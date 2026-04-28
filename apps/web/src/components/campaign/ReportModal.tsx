@@ -7,7 +7,8 @@ interface ReportModalProps {
     setReportModalOpen: (open: boolean) => void;
     reportReason: string;
     setReportReason: (val: string) => void;
-    handleReportComment: () => void;
+    handleReport: () => void;
+    title?: string;
 }
 
 export function ReportModal({
@@ -15,7 +16,8 @@ export function ReportModal({
     setReportModalOpen,
     reportReason,
     setReportReason,
-    handleReportComment
+    handleReport,
+    title = "Report"
 }: ReportModalProps) {
     if (!reportModalOpen) return null;
 
@@ -23,7 +25,7 @@ export function ReportModal({
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-2xl font-black text-gray-900">Report Comment</h3>
+                    <h3 className="text-2xl font-black text-gray-900">{title}</h3>
                     <button onClick={() => setReportModalOpen(false)} className="text-gray-300 hover:text-gray-900 text-3xl font-light">&times;</button>
                 </div>
                 <div className="space-y-4">
@@ -36,7 +38,7 @@ export function ReportModal({
                         rows={4}
                     />
                     <button
-                        onClick={handleReportComment}
+                        onClick={handleReport}
                         disabled={!reportReason.trim()}
                         className="w-full py-4 bg-yellow-500 text-white font-black rounded-full shadow-lg shadow-yellow-100 hover:bg-yellow-600 transition-all active:scale-95 disabled:opacity-50"
                     >

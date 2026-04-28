@@ -14,6 +14,7 @@ interface CampaignGoalProgressProps {
     handleJoin: () => void;
     handleLeave?: () => void;
     handleToggleLike: (id: string, isFavorited: boolean) => void;
+    onReport: () => void;
     formatCurrency: (amount: number | string) => string;
 }
 

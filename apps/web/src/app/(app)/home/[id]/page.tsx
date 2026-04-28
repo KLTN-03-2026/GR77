@@ -104,6 +104,9 @@ export default function CampaignDetailPage({
     const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
     const [reportReason, setReportReason] = useState("");
 
+    const [campaignReportModalOpen, setCampaignReportModalOpen] = useState(false);
+    const [campaignReportReason, setCampaignReportReason] = useState("");
+
     const fetchComments = async () => {
         try {
             const res = await fetch(`${API_BASE_URL}/comments/campaign/${id}`);
@@ -395,6 +398,39 @@ export default function CampaignDetailPage({
         } catch (err) { }
     };
 
+    const handleReportCampaign = async () => {
+        if (!campaignReportReason.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("Vui lòng đăng nhập để báo cáo chiến dịch");
+            router.push("/login");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}/report`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ 
+                    reason: campaignReportReason 
+                }),
+            });
+            if (res.ok) {
+                alert("Đã gửi báo cáo chiến dịch.");
+                setCampaignReportModalOpen(false);
+                setCampaignReportReason("");
+            } else {
+                const data = await res.json();
+                alert(data.message || "Không thể gửi báo cáo");
+            }
+        } catch (err) {
+            alert("Lỗi kết nối");
+        }
+    };
+
     const getAvatar = (user: any) => {
         return user?.profile?.avatarUrl || null;
     };
@@ -452,6 +488,7 @@ export default function CampaignDetailPage({
                                     currentUser={currentUser}
                                     isLiked={isLiked}
                                     handleToggleLike={handleToggleLike}
+                                    onReport={() => setCampaignReportModalOpen(true)}
                                 />
                             </div>
 
@@ -469,6 +506,7 @@ export default function CampaignDetailPage({
                                     setDonateOpen={setDonateOpen}
                                     handleJoin={handleJoin}
                                     handleToggleLike={handleToggleLike}
+                                    onReport={() => setCampaignReportModalOpen(true)}
                                     formatCurrency={formatCurrency}
                                 />
                             </div>
@@ -525,6 +563,12 @@ export default function CampaignDetailPage({
                 reportReason={reportReason}
                 setReportReason={setReportReason}
                 handleReportComment={handleReportComment}
+
+                campaignReportModalOpen={campaignReportModalOpen}
+                setCampaignReportModalOpen={setCampaignReportModalOpen}
+                campaignReportReason={campaignReportReason}
+                setCampaignReportReason={setCampaignReportReason}
+                handleReportCampaign={handleReportCampaign}
             />
         </div>
     );

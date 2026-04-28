@@ -25,6 +25,8 @@ export interface MenuItem {
   icon: React.FC<any>;
 }
 
+const TEAL = '#0891B2';
+
 /** Default navigation for regular users */
 export const userMenuItems: MenuItem[] = [
   { name: 'Home', href: '/home', icon: HomeIcon },
@@ -90,7 +92,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: Sideb
 
   /** Shared nav content used by both desktop and mobile sidebar */
   const renderNavItems = (onItemClick?: () => void) => (
-    <nav className="flex-1 px-3 lg:px-4 space-y-1.5 lg:space-y-2 mt-2">
+    <nav className="flex-1 px-3 lg:px-4 space-y-0.5 mt-3">
       {items.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
         return (
@@ -99,41 +101,48 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: Sideb
             href={item.href}
             onClick={onItemClick}
             className={`
-              relative flex items-center px-3 lg:px-4 py-2.5 lg:py-3 text-sm lg:text-base rounded-xl transition-all border
+              relative flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-[11px] rounded-xl transition-all duration-200
               ${isActive
                 ? (isAdmin
-                  ? 'bg-[#7598C1]/30 text-gray-900 border border-[#7598C1]/40 backdrop-blur-md'
-                  : 'bg-[#AFF1FF]/30 text-[#47c9e5] font-medium border border-[#AFF1FF]/80 backdrop-blur-md')
+                  ? 'bg-[#7598C1]/15 text-[#1d2951] font-semibold'
+                  : 'bg-[#0891B2]/8 text-[#0891B2] font-semibold')
                 : (isAdmin
-                  ? 'bg-white text-gray-700 border-transparent hover:text-gray-900 hover:border-[#7598C1] hover:shadow-[inset_0_0_12px_rgba(117,152,193,0.3),0_0_15px_rgba(117,152,193,0.4)]'
-                  : 'bg-white text-gray-700 font-medium border-transparent hover:text-[#47c9e5] hover:border-[#47c9e5] hover:shadow-[inset_0_0_12px_rgba(71,201,229,0.3),0_0_15px_rgba(71,201,229,0.4)]')
+                  ? 'text-gray-600 hover:text-[#1d2951] hover:bg-gray-100'
+                  : 'text-gray-600 hover:text-[#0891B2] hover:bg-[#0891B2]/6')
               }
             `}
           >
             {isActive && (
-              <div className={`absolute -left-3 lg:-left-4 top-1/2 -translate-y-1/2 w-1 lg:w-1.5 h-6 lg:h-8 ${isAdmin ? 'bg-[#1d2951]' : 'bg-[#47c9e5]'} rounded-r-full`} />
+              <div
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full"
+                style={{ backgroundColor: isAdmin ? '#1d2951' : TEAL }}
+              />
             )}
-            <item.icon className={`mr-3 lg:mr-4 h-5 w-5 lg:h-6 lg:w-6 ${isActive ? 'stroke-2' : ''}`} />
-            {item.name}
+            <item.icon
+              className={`h-[18px] w-[18px] lg:h-5 lg:w-5 shrink-0 transition-colors duration-200 ${isActive ? 'stroke-[2.2]' : 'stroke-[1.6]'}`}
+              style={isActive && !isAdmin ? { color: TEAL } : undefined}
+            />
+            <span className="text-[15px] lg:text-[16px] tracking-[-0.01em] leading-tight">{item.name}</span>
           </Link>
         );
       })}
 
       {/* Logout button - Only show for Admin if needed, or hide if moved to header */}
       {isAdmin && (
-        <div className="mt-4 pb-4">
+        <div className="mt-6 pt-4 mx-1 border-t border-gray-200">
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
             className={`
-              w-full flex items-center px-3 lg:px-4 py-2.5 lg:py-3 text-sm lg:text-base rounded-xl transition-all border
-              text-gray-900 font-medium border-transparent 
-              hover:border-red-400 hover:ring-2 hover:ring-red-100 hover:bg-white hover:text-red-600 hover:shadow-sm
+              w-full flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-[11px] rounded-xl transition-all duration-200
+              text-red-500 hover:text-red-500 hover:bg-red-50
               disabled:opacity-50
             `}
           >
-            <ArrowRightOnRectangleIcon className="mr-3 lg:mr-4 h-5 w-5 lg:h-6 lg:w-6 stroke-2" />
-            {isLoggingOut ? translate('sidebar.logging_out') : translate('header.logout')}
+            <ArrowRightOnRectangleIcon className="h-[18px] w-[18px] lg:h-5 lg:w-5 shrink-0 stroke-[1.6]" />
+            <span className="text-[13px] lg:text-[14px] font-medium tracking-[-0.01em]">
+              {isLoggingOut ? translate('sidebar.logging_out') : translate('header.logout')}
+            </span>
           </button>
         </div>
       )}
@@ -146,12 +155,12 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: Sideb
       <aside
         className={`
           hidden md:fixed md:bottom-0 md:left-0 md:flex md:w-64 md:flex-col
-          transition-all duration-300 z-30 bg-white border-r border-gray-200
+          transition-all duration-300 z-30 bg-white border-r border-gray-200/80
           ${isOpen ? 'md:translate-x-0' : 'md:-translate-x-full'}
         `}
         style={{ top: 'var(--header-h)' }}
       >
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-4">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1 pb-4">
           {renderNavItems()}
         </div>
       </aside>
@@ -173,13 +182,13 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: Sideb
         `}
       >
         {/* Drawer Header */}
-        <div className="flex items-center justify-between px-4 border-b border-gray-100" style={{ height: 'var(--header-row-h)' }}>
-          <span className="text-base font-black text-gray-800 tracking-tight">
+        <div className="flex items-center justify-between px-5 border-b border-gray-100" style={{ height: 'var(--header-row-h)' }}>
+          <span className="text-sm font-bold text-gray-800 tracking-tight uppercase">
             {roleLabel || 'Menu'}
           </span>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 -mr-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <XMarkIcon className="h-5 w-5 stroke-2" />
           </button>

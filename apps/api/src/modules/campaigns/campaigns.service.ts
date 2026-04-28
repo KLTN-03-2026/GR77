@@ -4,6 +4,7 @@ import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
 import { AdminPermission } from '../../constants/permissions';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
+import { ReportCampaignDto } from './dto/report-campaign.dto';
 /**
  * CampaignsService
  * 
@@ -518,6 +519,26 @@ export class CampaignsService {
           }
         } : {})
       },
+    });
+  }
+
+  async report(userId: string, campaignId: string, dto: ReportCampaignDto) {
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId }
+    });
+
+    if (!campaign) {
+      throw new NotFoundException('Campaign not found');
+    }
+
+    return this.prisma.report.create({
+      data: {
+        submitterId: userId,
+        targetCampaignId: campaignId,
+        targetUserId: campaign.creatorUserId,
+        reason: dto.reason,
+        details: dto.details
+      }
     });
   }
 }

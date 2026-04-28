@@ -13,6 +13,7 @@ interface CampaignSidebarProps {
     handleJoin: () => void;
     handleLeave?: () => void;
     handleToggleLike: (id: string, isFavorited: boolean) => void;
+    onReport: () => void;
     formatCurrency: (amount: number | string) => string;
 }
 
@@ -29,6 +30,7 @@ export function CampaignSidebar({
     handleJoin,
     handleLeave,
     handleToggleLike,
+    onReport,
     formatCurrency,
 }: CampaignSidebarProps) {
     return (
@@ -52,6 +54,7 @@ export function CampaignSidebar({
                     handleJoin={handleJoin}
                     handleLeave={handleLeave}
                     handleToggleLike={handleToggleLike}
+                    onReport={onReport}
                     formatCurrency={formatCurrency}
                 />
             </div>
