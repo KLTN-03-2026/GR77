@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
 interface CampaignHeaderProps {
     title: string;
@@ -11,9 +12,10 @@ interface CampaignHeaderProps {
     isCreator?: boolean;
     isLiked?: boolean;
     onToggleLike?: () => void;
+    onReport?: () => void;
 }
 
-export function CampaignHeader({ title, status, images, isCreator, isLiked, onToggleLike }: CampaignHeaderProps) {
+export function CampaignHeader({ title, status, images, isCreator, isLiked, onToggleLike, onReport }: CampaignHeaderProps) {
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
     const touchStartX = useRef(0);
     const touchEndX = useRef(0);
@@ -71,9 +73,23 @@ export function CampaignHeader({ title, status, images, isCreator, isLiked, onTo
                     {status}
                 </span>
 
-                {/* Like button */}
+                {/* Action buttons */}
                 {!isCreator && (
-                    <div className="absolute top-4 right-4 z-20">
+                    <div className="absolute top-4 right-4 z-20 flex gap-2">
+                        {/* Report button */}
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onReport?.();
+                            }}
+                            className="p-2.5 rounded-full shadow-lg transition-all border bg-white/20 text-white border-white/20 backdrop-blur-md hover:scale-110 active:scale-95"
+                            title="Báo cáo chiến dịch"
+                        >
+                            <ExclamationCircleIcon className="h-5 w-5" />
+                        </button>
+
+                        {/* Like button */}
                         <button
                             onClick={(e) => {
                                 e.preventDefault();

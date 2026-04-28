@@ -5,7 +5,6 @@ import {
   MagnifyingGlassIcon,
   EyeIcon,
   CheckBadgeIcon,
-  NoSymbolIcon,
   ExclamationTriangleIcon,
   ShieldCheckIcon,
   XMarkIcon,
@@ -39,6 +38,8 @@ export interface ReportData {
   status: 'PENDING' | 'RESOLVED';
   createdAt: string;
   reportedUser: ReportedUser;
+  targetCampaignId?: string;
+  targetCommentId?: string;
 }
 
 // ── Sub-components ──────────────────────────────────────────────────
@@ -379,7 +380,7 @@ export default function AdminReportsPage() {
                           <button title="Xem chi tiết báo cáo" onClick={() => handleViewReportDetails(report)} className="text-blue-500 hover:text-blue-700 transition-colors">
                             <EyeIcon className="w-5 h-5" />
                           </button>
-                          {report.status === 'PENDING' && (
+                           {report.status === 'PENDING' && (
                             <>
                               <button title="Duyệt báo cáo" onClick={() => handleUpdateStatus(report.id, 'RESOLVED')} className="text-green-500 hover:text-green-700 transition-colors">
                                 <CheckBadgeIcon className="w-5 h-5" />
@@ -489,7 +490,29 @@ export default function AdminReportsPage() {
                   <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Loại thực thể bị báo cáo</p>
                   <TypeBadge type={selectedReport.targetType} />
                 </div>
-                <p className="text-xl font-black text-[#24305E] truncate">{selectedReport.targetName}</p>
+                <div className="flex justify-between items-center">
+                  <p className="text-xl font-black text-[#24305E] truncate max-w-[80%]">{selectedReport.targetName}</p>
+                  {selectedReport.targetType === 'Campaign' && selectedReport.targetCampaignId && (
+                    <a
+                      href={`/admin/campaigns?id=${selectedReport.targetCampaignId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      Xem chiến dịch <EyeIcon className="w-3 h-3" />
+                    </a>
+                  )}
+                  {selectedReport.targetType === 'Comment' && selectedReport.targetCampaignId && (
+                    <a
+                      href={`/admin/campaigns?id=${selectedReport.targetCampaignId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      Xem bình luận <EyeIcon className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
               </div>
 
               {/* Content Section */}

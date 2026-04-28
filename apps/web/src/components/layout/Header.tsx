@@ -70,7 +70,8 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
   }, []);
 
   const userName = [user?.profile?.firstName, user?.profile?.lastName].filter(Boolean).join(' ') || user?.username || 'User';
-  const userAvatar = user?.profile?.avatarUrl;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userAvatar = user?.profile?.avatarUrl || (user as any)?.avatarUrl || (user as any)?.picture;
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);

@@ -20,7 +20,7 @@ export function TransactionTable({ transactions, account }: TransactionTableProp
         {account && (
           <button
             onClick={() => window.open(`https://amoy.polygonscan.com/address/${account}`, '_blank')}
-            className="w-fit text-sm font-bold text-cyan-600 hover:text-cyan-700 transition-all flex items-center gap-1.5 underline underline-offset-4 decoration-cyan-100 hover:decoration-cyan-400"
+            className="w-fit text-sm font-bold text-[#0891B2] hover:text-[#06778f] transition-all flex items-center gap-1.5 underline underline-offset-4 decoration-[#0891B2]/20 hover:decoration-[#0891B2]"
           >
             <ExternalLink className="w-4 h-4" />
             PolygonScan
