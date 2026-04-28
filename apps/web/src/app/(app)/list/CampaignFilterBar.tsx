@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, CalendarIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface CampaignFilterBarProps {
     search: string;
@@ -15,6 +15,8 @@ interface CampaignFilterBarProps {
     categories: { id: string; name: string }[];
 }
 
+const BRAND_COLOR = '#0891B2';
+
 export default function CampaignFilterBar({
     search,
     onSearchChange,
@@ -27,51 +29,69 @@ export default function CampaignFilterBar({
     categories,
 }: CampaignFilterBarProps) {
     return (
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-1.5 sm:mb-6">
-            <div className="relative flex-1">
-                <MagnifyingGlassIcon className="absolute left-3 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                <input
-                    type="text"
-                    placeholder="Search campaigns..."
-                    value={search}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    className="w-full h-[25px] sm:h-[35px] pl-8 sm:pl-10 pr-3 sm:pr-4 border border-gray-200 rounded-xl sm:rounded-2xl text-[11px] sm:text-sm font-medium text-gray-900 placeholder-gray-400 bg-gray-50 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all"
-                />
-            </div>
-
-            <div className="flex flex-row gap-1.5 sm:gap-2 w-full sm:w-auto flex-nowrap items-center">
-                <div className="flex-1 sm:flex-none h-[25px] sm:h-[35px] flex items-center justify-between bg-white border border-gray-200 rounded-full px-1.5 sm:px-2 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-200 transition-all min-w-0">
-                    <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => onStartDateChange(e.target.value)}
-                        className="flex-1 sm:flex-none w-full sm:w-auto px-0.5 sm:px-2 text-[10px] sm:text-sm font-medium text-gray-600 outline-none bg-transparent cursor-pointer text-center min-w-0"
-                    />
-                    <span className="text-gray-300 text-[9px] sm:text-xs shrink-0 mx-0.5">-</span>
-                    <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => onEndDateChange(e.target.value)}
-                        className="flex-1 sm:flex-none w-full sm:w-auto px-0.5 sm:px-2 text-[10px] sm:text-sm font-medium text-gray-600 outline-none bg-transparent cursor-pointer text-center min-w-0"
-                    />
+        <div className="bg-[#0891B2]/6 p-4 sm:p-5 mb-8">
+            <div className="flex flex-col md:flex-row items-end gap-4 md:gap-6">
+                {/* Search */}
+                <div className="flex-1 w-full">
+                    <label className="block text-[11px] font-black uppercase tracking-widest text-[#056C85] mb-1.5 ml-1 opacity-80">
+                        Search Campaigns
+                    </label>
+                    <div className="relative group">
+                        <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-500 stroke-2 group-focus-within:text-[#0891B2] transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Search campaigns..."
+                            value={search}
+                            onChange={(e) => onSearchChange(e.target.value)}
+                            className="w-full pl-11 pr-4 py-1.5 bg-gray-50 border-2 border-gray-300 rounded-2xl text-[14px] text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
+                        />
+                    </div>
                 </div>
-                <select
-                    value={selectedCategory}
-                    onChange={(e) => onCategoryChange(e.target.value)}
-                    className="shrink-0 w-[100px] sm:w-auto h-[25px] sm:h-[35px] px-2 sm:px-6 rounded-full text-[10px] sm:text-sm font-bold bg-white text-gray-800 border-2 border-gray-100 hover:border-gray-200 hover:text-black transition-all outline-none cursor-pointer appearance-none shadow-sm text-center"
-                    style={{
-                        backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%23000000\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")',
-                        backgroundPosition: 'right .3rem center',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundSize: '1em 1em',
-                        paddingRight: '1.2rem'
-                    }}
-                >
-                    <option value="All">All Categories</option>
-                    {categories.map(cat => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                    ))}
-                </select>
+
+                {/* Date Range */}
+                <div className="w-full md:w-auto">
+                    <label className="block text-[11px] font-black uppercase tracking-widest text-[#056C85] mb-1.5 ml-1 opacity-80">
+                        Date Range
+                    </label>
+                    <div className="flex items-center bg-gray-50 border-2 border-gray-300 rounded-2xl py-1.5 px-4 group focus-within:ring-1 focus-within:ring-cyan-500 outline-none transition-all">
+                        <CalendarIcon className="w-[18px] h-[18px] text-gray-500 stroke-2 group-focus-within:text-[#0891B2] transition-colors shrink-0" />
+                        <div className="flex items-center ml-2">
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => onStartDateChange(e.target.value)}
+                                className="w-[110px] bg-transparent border-none outline-none text-[14px] text-gray-900 placeholder-gray-400 cursor-pointer"
+                            />
+                            <span className="mx-1 text-gray-400">-</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => onEndDateChange(e.target.value)}
+                                className="w-[110px] bg-transparent border-none outline-none text-[14px] text-gray-900 placeholder-gray-400 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Category */}
+                <div className="w-full md:w-[220px]">
+                    <label className="block text-[11px] font-black uppercase tracking-widest text-[#056C85] mb-1.5 ml-1 opacity-80">
+                        Category
+                    </label>
+                    <div className="relative group">
+                        <select
+                            value={selectedCategory}
+                            onChange={(e) => onCategoryChange(e.target.value)}
+                            className="w-full py-1.5 px-5 bg-gray-50 border-2 border-gray-300 rounded-2xl text-[14px] text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-cyan-500 outline-none transition-all appearance-none cursor-pointer"
+                        >
+                            <option value="All">All Initiatives</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.name}>{cat.name}</option>
+                            ))}
+                        </select>
+                        <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-[#0891B2] pointer-events-none transition-colors" />
+                    </div>
+                </div>
             </div>
         </div>
     );

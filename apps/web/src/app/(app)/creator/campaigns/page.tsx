@@ -139,7 +139,7 @@ export default function CreatorCampaignsPage() {
             {/* Header section */}
             <div className="mb-2 sm:mb-8">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
-                    <DocumentTextIcon className="w-5 h-5 sm:w-7 sm:h-7 text-cyan-500" />
+                    <DocumentTextIcon className="w-5 h-5 sm:w-7 sm:h-7 text-[#0891B2]" />
                     My Campaigns
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-9">Quản lý các chiến dịch của bạn</p>
@@ -150,18 +150,20 @@ export default function CreatorCampaignsPage() {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-4 flex-1 w-full sm:w-auto">
                         <div className="relative w-full max-w-lg">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <MagnifyingGlassIcon className="w-[18px] h-[18px] text-gray-500 stroke-2" />
+                            </div>
                             <input
                                 type="text"
-                                className="w-full h-[25px] sm:h-[35px] bg-gray-50 border border-gray-200 rounded-full pl-6 pr-12 text-[11px] sm:text-sm text-gray-900 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder-gray-300"
+                                className="w-full pl-11 pr-4 py-1.5 bg-gray-50 border-2 border-gray-200 rounded-2xl text-[14px] text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
                                 placeholder="Search campaigns..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <MagnifyingGlassIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 font-bold" strokeWidth={2.5} />
                         </div>
                     </div>
 
-                    <Link href="/creator/campaigns/new" className="inline-flex justify-center items-center bg-white hover:bg-[#2b9ec5]/10 border-2 border-[#2b9ec5] text-[#2b9ec5] px-8 py-2.5 rounded-full text-sm font-black transition-colors w-full sm:w-auto gap-2">
+                    <Link href="/creator/campaigns/new" className="inline-flex justify-center items-center bg-white hover:bg-[#0891B2] hover:text-white border-2 border-[#0891B2] text-[#0891B2] px-8 py-2.5 rounded-full text-sm font-black transition-colors w-full active:scale-95 sm:w-auto gap-2">
                         + Add campaign
                     </Link>
                 </div>
@@ -179,7 +181,7 @@ export default function CreatorCampaignsPage() {
                     <>
                         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white text-gray-800">
                             <table className="w-full min-w-[1000px] table-fixed text-center text-[13px] font-medium border-collapse">
-                                <thead className="bg-[#7fa8e8] text-white">
+                                <thead className="bg-[#0891B2] text-white">
                                     <tr>
                                         <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[5%]">ID</th>
                                         <th className="py-3.5 px-4 font-bold border-r border-[#96baf0] last:border-r-0 w-[28%]">Name</th>
@@ -194,56 +196,58 @@ export default function CreatorCampaignsPage() {
                                     {paginatedCampaigns.map((camp, index) => {
                                         const globalIndex = (currentPage - 1) * itemsPerPage + index;
                                         return (
-                                        <tr
-                                            key={camp.id}
-                                            onClick={() => router.push(`/creator/campaigns/${camp.id}?idx=${globalIndex + 1}`)}
-                                            className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors cursor-pointer"
-                                        >
-                                            <td className="border-r border-white font-bold">#{globalIndex + 1}</td>
-                                            <td className="border-r border-white px-4 text-left overflow-hidden">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
-                                                        {camp.coverImageUrl ? (
-                                                            <img src={camp.coverImageUrl} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold bg-gray-100">
-                                                                No Pic
-                                                            </div>
-                                                        )}
+                                            <tr
+                                                key={camp.id}
+                                                onClick={() => router.push(`/creator/campaigns/${camp.id}?idx=${globalIndex + 1}`)}
+                                                className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors cursor-pointer"
+                                            >
+                                                <td className="border-r border-white font-bold">#{globalIndex + 1}</td>
+                                                <td className="border-r border-white px-4 text-left overflow-hidden">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
+                                                            {camp.coverImageUrl ? (
+                                                                <img src={camp.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold bg-gray-100">
+                                                                    No Pic
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex flex-col min-w-0 flex-1">
+                                                            <div className="font-bold truncate text-gray-900">{camp.title}</div>
+                                                            <div className="text-[10px] text-gray-400 truncate">{camp.category}</div>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex flex-col min-w-0 flex-1">
-                                                        <div className="font-bold truncate text-gray-900">{camp.title}</div>
-                                                        <div className="text-[10px] text-gray-400 truncate">{camp.category}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
-                                            <td className="border-r border-white font-bold text-gray-800">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
-                                            <td className="border-r border-white px-4 text-left truncate text-gray-700">{camp.locationText}</td>
-                                            <td className="border-r border-white px-4">
-                                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${camp.status === 'ACTIVE' ? 'bg-green-100 text-green-600' :
-                                                    camp.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
-                                                        'bg-gray-100 text-gray-600'
-                                                    }`}>
-                                                    {camp.status}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors group"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        router.push(`/creator/campaigns/${camp.id}/edit`);
-                                                    }}
-                                                    title="Edit Campaign"
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                                    </svg>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    )})}
+                                                </td>
+                                                <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
+                                                <td className="border-r border-white font-bold text-gray-800">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
+                                                <td className="border-r border-white px-4 text-left truncate text-gray-700">{camp.locationText}</td>
+                                                <td className="border-r border-white px-4">
+                                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${camp.status === 'ACTIVE' ? 'bg-green-100 text-green-600' :
+                                                        camp.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
+                                                            camp.status === 'REJECTED' ? 'bg-red-100 text-red-600' :
+                                                                'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                        {camp.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors group"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.push(`/creator/campaigns/${camp.id}/edit`);
+                                                        }}
+                                                        title="Edit Campaign"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                                        </svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
                                 </tbody>
                             </table>
                         </div>
