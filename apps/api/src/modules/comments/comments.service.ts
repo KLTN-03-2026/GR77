@@ -50,10 +50,10 @@ export class CommentsService {
             });
 
             if (parentComment && parentComment.userId !== userId) {
-                const link = parentComment.userId === comment.campaign.creatorUserId 
-                    ? `/creator/campaigns/${dto.campaignId}` 
-                    : `/home/${dto.campaignId}`;
-                    
+                const link = parentComment.userId === comment.campaign.creatorUserId
+                    ? `/creator/campaigns/${dto.campaignId}#discussion`
+                    : `/home/${dto.campaignId}#discussion`;
+
                 await this.notificationsService.create({
                     userId: parentComment.userId,
                     title: 'New Reply',
@@ -73,7 +73,7 @@ export class CommentsService {
                 title: 'New Comment',
                 message: `${commenterName} commented on your campaign "${comment.campaign.title}"`,
                 type: 'COMMENT',
-                link: `/creator/campaigns/${dto.campaignId}`,
+                link: `/creator/campaigns/${dto.campaignId}#discussion`,
             });
         }
 
@@ -84,9 +84,8 @@ export class CommentsService {
         const allComments = await this.prisma.comment.findMany({
             where: {
                 campaignId,
-                deletedAt: null,
             },
-            orderBy: { createdAt: 'asc' }, // sort by time ascending so we can process replies in order
+            orderBy: { createdAt: 'asc' },
             include: {
                 user: {
                     select: {
@@ -121,8 +120,11 @@ export class CommentsService {
             if (c.parentId) {
                 const root = findRoot(c);
                 if (root && root.id !== c.id) {
+                    // Only add reply if it's not deleted OR it has potential children (allComments includes them)
+                    // Actually, we add all first, then prune.
                     root.replies.push(c);
-                } else {
+                } else if (!root) {
+                    // If parent is missing (shouldn't happen with full load), treat as root
                     rootComments.push(c);
                 }
             } else {
@@ -130,15 +132,34 @@ export class CommentsService {
             }
         });
 
-        // Optional: root comments should usually be sorted new to old
-        rootComments.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        // Filter: If a comment is deleted and has no (non-deleted) replies, we can hide it.
+        // But for simplicity in this 2-level tree:
+        const processedRoot = rootComments.filter(r => {
+            // Keep if not deleted
+            if (!r.deletedAt) return true;
+            // Keep if it has at least one non-deleted reply
+            const hasActiveReplies = r.replies.some((reply: any) => !reply.deletedAt);
+            return hasActiveReplies;
+        });
 
-        // We also want to sort each root's replies chronologically
-        rootComments.forEach(r => {
+        // Prune deleted replies that have no further purpose? 
+        // Our UI only shows 2 levels anyway.
+        processedRoot.forEach(r => {
+            r.replies = r.replies.filter((reply: any) => {
+                if (!reply.deletedAt) return true;
+                return false; // In 2-level, a deleted reply has no children to show
+            });
+        });
+
+        // Sort root comments new to old
+        processedRoot.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+        // Sort replies old to new
+        processedRoot.forEach(r => {
             r.replies.sort((a: any, b: any) => a.createdAt.getTime() - b.createdAt.getTime());
         });
 
-        return rootComments;
+        return processedRoot;
     }
 
     async remove(userId: string, commentId: string) {

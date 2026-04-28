@@ -302,6 +302,30 @@ export class CampaignsService {
             }
           }
         },
+        donations: {
+          where: { status: 'SUCCESS' },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profile: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    avatarUrl: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        withdrawalRequests: {
+          orderBy: { createdAt: 'desc' },
+          take: 20
+        },
         _count: { select: { favorites: true, donations: true, participants: true } }
       }
     });
