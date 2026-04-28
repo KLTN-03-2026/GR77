@@ -6,6 +6,7 @@ interface CampaignGalleryBoxProps {
     currentUser: any;
     isLiked: boolean;
     handleToggleLike: () => void;
+    onReport: () => void;
 }
 
 export function CampaignGalleryBox({
@@ -14,6 +15,7 @@ export function CampaignGalleryBox({
     currentUser,
     isLiked,
     handleToggleLike,
+    onReport,
 }: CampaignGalleryBoxProps) {
     return (
         <div className="bg-white border border-gray-300 shadow-md rounded-[24px] p-2 overflow-hidden">
@@ -25,6 +27,7 @@ export function CampaignGalleryBox({
                     isCreator={currentUser?.id === campaign?.creatorUserId}
                     isLiked={isLiked}
                     onToggleLike={handleToggleLike}
+                    onReport={onReport}
                 />
             </div>
         </div>
