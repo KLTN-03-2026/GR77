@@ -194,56 +194,57 @@ export default function CreatorCampaignsPage() {
                                     {paginatedCampaigns.map((camp, index) => {
                                         const globalIndex = (currentPage - 1) * itemsPerPage + index;
                                         return (
-                                        <tr
-                                            key={camp.id}
-                                            onClick={() => router.push(`/creator/campaigns/${camp.id}?idx=${globalIndex + 1}`)}
-                                            className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors cursor-pointer"
-                                        >
-                                            <td className="border-r border-white font-bold">#{globalIndex + 1}</td>
-                                            <td className="border-r border-white px-4 text-left overflow-hidden">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
-                                                        {camp.coverImageUrl ? (
-                                                            <img src={camp.coverImageUrl} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold bg-gray-100">
-                                                                No Pic
-                                                            </div>
-                                                        )}
+                                            <tr
+                                                key={camp.id}
+                                                onClick={() => router.push(`/creator/campaigns/${camp.id}?idx=${globalIndex + 1}`)}
+                                                className="bg-[#fcf4f6] border-b border-white last:border-b-0 h-[4.5rem] hover:bg-gray-100 transition-colors cursor-pointer"
+                                            >
+                                                <td className="border-r border-white font-bold">#{globalIndex + 1}</td>
+                                                <td className="border-r border-white px-4 text-left overflow-hidden">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-white shadow-sm">
+                                                            {camp.coverImageUrl ? (
+                                                                <img src={camp.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold bg-gray-100">
+                                                                    No Pic
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex flex-col min-w-0 flex-1">
+                                                            <div className="font-bold truncate text-gray-900">{camp.title}</div>
+                                                            <div className="text-[10px] text-gray-400 truncate">{camp.category}</div>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex flex-col min-w-0 flex-1">
-                                                        <div className="font-bold truncate text-gray-900">{camp.title}</div>
-                                                        <div className="text-[10px] text-gray-400 truncate">{camp.category}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
-                                            <td className="border-r border-white font-bold text-gray-800">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
-                                            <td className="border-r border-white px-4 text-left truncate text-gray-700">{camp.locationText}</td>
-                                            <td className="border-r border-white px-4">
-                                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${camp.status === 'ACTIVE' ? 'bg-green-100 text-green-600' :
-                                                    camp.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
-                                                        'bg-gray-100 text-gray-600'
-                                                    }`}>
-                                                    {camp.status}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors group"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        router.push(`/creator/campaigns/${camp.id}/edit`);
-                                                    }}
-                                                    title="Edit Campaign"
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                                    </svg>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    )})}
+                                                </td>
+                                                <td className="border-r border-white">{new Date(camp.createdAt).toLocaleDateString()}</td>
+                                                <td className="border-r border-white font-bold text-gray-800">{Number(camp.fundingGoalAmount).toLocaleString()}</td>
+                                                <td className="border-r border-white px-4 text-left truncate text-gray-700">{camp.locationText}</td>
+                                                <td className="border-r border-white px-4">
+                                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${camp.status === 'ACTIVE' ? 'bg-green-100 text-green-600' :
+                                                        camp.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
+                                                            'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                        {camp.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors group"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.push(`/creator/campaigns/${camp.id}/edit`);
+                                                        }}
+                                                        title="Edit Campaign"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                                        </svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -414,8 +415,8 @@ export default function CreatorCampaignsPage() {
                                             stroke="none"
                                             cornerRadius={40}
                                         >
-                                            <Cell fill="#dff0fa" />
-                                            <Cell fill="#f6f9fc" />
+                                            <Cell fill="#0ea5e9" />
+                                            <Cell fill="#f1f5f9" />
                                         </Pie>
                                     </PieChart>
                                 </ResponsiveContainer>

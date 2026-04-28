@@ -712,6 +712,8 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                 handleDonate={() => { }}
                 handleBlockchainDonate={() => { }}
                 QUICK_AMOUNTS={[]}
+                message=""
+                setMessage={() => { }}
 
                 reportModalOpen={reportModalOpen}
                 setReportModalOpen={setReportModalOpen}
