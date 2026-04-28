@@ -31,7 +31,7 @@ export default function UserAvatar({ src, role, size = 'md', className = '' }: U
     if (src) {
         return (
             <div className={`relative shrink-0 ${sizeClasses[size]} rounded-full overflow-hidden border border-gray-100 shadow-sm ${className}`}>
-                <img src={src} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={src} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
         );
     }

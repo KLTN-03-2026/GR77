@@ -1,10 +1,10 @@
 'use client';
 
-import { 
-  Wallet, 
-  Copy, 
-  RefreshCw, 
-  LogOut 
+import {
+  Wallet,
+  Copy,
+  RefreshCw,
+  LogOut
 } from "lucide-react";
 
 interface WalletCardProps {
@@ -58,7 +58,7 @@ export function WalletCard({
             <button
               onClick={connectWallet}
               disabled={isChainLoading}
-              className="w-full md:w-auto px-10 py-4 rounded-full font-bold text-cyan-600 border border-cyan-600 bg-cyan-50 hover:bg-cyan-100 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-sm"
+              className="w-full md:w-auto px-10 py-4 rounded-full font-bold text-[#0891B2] border-2 border-[#0891B2] bg-[#0891B2]/5 hover:bg-[#0891B2]/10 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-sm"
             >
               {isChainLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Wallet className="w-6 h-6" />}
               Connect Wallet
