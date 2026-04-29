@@ -24,6 +24,7 @@ import { useGlobalAuth } from '@/contexts/AuthContext';
 import { API_BASE_URL } from '@/lib/constants/endpoints';
 import { CampaignDiscussion } from '@/components/campaign/CampaignDiscussion';
 import { CampaignModals } from '@/app/(app)/home/[id]/_components/CampaignModals';
+import { CreatorTransactionHistory } from '../../components/CreatorTransactionHistory';
 
 export default function CampaignDetailClient({ id }: { id: string }) {
     const [campaign, setCampaign] = useState<any>(null);
@@ -378,6 +379,10 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         setReportModalOpen={setReportModalOpen}
                         getAvatar={getAvatar}
                     />
+
+                    {/* Transaction History Section */}
+                    <CreatorTransactionHistory campaignId={id} />
+
                 </div>
 
                 {/* Right Column: Status, Funding, Wallet Button, Creator */}
@@ -720,6 +725,12 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                 reportReason={reportReason}
                 setReportReason={setReportReason}
                 handleReportComment={handleReportComment}
+
+                campaignReportModalOpen={false}
+                setCampaignReportModalOpen={() => { }}
+                campaignReportReason=""
+                setCampaignReportReason={() => { }}
+                handleReportCampaign={async () => { }}
             />
         </div >
     );

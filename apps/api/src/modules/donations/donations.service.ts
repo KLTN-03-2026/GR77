@@ -297,6 +297,30 @@ export class DonationsService {
         });
     }
 
+    async adminListAll(filters: { status?: string; method?: string; campaignId?: string }) {
+        const where: any = {};
+        if (filters.status) where.status = filters.status.toUpperCase();
+        if (filters.method) where.paymentMethod = filters.method.toUpperCase();
+        if (filters.campaignId) where.campaignId = filters.campaignId;
+
+        return this.prisma.donation.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            take: 100,
+            include: {
+                campaign: { select: { id: true, title: true } },
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        email: true,
+                        profile: { select: { firstName: true, lastName: true, avatarUrl: true } },
+                    },
+                },
+            },
+        });
+    }
+
     async checkStatus(orderId: string) {
         const paymentInfo = await this.payOS.paymentRequests.get(Number(orderId));
         // this.logger.log(`[PayOS Status Check] Raw response for Order ${orderId}: ${JSON.stringify(paymentInfo, null, 2)}`);

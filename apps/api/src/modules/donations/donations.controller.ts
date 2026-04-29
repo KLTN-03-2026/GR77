@@ -1,8 +1,14 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Param, Query } from '@nestjs/common';
 import { DonationsService } from './donations.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RequirePermissions } from '../auth/permissions.decorator';
+import { Role } from '@prisma/client';
+import { AdminPermission } from '../../constants/permissions';
 
 @Controller('donations')
 export class DonationsController {
@@ -40,5 +46,18 @@ export class DonationsController {
     @Get('/check-status/:orderId')
     async checkStatus(@Param('orderId') orderId: string) {
         return this.donationsService.checkStatus(orderId);
+    }
+
+    /** Admin: Lấy toàn bộ donations (filter theo status, paymentMethod) */
+    @Get('/admin/all')
+    @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @RequirePermissions(AdminPermission.TRANSACTIONS_VIEW)
+    async adminListAll(
+        @Query('status') status?: string,
+        @Query('method') method?: string,
+        @Query('campaignId') campaignId?: string,
+    ) {
+        return this.donationsService.adminListAll({ status, method, campaignId });
     }
 }
