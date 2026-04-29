@@ -7,6 +7,7 @@ interface CampaignGoalProgressProps {
     totalRaised: number;
     participantsCount?: number;
     isJoined: boolean;
+    hasDonated?: boolean;
     isLiked: boolean;
     isCreator?: boolean;
     campaignId: string;
@@ -24,6 +25,7 @@ export function CampaignGoalProgress({
     totalRaised,
     participantsCount,
     isJoined,
+    hasDonated,
     isLiked,
     isCreator,
     campaignId,
@@ -113,13 +115,13 @@ export function CampaignGoalProgress({
                                 </button>
                             ) : (
                                 <button
-                                    onClick={isJoined ? handleLeave : handleJoin}
+                                    onClick={isJoined ? (hasDonated ? () => alert("Bạn không thể rời chiến dịch vì đã thực hiện quyên góp thành công.") : handleLeave) : handleJoin}
                                     className={`flex-1 py-2.5 sm:py-3 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg ${isJoined
-                                        ? "bg-white border-red-500 text-red-500 hover:bg-red-50 shadow-red-100/50"
+                                        ? (hasDonated ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed opacity-70" : "bg-white border-red-500 text-red-500 hover:bg-red-50 shadow-red-100/50")
                                         : "bg-white border-pink-500 text-pink-500 hover:bg-pink-50 shadow-pink-100/50"
                                         }`}
                                 >
-                                    {isJoined ? "Leave" : "Join Free"}
+                                    {isJoined ? (hasDonated ? "Donated Member" : "Leave") : "Join Free"}
                                 </button>
                             )}
                             <button

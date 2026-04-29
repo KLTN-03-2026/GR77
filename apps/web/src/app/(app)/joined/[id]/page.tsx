@@ -43,6 +43,7 @@ export default function JoinedCampaignDetailPage({
         fetchError,
         isLiked,
         isJoined,
+        hasDonated,
         showLeaveModal, setShowLeaveModal,
         isLeaving,
         handleToggleLike,
@@ -169,6 +170,7 @@ export default function JoinedCampaignDetailPage({
                                     totalRaised={totalRaised}
                                     participantsCount={campaign?.participantsCount}
                                     isJoined={isJoined}
+                                    hasDonated={hasDonated}
                                     isLiked={isLiked}
                                     isCreator={currentUser?.id === campaign?.creatorUserId}
                                     campaignId={campaign?.id}

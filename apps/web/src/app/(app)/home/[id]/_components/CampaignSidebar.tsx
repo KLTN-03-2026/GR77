@@ -6,6 +6,7 @@ interface CampaignSidebarProps {
     totalRaised: number;
     participantsCount?: number;
     isJoined: boolean;
+    hasDonated?: boolean;
     isLiked: boolean;
     isCreator: boolean;
     campaignId: string;
@@ -23,6 +24,7 @@ export function CampaignSidebar({
     totalRaised,
     participantsCount,
     isJoined,
+    hasDonated,
     isLiked,
     isCreator,
     campaignId,
@@ -47,6 +49,7 @@ export function CampaignSidebar({
                     totalRaised={totalRaised}
                     participantsCount={participantsCount}
                     isJoined={isJoined}
+                    hasDonated={hasDonated}
                     isLiked={isLiked}
                     isCreator={isCreator}
                     campaignId={campaignId}

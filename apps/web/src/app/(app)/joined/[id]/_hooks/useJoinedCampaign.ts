@@ -12,7 +12,8 @@ export function useJoinedCampaign(campaignId: string) {
     const [fetchError, setFetchError] = useState("");
 
     const [isLiked, setIsLiked] = useState(false);
-    const [isJoined, setIsJoined] = useState(true); // Should be true since this is the joined page
+    const [isJoined, setIsJoined] = useState(true);
+    const [hasDonated, setHasDonated] = useState(false);
 
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [isLeaving, setIsLeaving] = useState(false);
@@ -63,6 +64,7 @@ export function useJoinedCampaign(campaignId: string) {
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.joined) setIsJoined(true);
+                    if (data.hasDonated) setHasDonated(true);
                 })
                 .catch(() => { });
 
@@ -139,6 +141,7 @@ export function useJoinedCampaign(campaignId: string) {
         fetchError,
         isLiked,
         isJoined,
+        hasDonated,
         showLeaveModal, setShowLeaveModal,
         isLeaving,
         handleToggleLike,

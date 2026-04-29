@@ -94,6 +94,7 @@ export default function CampaignDetailPage({
     const [blockchainError, setBlockchainError] = useState<string | null>(null);
 
     const [isJoined, setIsJoined] = useState(false);
+    const [hasDonatedUser, setHasDonatedUser] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
     const [donationMessage, setDonationMessage] = useState("");
     const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -158,6 +159,7 @@ export default function CampaignDetailPage({
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.joined) setIsJoined(true);
+                    if (data.hasDonated) setHasDonatedUser(true);
                 })
                 .catch(() => { });
 
@@ -544,6 +546,7 @@ export default function CampaignDetailPage({
                                     totalRaised={totalRaised}
                                     participantsCount={campaign?.participantsCount}
                                     isJoined={isJoined}
+                                    hasDonated={hasDonatedUser}
                                     isLiked={isLiked}
                                     isCreator={currentUser?.id === campaign?.creatorUserId}
                                     campaignId={campaign?.id}
