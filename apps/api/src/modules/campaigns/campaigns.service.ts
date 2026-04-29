@@ -5,7 +5,7 @@ import { AdminPermission } from '../../constants/permissions';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { ReportCampaignDto } from './dto/report-campaign.dto';
-import { CreateCampaignUpdateDto } from './dto/create-campaign-update.dto';
+import { CreateCampaignNewsDto } from './dto/create-campaign-news.dto';
 /**
  * CampaignsService
  * 
@@ -556,7 +556,7 @@ export class CampaignsService {
     });
   }
 
-  async postUpdate(userId: string, campaignId: string, dto: CreateCampaignUpdateDto) {
+  async postNews(userId: string, campaignId: string, dto: CreateCampaignNewsDto) {
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
       include: {
@@ -569,7 +569,7 @@ export class CampaignsService {
     if (!campaign) throw new NotFoundException('Campaign not found');
     if (campaign.creatorUserId !== userId) throw new ForbiddenException('Not your campaign');
 
-    const update = await this.prisma.campaignUpdate.create({
+    const news = await this.prisma.campaignNews.create({
       data: {
         campaignId,
         title: dto.title,
@@ -583,13 +583,13 @@ export class CampaignsService {
       const notifications = supporters.map(p => ({
         userId: p.userId,
         title: `Tin tức mới: ${campaign.title}`,
-        message: `Tác giả vừa đăng tóm tắt cập nhật: ${dto.title}`,
-        type: 'CAMPAIGN_UPDATE',
+        message: `Tác giả vừa đăng thông báo: ${dto.title}`,
+        type: 'CAMPAIGN_NEWS',
         link: `/joined/${campaignId}`
       }));
       await this.prisma.notification.createMany({ data: notifications });
     }
 
-    return update;
+    return news;
   }
 }

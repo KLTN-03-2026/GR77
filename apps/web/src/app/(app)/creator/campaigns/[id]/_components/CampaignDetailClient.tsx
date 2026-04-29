@@ -218,7 +218,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
         setIsPostingUpdate(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${API_BASE_URL}/campaigns/${id}/updates`, {
+            const res = await fetch(`${API_BASE_URL}/campaigns/${id}/news`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
