@@ -10,7 +10,7 @@ interface CampaignTabsProps {
 }
 
 export function CampaignTabs({ campaign, currentUser }: CampaignTabsProps) {
-    const [activeTab, setActiveTab] = useState<'donations' | 'withdrawals' | 'updates'>('updates');
+    const [activeTab, setActiveTab] = useState<'donations' | 'withdrawals' | 'news'>('news');
 
     const donations = campaign?.donations || [];
     const withdrawals = campaign?.withdrawalRequests || [];
@@ -32,13 +32,13 @@ export function CampaignTabs({ campaign, currentUser }: CampaignTabsProps) {
             {/* Tab Headers */}
             <div className="flex overflow-x-auto gap-2 pb-4 mb-6 border-b border-gray-200 hide-scrollbar">
                 <button
-                    onClick={() => setActiveTab('updates')}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all whitespace-nowrap border ${activeTab === 'updates'
+                    onClick={() => setActiveTab('news')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all whitespace-nowrap border ${activeTab === 'news'
                         ? 'bg-cyan-50 border-2 border-cyan-500 text-cyan-700 shadow-sm'
                         : 'bg-gray-100 border-transparent text-gray-500 hover:bg-gray-200'
                         }`}
                 >
-                    <Rss className="w-5 h-5" /> Updates
+                    <Rss className="w-5 h-5" /> News
                 </button>
                 <button
                     onClick={() => setActiveTab('donations')}
@@ -167,23 +167,23 @@ export function CampaignTabs({ campaign, currentUser }: CampaignTabsProps) {
                     </div>
                 )}
 
-                {activeTab === 'updates' && (
+                {activeTab === 'news' && (
                     <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-                        <h3 className="text-xl font-bold text-gray-900 mb-6">Organizer Updates</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-6">Organizer News</h3>
                         <div className="space-y-6">
-                            {campaign?.updates?.length > 0 ? (
-                                campaign.updates.map((update: any) => (
-                                    <div className="relative pl-6 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-1 before:bg-blue-100 rounded-lg" key={update.id}>
+                            {campaign?.news?.length > 0 ? (
+                                campaign.news.map((item: any) => (
+                                    <div className="relative pl-6 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-1 before:bg-blue-100 rounded-lg" key={item.id}>
                                         <div className="absolute left-[-5px] top-2 w-3 h-3 bg-blue-500 rounded-full ring-4 ring-white" />
-                                        <span className="text-sm font-bold text-blue-600 mb-1 inline-block">{formatDate(update.createdAt)}</span>
-                                        <h4 className="text-lg font-bold text-gray-900 mb-2">{update.title}</h4>
-                                        <p className="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-2xl">
-                                            {update.content}
+                                        <span className="text-sm font-bold text-blue-600 mb-1 inline-block">{formatDate(item.createdAt)}</span>
+                                        <h4 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h4>
+                                        <p className="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-2xl whitespace-pre-wrap">
+                                            {item.content}
                                         </p>
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-center py-8 text-gray-500 italic">No updates from the organizer yet.</p>
+                                <p className="text-center py-8 text-gray-500 italic">No news from the organizer yet.</p>
                             )}
                         </div>
                     </div>

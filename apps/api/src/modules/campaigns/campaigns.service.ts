@@ -427,6 +427,9 @@ export class CampaignsService {
           orderBy: { createdAt: 'desc' },
           take: 20
         },
+        news: {
+          orderBy: { createdAt: 'desc' }
+        },
         _count: { select: { favorites: true, donations: true, participants: true } }
       }
     });

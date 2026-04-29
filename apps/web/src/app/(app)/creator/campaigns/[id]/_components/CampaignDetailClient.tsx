@@ -234,7 +234,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                 throw new Error(err.message || 'Lỗi đăng cập nhật');
             }
 
-            alert('Cập nhật đã được đăng và thông báo đến người ủng hộ!');
+            alert('Bản tin mới đã được đăng và thông báo đến người ủng hộ!');
             setUpdateTitle('');
             setUpdateContent('');
 
@@ -533,14 +533,14 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                 </svg>
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-gray-900 leading-none mb-1">Post an Update</h2>
+                                <h2 className="text-lg font-bold text-gray-900 leading-none mb-1">Post News</h2>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                     Notify your supporters
                                 </p>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 mb-8">
                             <div className="flex gap-3">
                                 {creatorAvatar ? (
                                     <img src={creatorAvatar} alt="Your Avatar" className="h-10 w-10 rounded-full object-cover shadow-sm bg-white" />
@@ -553,14 +553,14 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                     type="text"
                                     value={updateTitle}
                                     onChange={(e) => setUpdateTitle(e.target.value)}
-                                    placeholder="Update Title..."
+                                    placeholder="News Title..."
                                     className="flex-1 bg-gray-50 border border-gray-100 rounded-xl py-2.5 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold"
                                 />
                             </div>
                             <textarea
                                 value={updateContent}
                                 onChange={(e) => setUpdateContent(e.target.value)}
-                                placeholder="Write your update here..."
+                                placeholder="Write your news here..."
                                 rows={3}
                                 className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-none mb-3"
                             ></textarea>
@@ -572,9 +572,29 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                 {isPostingUpdate ? (
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 ) : (
-                                    'Publish Update'
+                                    'Publish News'
                                 )}
                             </button>
+                        </div>
+
+                        {/* Render News History List */}
+                        <div className="space-y-4 pt-6 border-t border-gray-100">
+                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">News History</h3>
+                            {campaign?.news?.length > 0 ? (
+                                <div className="space-y-4">
+                                    {campaign.news.map((item: any) => (
+                                        <div key={item.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                            <p className="text-[10px] uppercase font-bold text-blue-500 tracking-widest mb-1.5">
+                                                {new Date(item.createdAt).toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            </p>
+                                            <h4 className="text-sm font-bold text-gray-900 mb-2">{item.title}</h4>
+                                            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{item.content}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-gray-400 italic text-center py-4">Chưa có bản tin nào được đăng.</p>
+                            )}
                         </div>
                     </div>
                 </div>
