@@ -124,7 +124,7 @@ export default function ActivityPage() {
 
     const getProgress = (campaign: any) => {
         const goal = Number(campaign.fundingGoalAmount) || 1;
-        const current = Number(campaign.currentAmount) || 0;
+        const current = Number(campaign.currentRaisedAmount) || 0;
         return Math.min((current / goal) * 100, 100);
     };
 
