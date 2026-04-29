@@ -150,6 +150,7 @@ model Campaign {
   favorites                Favorite[]
   reports                  Report[]
   withdrawalRequests       WithdrawalRequest[]
+  news                     CampaignNews[]
 
   @@index([status])
   @@index([creatorUserId])
@@ -188,6 +189,19 @@ model CampaignImage {
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@map("campaign_images")
+}
+
+model CampaignNews {
+  id         String   @id @default(uuid())
+  campaignId String   @map("campaign_id")
+  title      String   @db.VarChar(255)
+  content    String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@map("campaign_news")
 }
 
 model CampaignCategory {
