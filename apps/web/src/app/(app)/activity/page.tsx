@@ -124,7 +124,7 @@ export default function ActivityPage() {
 
     const getProgress = (campaign: any) => {
         const goal = Number(campaign.fundingGoalAmount) || 1;
-        const current = Number(campaign.currentAmount) || 0;
+        const current = Number(campaign.currentRaisedAmount) || 0;
         return Math.min((current / goal) * 100, 100);
     };
 
@@ -239,13 +239,22 @@ export default function ActivityPage() {
                                                         {formatDate(campaign.startAt)} – {formatDate(campaign.endAt)}
                                                     </p>
                                                 </div>
-                                                {/* Financial row */}
-                                                <div className="flex flex-wrap items-end md:gap-x-[3cqi] gap-x-6 gap-y-2 md:mb-[0.5cqi] mb-1.5">
-                                                    <div>
-                                                        <p className="md:text-[1cqi] text-[10px] font-semibold uppercase tracking-wider text-gray-500 md:mb-[0.3cqi] mb-0.5">Min Donate</p>
+                                                {/* Raised + Progress bar */}
+                                                <div className="md:mb-[0.5cqi] mb-1.5">
+                                                    <div className="flex justify-between items-end md:mb-[0.3cqi] mb-1">
+                                                        <p className="md:text-[1cqi] text-[10px] font-semibold uppercase tracking-wider text-gray-500">Raised</p>
                                                         <p className="md:text-[1.4cqi] text-sm font-bold" style={{ color: TEAL }}>
-                                                            {formatCurrency(campaign.minimumDonationAmount)} VND
+                                                            {formatCurrency(campaign.currentRaisedAmount || 0)} VND
                                                         </p>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full transition-all duration-1000"
+                                                            style={{
+                                                                width: `${progress}%`,
+                                                                background: `linear-gradient(90deg, #47c9e5, ${TEAL})`
+                                                            }}
+                                                        ></div>
                                                     </div>
                                                 </div>
                                             </div>

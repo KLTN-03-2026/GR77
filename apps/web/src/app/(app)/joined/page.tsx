@@ -254,6 +254,24 @@ export default function JoinedCampaignsPage() {
                                                         {formatDate(campaign.startAt)} – {formatDate(campaign.endAt)}
                                                     </p>
                                                 </div>
+                                                {/* Raised + Progress bar */}
+                                                <div className="md:mb-[0.8cqi] mb-2">
+                                                    <div className="flex justify-between items-end md:mb-[0.3cqi] mb-1">
+                                                        <p className="md:text-[1cqi] text-[10px] font-semibold uppercase tracking-wider text-gray-500">Raised</p>
+                                                        <p className="md:text-[1.3cqi] text-xs font-bold" style={{ color: TEAL }}>
+                                                            {Number(campaign.currentRaisedAmount || 0).toLocaleString('vi-VN')} VND
+                                                        </p>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full transition-all duration-1000"
+                                                            style={{
+                                                                width: `${Math.min(100, Number(campaign.fundingGoalAmount) > 0 ? (Number(campaign.currentRaisedAmount || 0) / Number(campaign.fundingGoalAmount)) * 100 : 0)}%`,
+                                                                background: `linear-gradient(90deg, #47c9e5, ${TEAL})`
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
                                                 {/* Joined date */}
                                                 <div className="md:mb-[0.5cqi] mb-1.5">
                                                     <p className="md:text-[1.2cqi] text-xs font-medium flex text-gray-400 items-center gap-1 italic">

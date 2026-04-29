@@ -33,6 +33,7 @@ export class ParticipantsService {
         locationText: true,
         coverImageUrl: true,
         fundingGoalAmount: true,
+        currentRaisedAmount: true,
         minimumDonationAmount: true,
         startAt: true,
         endAt: true,
