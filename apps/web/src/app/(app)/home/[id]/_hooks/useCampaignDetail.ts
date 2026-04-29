@@ -47,7 +47,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
         fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/view-histories/${id}`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
-        }).catch(() => {});
+        }).catch(() => { });
     }, [campaign, id]);
 
     /* ── State ── */
@@ -78,7 +78,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 const data = await res.json();
                 setComments(data);
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     useEffect(() => {
@@ -98,7 +98,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 .then((data) => {
                     if (data.joined) setIsJoined(true);
                 })
-                .catch(() => {});
+                .catch(() => { });
 
             fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${id}/status`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -107,7 +107,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 .then((data) => {
                     if (data.favorited) setIsLiked(true);
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
         fetchComments();
     }, [id]);
@@ -137,7 +137,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
             if (res.ok) {
                 setIsLiked(!isLiked);
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     const handleJoin = async () => {
@@ -226,12 +226,25 @@ export function useCampaignDetail(id: string, currentUser: any) {
             if (!forceDemo) {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 from = accounts[0];
-                const ethAmount = (amountVnd / 70000000).toFixed(8);
+
+                const platformWallet = process.env.NEXT_PUBLIC_PLATFORM_WALLET_ADDRESS;
+                if (!platformWallet) {
+                    throw new Error('Hệ thống chưa cấu hình ví nhận tiền (Platform Wallet).');
+                }
+
+                // Tiền sẽ được gửi vào ví Escrow của hệ thống trước khi giải ngân
+                // Tỷ giá giả định 1 MATIC = 20,000 VND
+                const MATIC_PRICE_VND = 20000;
+                const ethAmount = (amountVnd / MATIC_PRICE_VND).toFixed(8);
                 const weiValue = '0x' + (BigInt(Math.floor(Number(ethAmount) * 1e18))).toString(16);
 
                 txHash = await window.ethereum.request({
                     method: 'eth_sendTransaction',
-                    params: [{ from, to: '0x0000000000000000000000000000000000000000', value: weiValue }],
+                    params: [{
+                        from,
+                        to: platformWallet,
+                        value: weiValue
+                    }],
                 });
             }
 
@@ -276,7 +289,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 ? `${replyingTo.user.profile.firstName} ${replyingTo.user.profile.lastName ?? ""}`.trim()
                 : replyingTo.user?.username;
             const tag = `@${name}`;
-            
+
             // If user still has the tag at start, we replace it with @[Name] for backend
             if (commentText.startsWith(tag)) {
                 const messageOnly = commentText.slice(tag.length).trim();
@@ -326,7 +339,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) fetchComments();
-        } catch (err) {}
+        } catch (err) { }
     };
 
     const handleReportComment = async () => {
@@ -346,7 +359,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 setReportModalOpen(false);
                 setReportReason("");
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     return {
@@ -355,10 +368,10 @@ export function useCampaignDetail(id: string, currentUser: any) {
         fetchError,
         isLiked,
         handleToggleLike,
-        
+
         isJoined,
         handleJoin,
-        
+
         donateOpen,
         setDonateOpen,
         donateAmount,

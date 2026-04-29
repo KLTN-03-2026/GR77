@@ -68,12 +68,25 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
             if (!forceDemo) {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 from = accounts[0];
-                const ethAmount = (amountVnd / 70000000).toFixed(8);
+
+                const platformWallet = process.env.NEXT_PUBLIC_PLATFORM_WALLET_ADDRESS;
+                if (!platformWallet) {
+                    throw new Error('Hệ thống chưa cấu hình ví nhận tiền (Platform Wallet).');
+                }
+
+                // Tiền sẽ được gửi vào ví Escrow của hệ thống trước khi giải ngân
+                // Tỷ giá giả định 1 MATIC = 20,000 VND
+                const MATIC_PRICE_VND = 20000;
+                const ethAmount = (amountVnd / MATIC_PRICE_VND).toFixed(8);
                 const weiValue = '0x' + (BigInt(Math.floor(Number(ethAmount) * 1e18))).toString(16);
 
                 txHash = await window.ethereum.request({
                     method: 'eth_sendTransaction',
-                    params: [{ from, to: '0x0000000000000000000000000000000000000000', value: weiValue }],
+                    params: [{
+                        from,
+                        to: platformWallet,
+                        value: weiValue
+                    }],
                 });
             }
 

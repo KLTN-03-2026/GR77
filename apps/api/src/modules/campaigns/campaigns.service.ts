@@ -361,6 +361,11 @@ export class CampaignsService {
                 lastName: true,
                 avatarUrl: true
               }
+            },
+            wallet: {
+              select: {
+                walletAddress: true
+              }
             }
           }
         },
