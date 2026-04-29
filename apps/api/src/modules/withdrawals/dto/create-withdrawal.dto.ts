@@ -3,14 +3,14 @@ import { WithdrawalMethod } from '@prisma/client';
 
 export class CreateWithdrawalDto {
     @IsNumber()
-    @Min(1000)
+    @Min(10000, { message: 'Số tiền rút tối thiểu là 10,000 VNĐ' })
     amount: number;
 
     @IsString()
     @IsOptional()
     reason?: string;
 
-    @IsEnum(WithdrawalMethod)
+    @IsEnum(WithdrawalMethod, { message: 'Phương thức rút tiền không hợp lệ (WALLET hoặc BANK)' })
     method: WithdrawalMethod;
 
     @IsString()
