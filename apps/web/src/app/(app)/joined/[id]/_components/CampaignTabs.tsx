@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Rss, HandCoins, Landmark } from "lucide-react";
+import { Rss, HandCoins, Landmark, ChevronDown, ChevronUp } from "lucide-react";
 import { formatCurrency, formatDate } from "../../../home/[id]/_utils/formatters";
 
 interface CampaignTabsProps {
@@ -14,6 +14,18 @@ export function CampaignTabs({ campaign, currentUser }: CampaignTabsProps) {
 
     const donations = campaign?.donations || [];
     const withdrawals = campaign?.withdrawalRequests || [];
+
+    const [visibleDonationsCount, setVisibleDonationsCount] = useState(3);
+
+    const handleShowMore = () => {
+        setVisibleDonationsCount(prev => prev + 5);
+    };
+
+    const handleShowLess = () => {
+        setVisibleDonationsCount(prev => Math.max(3, prev - 5));
+    };
+
+    const displayedDonations = donations.slice(0, visibleDonationsCount);
 
     return (
         <div className="px-4 sm:px-8 pb-8 max-w-7xl mx-auto mt-8">
@@ -55,48 +67,71 @@ export function CampaignTabs({ campaign, currentUser }: CampaignTabsProps) {
                         <h3 className="text-xl font-bold text-gray-900 mb-6">Donation History</h3>
                         <div className="space-y-4">
                             {donations.length > 0 ? (
-                                donations.map((donation: any) => {
-                                    const profile = donation.user?.profile;
-                                    const isMe = donation.userId === currentUser?.id;
-                                    const accountName = donation.user?.username || "Khách vãng lai";
-                                    const fullNameArr = profile ? [profile.lastName, profile.firstName].filter(Boolean) : [];
-                                    const fullName = fullNameArr.join(' ');
+                                <>
+                                    {displayedDonations.map((donation: any) => {
+                                        const profile = donation.user?.profile;
+                                        const isMe = donation.userId === currentUser?.id;
+                                        const accountName = donation.user?.username || "Khách vãng lai";
+                                        const fullNameArr = profile ? [profile.lastName, profile.firstName].filter(Boolean) : [];
+                                        const fullName = fullNameArr.join(' ');
 
-                                    let baseName = accountName;
-                                    if (fullName && fullName.toLowerCase() !== accountName.toLowerCase()) {
-                                        baseName = `${fullName} (${accountName})`;
-                                    }
+                                        let baseName = accountName;
+                                        if (fullName && fullName.toLowerCase() !== accountName.toLowerCase()) {
+                                            baseName = `${fullName} (${accountName})`;
+                                        }
 
-                                    const donorName = isMe ? `${baseName} ( Tôi )` : baseName;
+                                        const donorName = isMe ? `${baseName} ( Tôi )` : baseName;
 
-                                    return (
-                                        <div key={donation.id} className="p-5 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200 shadow-sm">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center font-bold overflow-hidden border border-blue-100 shadow-sm">
-                                                        {donation.user?.profile?.avatarUrl ? (
-                                                            <img src={donation.user.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <span className="text-base uppercase">{donorName.charAt(0)}</span>
-                                                        )}
+                                        return (
+                                            <div key={donation.id} className="p-5 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200 shadow-sm">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center font-bold overflow-hidden border border-blue-100 shadow-sm">
+                                                            {donation.user?.profile?.avatarUrl ? (
+                                                                <img src={donation.user.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <span className="text-base uppercase">{donorName.charAt(0)}</span>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black text-gray-900 group-hover:text-blue-600 transition-colors">
+                                                                {donorName}
+                                                            </p>
+                                                            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{formatDate(donation.donatedAt || donation.createdAt)}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-black text-gray-900 group-hover:text-blue-600 transition-colors">
-                                                            {donorName}
-                                                        </p>
-                                                        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{formatDate(donation.donatedAt || donation.createdAt)}</p>
-                                                    </div>
+                                                    <span className="font-black text-green-600 text-lg">+{formatCurrency(Number(donation.amount))} VND</span>
                                                 </div>
-                                                <span className="font-black text-green-600 text-lg">+{formatCurrency(Number(donation.amount))} VND</span>
+                                                {donation.message && (
+                                                    <div className="ml-16 mt-2 p-3 bg-white/60 rounded-xl border border-gray-100 text-sm text-gray-600 italic leading-relaxed">
+                                                        "{donation.message}"
+                                                    </div>
+                                                )}
                                             </div>
-                                            {donation.message && (
-                                                <div className="ml-16 mt-2 p-3 bg-white/60 rounded-xl border border-gray-100 text-sm text-gray-600 italic leading-relaxed">
-                                                    "{donation.message}"
-                                                </div>
+                                        );
+                                    })}
+
+                                    {(donations.length > visibleDonationsCount || visibleDonationsCount > 3) && (
+                                        <div className="flex justify-center gap-4 pt-4">
+                                            {donations.length > visibleDonationsCount && (
+                                                <button
+                                                    onClick={handleShowMore}
+                                                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-white border-2 border-cyan-500 text-cyan-600 font-bold hover:bg-cyan-50 transition-all shadow-sm active:scale-95"
+                                                >
+                                                    Xem thêm <ChevronDown className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            {visibleDonationsCount > 3 && (
+                                                <button
+                                                    onClick={handleShowLess}
+                                                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-white border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition-all shadow-sm active:scale-95"
+                                                >
+                                                    Thu gọn <ChevronUp className="w-4 h-4" />
+                                                </button>
                                             )}
                                         </div>
-                                    );
-                                })
+                                    )}
+                                </>
                             ) : (
                                 <p className="text-center py-8 text-gray-500 italic">No donations yet.</p>
                             )}

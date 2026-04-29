@@ -209,6 +209,20 @@ export class DonationsService {
                             note: `PayOS donation sync - User ${transaction.donation.userId || 'Guest'}`
                         }
                     });
+
+                    // 5. Create Wallet Transaction for User History
+                    if (transaction.donation.userId) {
+                        await tx.walletTransaction.create({
+                            data: {
+                                userId: transaction.donation.userId,
+                                type: 'DONATION',
+                                amount: transaction.amount,
+                                status: 'SUCCESS',
+                                description: `PayOS Donate: ${transaction.donation.campaign.title}`,
+                                orderId: transaction.orderId
+                            }
+                        });
+                    }
                 });
                 this.logger.log(`[Webhook] Database updated successfully for order ${orderCode}`);
             } else if (status === 'CANCELED' || status === 'EXPIRED') {
@@ -243,7 +257,8 @@ export class DonationsService {
                     paymentMethod: 'BLOCKCHAIN',
                     status: 'SUCCESS',
                     donatedAt: new Date()
-                }
+                },
+                include: { campaign: true }
             });
 
             await tx.campaign.update({
@@ -263,6 +278,20 @@ export class DonationsService {
                     note: `Blockchain payment by ${dto.walletAddress}`
                 }
             });
+
+            // 4. Create Wallet Transaction for User History
+            if (userId) {
+                await tx.walletTransaction.create({
+                    data: {
+                        userId,
+                        type: 'DONATION',
+                        amount: new Prisma.Decimal(dto.amount),
+                        status: 'SUCCESS',
+                        description: `Blockchain Donate: ${donation.campaign.title}`,
+                        orderId: dto.txHash // Use txHash as orderId for uniqueness/reference
+                    }
+                });
+            }
 
             return donation;
         });

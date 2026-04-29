@@ -417,14 +417,17 @@ export default function CreatorCampaignsPage() {
                                             dataKey="value"
                                             stroke="none"
                                             cornerRadius={40}
+                                            isAnimationActive={true}
+                                            animationDuration={1500}
+                                            animationEasing="ease-out"
                                         >
                                             <Cell fill="#0ea5e9" />
-                                            <Cell fill="#f1f5f9" />
+                                            <Cell fill="#ffe601" />
                                         </Pie>
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <span className="text-xl sm:text-2xl font-black text-[#fed13f] drop-shadow-sm tracking-wide">
+                                    <span className="text-xl sm:text-2xl font-black text-[#eab308] drop-shadow-sm tracking-wide">
                                         {formatVND(raised)}
                                     </span>
                                     <span className="text-[9px] text-gray-400 font-bold mt-0.5">VND</span>
