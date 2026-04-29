@@ -272,18 +272,18 @@ export default function AdminsPage() {
             {/* ── STATS ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <StatCard label="Tổng Admin" value={users.length.toLocaleString()} icon={<UserGroupIcon />} />
-                <StatCard label="Đã Khóa" value={users.filter(u => u.isLocked).length.toLocaleString()} icon={<LockClosedIcon />} color="bg-gray-200" />
+                <StatCard label="Đã Khóa" value={users.filter(u => u.isLocked).length.toLocaleString()} icon={<LockClosedIcon />} />
             </div>
 
             {/* ── TABLE ── */}
             <div className="bg-white border border-gray-300 rounded-[1.5rem] overflow-hidden shadow-sm">
                 <div className="flex flex-wrap items-center gap-4 p-5 bg-[#f8f9fa] border-b border-gray-300">
                     <div className="relative">
-                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
                         <input
                             type="text"
                             placeholder="Tìm kiếm admin..."
-                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl w-72 text-sm outline-none focus:border-blue-400 transition-all bg-white"
+                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl w-72 text-sm font-bold text-gray-800 outline-none focus:border-blue-400 transition-all bg-white placeholder:text-gray-400"
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                         />
@@ -304,7 +304,7 @@ export default function AdminsPage() {
 
                     <button
                         onClick={() => { setIsModalOpen(true); setCreateSuccess(''); }}
-                        className="ml-auto bg-[#7598C1] hover:bg-[#5DA2D5] text-black px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all active:scale-95"
+                        className="ml-auto bg-[#7598C1] hover:bg-[#5DA2D5] text-gray-900 px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all active:scale-95"
                     >
                         <PlusIcon className="h-5 w-5 stroke-[3]" /> Thêm Admin
                     </button>
@@ -314,12 +314,12 @@ export default function AdminsPage() {
                     <table className="w-full text-sm text-left border-collapse">
                         <thead>
                             <tr className="bg-white border-b border-gray-300">
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px] text-center w-16">ID</th>
-                                <th className="px-6 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px]">Danh tính</th>
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px]">Vai trò</th>
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px]">Trạng thái</th>
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px]">Phân quyền</th>
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-400 text-[10px] text-center">Thao tác</th>
+                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px] text-center w-16">ID</th>
+                                <th className="px-6 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px]">Danh tính</th>
+                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px]">Vai trò</th>
+                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px]">Trạng thái</th>
+                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px]">Phân quyền</th>
+                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px] text-center">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-300">
@@ -327,13 +327,13 @@ export default function AdminsPage() {
                                 <tr><td colSpan={6} className="px-6 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu...</td></tr>
                             ) : paginatedAdmins.length > 0 ? paginatedAdmins.map((admin, index) => (
                                 <tr key={admin.id} className="bg-[#fbfbfb] hover:bg-white transition-colors group">
-                                    <td className="px-4 py-4 text-center font-bold text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                    <td className="px-4 py-4 text-center font-bold text-gray-700">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-4">
                                             <UserAvatar role={admin.rawRole} src={admin.avatarUrl} />
                                             <div>
                                                 <p className="font-black text-gray-800 leading-tight text-base">{admin.username}</p>
-                                                <p className="text-[12px] text-gray-500 font-medium">{admin.email}</p>
+                                                <p className="text-[12px] text-gray-600 font-bold">{admin.email}</p>
                                             </div>
                                         </div>
                                     </td>
@@ -438,40 +438,39 @@ export default function AdminsPage() {
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Email công việc</label>
                                     <div className="relative">
-                                        <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+                                        <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                         <input
                                             type="email"
                                             required
                                             placeholder="email@kindlink.com"
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-50 focus:border-[#7598C1] outline-none transition-all"
+                                            className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 focus:ring-4 focus:ring-blue-50 focus:border-[#7598C1] outline-none transition-all placeholder:text-gray-500"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Mật khẩu khởi tạo</label>
+                                    <label className="text-[10px] font-black text-gray-800 uppercase tracking-widest mb-1.5 block">Mật khẩu khởi tạo</label>
                                     <div className="relative">
-                                        <KeyIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+                                        <KeyIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
                                         <input
                                             type="text"
-                                            placeholder="Mặc định: Admin123"
                                             value={formData.password}
                                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                            className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-50 focus:border-[#7598C1] outline-none transition-all"
+                                            className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 focus:ring-4 focus:ring-blue-50 focus:border-[#7598C1] outline-none transition-all placeholder:text-gray-500"
                                         />
                                     </div>
                                     <p className="text-[10px] text-gray-400 mt-2 italic font-medium">* Để trống nếu muốn dùng mật khẩu hệ thống mặc định.</p>
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Vai trò trong hệ thống</label>
+                                    <label className="text-[10px] font-black text-gray-800 uppercase tracking-widest mb-1.5 block">Vai trò trong hệ thống</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, role: 'ADMIN' })}
-                                            className={`py-4 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${formData.role === 'ADMIN' ? 'border-[#7598C1] bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-400'
+                                            className={`py-4 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${formData.role === 'ADMIN' ? 'border-[#7598C1] bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-600'
                                                 }`}
                                         >
                                             Admin
@@ -480,7 +479,7 @@ export default function AdminsPage() {
                                             type="button"
                                             disabled={!isSuperAdmin}
                                             onClick={() => setFormData({ ...formData, role: 'SUPER_ADMIN' })}
-                                            className={`py-4 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${formData.role === 'SUPER_ADMIN' ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-gray-100 bg-gray-50 text-gray-400 opacity-50'
+                                            className={`py-4 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${formData.role === 'SUPER_ADMIN' ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-gray-100 bg-gray-50 text-gray-600 opacity-50'
                                                 }`}
                                         >
                                             Super Admin
@@ -529,7 +528,7 @@ export default function AdminsPage() {
                                     Lưu ý: Sau khi khóa, Quản trị viên này sẽ <span className="text-red-600 font-black">KHÔNG THỂ</span> đăng nhập vào hệ thống ngay lập tức.
                                 </p>
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Lý do khóa tài khoản</label>
+                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1.5 block">Lý do khóa tài khoản</label>
                                     <textarea
                                         value={confirmModal.reason}
                                         onChange={(e) => setConfirmModal({ ...confirmModal, reason: e.target.value })}
@@ -592,7 +591,7 @@ export default function AdminsPage() {
                                 {/* Permissions section */}
                                 <div>
                                     <div className="flex items-center justify-between mb-8">
-                                        <h3 className="text-sm font-black uppercase text-gray-400 tracking-[0.2em]">Phân quyền chi tiết</h3>
+                                        <h3 className="text-sm font-black uppercase text-gray-600 tracking-[0.2em]">Phân quyền chi tiết</h3>
                                     </div>
 
                                     {selectedUser.rawRole === 'SUPER_ADMIN' ? (
@@ -637,7 +636,7 @@ export default function AdminsPage() {
                                                                     </div>
                                                                     <div className="flex-1">
                                                                         <p className="text-[15px] font-black text-gray-800">{p.label}</p>
-                                                                        <p className="text-[10px] text-gray-400 font-bold tracking-wider uppercase mt-0.5">{p.key}</p>
+                                                                        <p className="text-[10px] text-gray-600 font-bold tracking-wider uppercase mt-0.5">{p.key}</p>
                                                                     </div>
                                                                 </label>
                                                             );
