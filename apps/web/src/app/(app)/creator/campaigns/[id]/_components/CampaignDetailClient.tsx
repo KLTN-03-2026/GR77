@@ -481,7 +481,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         {/* Public Link Button */}
                         <div className="space-y-3 mb-8">
                             <Link
-                                href={`/home/${campaign.id}`}
+                                href={`/home/${campaign.id}?from=creator/campaigns`}
                                 className="w-full bg-gray-50 border-2 border-cyan-500 text-cyan-700 hover:bg-cyan-100 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
                             >
                                 <ShareIcon className="h-5 w-5" />

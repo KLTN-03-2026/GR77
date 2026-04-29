@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import {
   HomeIcon,
@@ -53,8 +53,13 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: SidebarProps) {
 
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Check if we came from another page via query param to keep its sidebar item active
+  const fromParam = searchParams.get('from');
+  const activePath = fromParam ? `/${fromParam}` : pathname;
 
   // Use provided menuItems or fall back to default user menu
   const items = menuItems ?? userMenuItems;
@@ -94,7 +99,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: Sideb
   const renderNavItems = (onItemClick?: () => void) => (
     <nav className="flex-1 px-3 lg:px-4 space-y-0.5 mt-3">
       {items.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+        const isActive = activePath === item.href || activePath.startsWith(item.href + '/');
         return (
           <Link
             key={item.name}

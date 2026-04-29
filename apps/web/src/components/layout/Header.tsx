@@ -76,6 +76,36 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dynamicCampaignName, setDynamicCampaignName] = useState('');
+
+  // Fetch campaign name if pathname contains an ID at the end for known campaign routes
+  useEffect(() => {
+    const parts = pathname.split('/').filter(Boolean);
+    let campaignId = null;
+
+    if (pathname.startsWith('/home/') && parts.length === 2) {
+      campaignId = parts[1];
+    } else if (pathname.startsWith('/joined/') && parts.length === 2) {
+      campaignId = parts[1];
+    } else if (pathname.startsWith('/creator/campaigns/') && parts.length === 3 && parts[2] !== 'new' && parts[2] !== 'edit') {
+      campaignId = parts[2];
+    }
+
+    if (campaignId) {
+      fetch(`${API_BASE_URL}/campaigns/${campaignId}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.title) {
+            setDynamicCampaignName(data.title);
+          } else {
+            setDynamicCampaignName('');
+          }
+        })
+        .catch(() => setDynamicCampaignName(''));
+    } else {
+      setDynamicCampaignName('');
+    }
+  }, [pathname]);
 
   useEffect(() => {
     // Close dropdown on click outside
@@ -149,6 +179,8 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     if (pathname.includes('/creator/campaigns') && pathname.includes('/edit')) {
       return (
         <>
+          <Link href="/home" className="hover:text-blue-600 transition-colors">Home</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
           <Link href="/creator/campaigns" className="hover:text-blue-600">My Campaigns</Link>
           <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
           <span className="text-gray-900 font-medium">Edit</span>
@@ -156,15 +188,19 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
       );
     }
 
-    if (pathname.startsWith('/creator/campaigns/') && !pathname.includes('/new')) {
+    if (pathname.startsWith('/creator/campaigns/') && !pathname.includes('/new') && !pathname.includes('/edit')) {
       const parts = pathname.split('/');
       const campaignId = parts[parts.length - 1];
       const idx = searchParams.get('idx');
       return (
         <>
+          <Link href="/home" className="hover:text-blue-600 transition-colors">Home</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
           <Link href="/creator/campaigns" className="hover:text-blue-600">My Campaigns</Link>
           <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
-          <span className="text-gray-900 font-medium">{idx ? `#${idx}` : `#${campaignId.length > 8 ? campaignId.slice(-4) : campaignId}`}</span>
+          <span className="text-gray-900 font-medium line-clamp-1 max-w-[300px]">
+            {dynamicCampaignName || (idx ? `#${idx}` : `#${campaignId.length > 8 ? campaignId.slice(-4) : campaignId}`)}
+          </span>
         </>
       );
     }
@@ -181,21 +217,47 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     if (pathname.includes('/admin/settings')) return <><span>{translate('menu.settings')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
 
     // Default user breadcrumbs
+    const fromParam = searchParams.get('from');
+    const activePath = fromParam ? `/${fromParam}` : pathname;
+
     let title = 'Home';
-    if (pathname.includes('/home')) title = 'Home';
-    else if (pathname.includes('/favorites')) title = 'Favorite Campaigns';
-    else if (pathname.includes('/activity')) title = 'Activity History';
-    else if (pathname.includes('/joined')) title = 'Joined Campaigns';
-    else if (pathname.includes('/creator')) title = 'My Campaigns';
-    else if (pathname.includes('/list')) title = 'All Campaigns';
-    else if (pathname.includes('/wallet')) title = 'Wallet';
-    else if (pathname.includes('/settings')) title = 'Setting';
-    else if (pathname.includes('/notifications')) title = 'Notifications';
+    let basePath = '/home';
+    if (activePath.startsWith('/home')) { title = 'Home'; basePath = '/home'; }
+    else if (activePath.startsWith('/favorites')) { title = 'Favorite Campaigns'; basePath = '/favorites'; }
+    else if (activePath.startsWith('/activity')) { title = 'Activity History'; basePath = '/activity'; }
+    else if (activePath.startsWith('/joined')) { title = 'Joined Campaigns'; basePath = '/joined'; }
+    else if (activePath.startsWith('/creator')) { title = 'My Campaigns'; basePath = '/creator/campaigns'; }
+    else if (activePath.startsWith('/list')) { title = 'All Campaigns'; basePath = '/list'; }
+    else if (activePath.startsWith('/wallet')) { title = 'Wallet'; basePath = '/wallet'; }
+    else if (activePath.startsWith('/settings')) { title = 'Setting'; basePath = '/settings'; }
+    else if (activePath.startsWith('/notifications')) { title = 'Notifications'; basePath = '/notifications'; }
 
     return (
       <>
-        <span>{title}</span>
-        <ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} />
+        {dynamicCampaignName ? (
+          <>
+            {basePath !== '/home' && basePath !== '/list' && basePath !== '/wallet' && basePath !== '/settings' && (
+              <>
+                <Link href="/home" className="hover:text-blue-600 transition-colors">Home</Link>
+                <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+              </>
+            )}
+            <Link href={basePath} className="hover:text-blue-600 transition-colors">{title}</Link>
+            <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+            <span className="text-gray-900 font-medium line-clamp-1 max-w-[300px]">{dynamicCampaignName}</span>
+          </>
+        ) : (
+          <>
+            {basePath !== '/home' && basePath !== '/list' && basePath !== '/wallet' && basePath !== '/settings' && (
+              <>
+                <Link href="/home" className="hover:text-blue-600 transition-colors">Home</Link>
+                <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+              </>
+            )}
+            <span>{title}</span>
+            <ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} />
+          </>
+        )}
       </>
     );
   };
