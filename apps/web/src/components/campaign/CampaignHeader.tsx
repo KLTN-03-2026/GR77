@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 
 interface CampaignHeaderProps {
     title: string;
@@ -83,10 +83,10 @@ export function CampaignHeader({ title, status, images, isCreator, isLiked, onTo
                                 e.stopPropagation();
                                 onReport?.();
                             }}
-                            className="p-2.5 rounded-full shadow-lg transition-all border bg-white/20 text-white border-white/20 backdrop-blur-md hover:scale-110 active:scale-95"
+                            className="p-2.5 rounded-full transition-all border-2 bg-white text-amber-500 border-amber-200 hover:scale-110 active:scale-95 hover:bg-amber-50"
                             title="Báo cáo chiến dịch"
                         >
-                            <ExclamationCircleIcon className="h-5 w-5" />
+                            <ExclamationTriangleIcon className="h-5 w-5" />
                         </button>
 
                         {/* Like button */}

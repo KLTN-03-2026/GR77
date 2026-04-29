@@ -39,22 +39,18 @@ export function CampaignGoalProgress({
 
                 <div className="flex-1 flex flex-col justify-center w-full items-center py-4">
                     <div className="relative w-40 h-40 sm:w-56 sm:h-56 lg:w-72 lg:h-72 shrink-0">
-                        <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90 filter drop-shadow-sm">
+                        <svg viewBox="0 0 40 40" className="w-full h-full -rotate-90">
                             <defs>
                                 <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                                     <stop offset="0%" stopColor="#47c9e5" />
                                     <stop offset="100%" stopColor="#2b9ec5" />
                                 </linearGradient>
-                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                    <feGaussianBlur stdDeviation="0.8" result="blur" />
-                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                </filter>
                             </defs>
                             {/* Track */}
                             <path
                                 className="text-gray-100/80"
                                 strokeDasharray="100, 100"
-                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                d="M20 4.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="2.8"
@@ -63,11 +59,10 @@ export function CampaignGoalProgress({
                             <path
                                 stroke="url(#progressGradient)"
                                 style={{
-                                    filter: 'url(#glow)',
                                     transition: 'stroke-dasharray 1s ease-out'
                                 }}
                                 strokeDasharray={`${raisedPercent}, 100`}
-                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                d="M20 4.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                 fill="none"
                                 strokeWidth="2.8"
                                 strokeLinecap="round"
@@ -129,7 +124,7 @@ export function CampaignGoalProgress({
                             )}
                             <button
                                 onClick={() => setDonateOpen(true)}
-                                className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full shadow-lg shadow-yellow-100/50 transition-all active:scale-95"
+                                className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full transition-all active:scale-95"
                             >
                                 Donate
                             </button>
