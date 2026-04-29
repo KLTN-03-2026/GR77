@@ -44,6 +44,13 @@ export default function CampaignDetailClient({ id }: { id: string }) {
     const { user: currentUser } = useGlobalAuth();
     const router = useRouter();
 
+    // Post Update State
+    const [updateTitle, setUpdateTitle] = useState('');
+    const [updateContent, setUpdateContent] = useState('');
+    const [isPostingUpdate, setIsPostingUpdate] = useState(false);
+
+
+
     // Comment states
     const [comments, setComments] = useState<any[]>([]);
     const [newComment, setNewComment] = useState("");
@@ -164,46 +171,86 @@ export default function CampaignDetailClient({ id }: { id: string }) {
 
     const handleWithdrawalSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!withdrawalAmount || !withdrawalReason) {
-            alert('Vui lòng nhập đầy đủ thông tin');
-            return;
-        }
-
-        setIsSubmittingWithdrawal(true);
         try {
+            setIsSubmittingWithdrawal(true);
             const token = localStorage.getItem('accessToken');
-            const data = {
-                amount: Number(withdrawalAmount),
-                reason: withdrawalReason,
-                method: withdrawalMethod,
-                ...(withdrawalMethod === 'BANK' ? { bankName, accountNumber, accountOwner } : {})
-            };
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/withdrawals/campaign/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/withdrawals/campaign/${id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify({
+                    amount: Number(withdrawalAmount),
+                    reason: withdrawalReason || 'Yêu cầu rút tiền',
+                    method: withdrawalMethod,
+                    ...(withdrawalMethod === 'BANK' ? { bankName, accountNumber, accountOwner } : {})
+                }),
             });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.message || 'Gửi yêu cầu thất bại');
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Lỗi gửi yêu cầu rút tiền');
             }
 
-            alert('Gửi yêu cầu rút tiền thành công! Vui lòng chờ phê duyệt.');
+            alert('Yêu cầu rút tiền đã được gửi thành công. Vui lòng chờ phê duyệt.');
             setWithdrawalModalOpen(false);
             setWithdrawalAmount('');
-            setWithdrawalReason('');
-            setBankName('');
-            setAccountNumber('');
-            setAccountOwner('');
-        } catch (err: any) {
-            alert(`Lỗi: ${err.message}`);
+
+            // Reload campaign
+            const reloadRes = await fetch(`${API_BASE_URL}/campaigns/${id}`);
+            if (reloadRes.ok) {
+                const data = await reloadRes.json();
+                setCampaign(data);
+            }
+        } catch (error: any) {
+            console.error('Lỗi rút tiền:', error);
+            alert(error.message || 'Có lỗi xảy ra khi tạo yêu cầu rút tiền');
         } finally {
             setIsSubmittingWithdrawal(false);
+        }
+    };
+
+    const handlePostUpdate = async () => {
+        if (!updateTitle.trim() || !updateContent.trim()) {
+            alert('Vui lòng nhập đầy đủ tiêu đề và nội dung cập nhật.');
+            return;
+        }
+        setIsPostingUpdate(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+            const res = await fetch(`${API_BASE_URL}/campaigns/${id}/updates`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    title: updateTitle,
+                    content: updateContent,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Lỗi đăng cập nhật');
+            }
+
+            alert('Cập nhật đã được đăng và thông báo đến người ủng hộ!');
+            setUpdateTitle('');
+            setUpdateContent('');
+
+            // Reload campaign data to show new update
+            const reloadRes = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (reloadRes.ok) {
+                const data = await reloadRes.json();
+                setCampaign(data);
+            }
+        } catch (err: any) {
+            console.error('Post update error:', err);
+            alert(err.message || 'Có lỗi xảy ra khi đăng cập nhật.');
+        } finally {
+            setIsPostingUpdate(false);
         }
     };
 
@@ -504,17 +551,29 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                 )}
                                 <input
                                     type="text"
+                                    value={updateTitle}
+                                    onChange={(e) => setUpdateTitle(e.target.value)}
                                     placeholder="Update Title..."
-                                    className="flex-1 bg-gray-50 border-gray-100 rounded-xl py-2.5 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold"
+                                    className="flex-1 bg-gray-50 border border-gray-100 rounded-xl py-2.5 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold"
                                 />
                             </div>
                             <textarea
+                                value={updateContent}
+                                onChange={(e) => setUpdateContent(e.target.value)}
                                 placeholder="Write your update here..."
                                 rows={3}
-                                className="w-full bg-gray-50 border-gray-100 rounded-xl py-3 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-none"
+                                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-none mb-3"
                             ></textarea>
-                            <button className="w-full bg-blue-500 border-2 border-blue-500 text-white text-[11px] font-black py-3.5 rounded-full hover:bg-blue-600 transition-all shadow-lg shadow-blue-100 active:scale-95 uppercase tracking-widest">
-                                Publish Update
+                            <button
+                                onClick={handlePostUpdate}
+                                disabled={isPostingUpdate || !updateTitle.trim() || !updateContent.trim()}
+                                className="w-full bg-blue-500 border-2 border-blue-500 text-white text-[11px] font-black py-3.5 rounded-full hover:bg-blue-600 transition-all shadow-lg shadow-blue-100 active:scale-95 uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isPostingUpdate ? (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    'Publish Update'
+                                )}
                             </button>
                         </div>
                     </div>

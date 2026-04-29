@@ -5,6 +5,7 @@ import { AdminPermission } from '../../constants/permissions';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { ReportCampaignDto } from './dto/report-campaign.dto';
+import { CreateCampaignUpdateDto } from './dto/create-campaign-update.dto';
 /**
  * CampaignsService
  * 
@@ -536,6 +537,14 @@ export class CampaignsService {
       throw new NotFoundException('Campaign not found');
     }
 
+    await this.prisma.userActionLog.create({
+      data: {
+        userId,
+        action: 'REPORT_CAMPAIGN',
+        details: `Reported campaign ${campaignId} for: ${dto.reason}`,
+      },
+    });
+
     return this.prisma.report.create({
       data: {
         submitterId: userId,
@@ -545,5 +554,42 @@ export class CampaignsService {
         details: dto.details
       }
     });
+  }
+
+  async postUpdate(userId: string, campaignId: string, dto: CreateCampaignUpdateDto) {
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId },
+      include: {
+        participants: {
+          select: { userId: true },
+        },
+      },
+    });
+
+    if (!campaign) throw new NotFoundException('Campaign not found');
+    if (campaign.creatorUserId !== userId) throw new ForbiddenException('Not your campaign');
+
+    const update = await this.prisma.campaignUpdate.create({
+      data: {
+        campaignId,
+        title: dto.title,
+        content: dto.content,
+      },
+    });
+
+    // Notify supporters (participants or donors - we use participants here)
+    const supporters = campaign.participants;
+    if (supporters.length > 0) {
+      const notifications = supporters.map(p => ({
+        userId: p.userId,
+        title: `Tin tức mới: ${campaign.title}`,
+        message: `Tác giả vừa đăng tóm tắt cập nhật: ${dto.title}`,
+        type: 'CAMPAIGN_UPDATE',
+        link: `/joined/${campaignId}`
+      }));
+      await this.prisma.notification.createMany({ data: notifications });
+    }
+
+    return update;
   }
 }
