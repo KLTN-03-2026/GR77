@@ -16,6 +16,7 @@ import { CampaignGalleryBox } from "./_components/CampaignGalleryBox";
 import { CampaignSidebar } from "./_components/CampaignSidebar";
 import { CampaignModals } from "./_components/CampaignModals";
 import { CampaignTabs } from "../../joined/[id]/_components/CampaignTabs";
+import { LeaveCampaignModal } from "../../joined/[id]/_components/LeaveCampaignModal";
 
 // Hooks & Utils
 import { useCampaignDetail } from "./_hooks/useCampaignDetail";
@@ -95,6 +96,8 @@ export default function CampaignDetailPage({
     const [isJoined, setIsJoined] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
     const [donationMessage, setDonationMessage] = useState("");
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
 
     const [comments, setComments] = useState<any[]>([]);
     const [newComment, setNewComment] = useState("");
@@ -228,6 +231,34 @@ export default function CampaignDetailPage({
             alert("Lỗi kết nối");
         } finally {
             setIsJoining(false);
+        }
+    };
+
+    const handleLeave = async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        setIsLeaving(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/participants/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (res.ok) {
+                setIsJoined(false);
+                alert("Bạn đã rời chiến dịch.");
+            } else {
+                const data = await res.json();
+                alert(data.message || "Không thể rời chiến dịch");
+            }
+        } catch (err) {
+            alert("Lỗi kết nối");
+        } finally {
+            setIsLeaving(false);
+            setShowLeaveModal(false);
         }
     };
 
@@ -518,6 +549,7 @@ export default function CampaignDetailPage({
                                     campaignId={campaign?.id}
                                     setDonateOpen={setDonateOpen}
                                     handleJoin={handleJoin}
+                                    handleLeave={() => setShowLeaveModal(true)}
                                     handleToggleLike={handleToggleLike}
                                     onReport={() => setCampaignReportModalOpen(true)}
                                     formatCurrency={formatCurrency}
@@ -526,10 +558,12 @@ export default function CampaignDetailPage({
                         </div>
                     </div>
 
-                    <CampaignTabs
-                        campaign={campaign}
-                        currentUser={currentUser}
-                    />
+                    {(isJoined || currentUser?.id === campaign?.creatorUserId) && (
+                        <CampaignTabs
+                            campaign={campaign}
+                            currentUser={currentUser}
+                        />
+                    )}
 
                     {/* Container 2: Community Discussion */}
                     <div className="px-4 sm:px-8 pb-12 max-w-7xl mx-auto mt-8">
@@ -582,6 +616,13 @@ export default function CampaignDetailPage({
                 campaignReportReason={campaignReportReason}
                 setCampaignReportReason={setCampaignReportReason}
                 handleReportCampaign={handleReportCampaign}
+            />
+            
+            <LeaveCampaignModal
+                showLeaveModal={showLeaveModal}
+                setShowLeaveModal={setShowLeaveModal}
+                handleLeave={handleLeave}
+                isLeaving={isLeaving}
             />
         </div>
     );
