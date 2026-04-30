@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "D:\\kindlink\\packages\\contracts\\contracts\\KindlinkCampaign.sol": {
-      "lastModificationDate": 1775393360284,
-      "contentHash": "41239c65216cf0a156303bd6e0a13e08",
+      "lastModificationDate": 1777559396786,
+      "contentHash": "b7425e68acd8abb7b11cc3d6bc38a0ec",
       "sourceName": "contracts/KindlinkCampaign.sol",
       "solcConfig": {
         "version": "0.8.24",
