@@ -70,6 +70,19 @@ export class WithdrawalsController {
         return this.withdrawalsService.approve(req.user.id, id, dto);
     }
 
+    /** Admin: Xác nhận giải ngân (sau khi đã chuyển khoản VND + rút POL on-chain) */
+    @Patch('/admin/:id/disburse')
+    @UseGuards(RolesGuard, PermissionsGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @RequirePermissions(AdminPermission.WITHDRAWALS_APPROVE)
+    async disburse(
+        @Req() req: any,
+        @Param('id') id: string,
+        @Body() dto: ApproveWithdrawalDto,
+    ) {
+        return this.withdrawalsService.disburse(req.user.id, id, dto);
+    }
+
     /** Admin: Từ chối yêu cầu rút tiền */
     @Patch('/admin/:id/reject')
     @UseGuards(RolesGuard, PermissionsGuard)

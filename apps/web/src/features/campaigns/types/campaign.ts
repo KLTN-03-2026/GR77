@@ -35,3 +35,22 @@ export interface CampaignListFilter {
   category: string;
   status: string;
 }
+export interface CampaignTransparency {
+  campaignId: string;
+  title: string;
+  currentBalance: number;
+  ledger: LedgerEntry[];
+}
+
+export interface LedgerEntry {
+  id: string;
+  type: 'IN' | 'OUT';
+  amount: number;
+  date: string;
+  actor: string;
+  txHash?: string;
+  proofUrl?: string;
+  bankProof?: string;
+  note?: string;
+  meta?: { polAmount: number; rate: number };
+}

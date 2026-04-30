@@ -97,7 +97,7 @@ export interface KindlinkCampaignInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "approveWithdraw",
-    values: [BytesLike]
+    values: [BytesLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "claimRefund",
@@ -365,18 +365,21 @@ export namespace WithdrawApprovedEvent {
   export type InputTuple = [
     campaignKey: BytesLike,
     creator: AddressLike,
+    withdrawalRequestId: string,
     amount: BigNumberish,
     fee: BigNumberish
   ];
   export type OutputTuple = [
     campaignKey: string,
     creator: string,
+    withdrawalRequestId: string,
     amount: bigint,
     fee: bigint
   ];
   export interface OutputObject {
     campaignKey: string;
     creator: string;
+    withdrawalRequestId: string;
     amount: bigint;
     fee: bigint;
   }
@@ -445,7 +448,7 @@ export interface KindlinkCampaign extends BaseContract {
   FEE_DENOMINATOR: TypedContractMethod<[], [bigint], "view">;
 
   approveWithdraw: TypedContractMethod<
-    [campaignKey: BytesLike],
+    [campaignKey: BytesLike, withdrawalRequestId: string],
     [void],
     "nonpayable"
   >;
@@ -533,7 +536,11 @@ export interface KindlinkCampaign extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "approveWithdraw"
-  ): TypedContractMethod<[campaignKey: BytesLike], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [campaignKey: BytesLike, withdrawalRequestId: string],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "claimRefund"
   ): TypedContractMethod<[campaignKey: BytesLike], [void], "nonpayable">;
@@ -758,7 +765,7 @@ export interface KindlinkCampaign extends BaseContract {
       RefundClaimedEvent.OutputObject
     >;
 
-    "WithdrawApproved(bytes32,address,uint256,uint256)": TypedContractEvent<
+    "WithdrawApproved(bytes32,address,string,uint256,uint256)": TypedContractEvent<
       WithdrawApprovedEvent.InputTuple,
       WithdrawApprovedEvent.OutputTuple,
       WithdrawApprovedEvent.OutputObject

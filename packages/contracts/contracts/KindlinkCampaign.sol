@@ -51,7 +51,7 @@ contract KindlinkCampaign is ReentrancyGuard, Ownable {
     event CampaignMarkedSuccess(bytes32 indexed campaignKey);
     event CampaignMarkedFailed(bytes32 indexed campaignKey);
     event WithdrawRequested(bytes32 indexed campaignKey, address creator);
-    event WithdrawApproved(bytes32 indexed campaignKey, address creator, uint256 amount, uint256 fee);
+    event WithdrawApproved(bytes32 indexed campaignKey, address creator, string withdrawalRequestId, uint256 amount, uint256 fee);
     event RefundClaimed(bytes32 indexed campaignKey, address donor, uint256 amount);
     event PlatformFeeUpdated(uint256 newFeeBps);
     event PlatformWalletUpdated(address newWallet);
@@ -121,9 +121,16 @@ contract KindlinkCampaign is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Approve creator's withdrawal request and transfer funds. Only admin.
+     * @notice Approve creator's withdrawal. Sends ALL raised POL to platformWallet.
+     *         The platform then disburses equivalent VND to the creator's bank account.
+     *         Off-chain withdrawalRequestId is included in the event for DB traceability.
+     * @param campaignKey        keccak256 of off-chain campaign UUID
+     * @param withdrawalRequestId  Off-chain withdrawal request ID (for event indexing)
      */
-    function approveWithdraw(bytes32 campaignKey) external onlyOwner nonReentrant campaignExists(campaignKey) {
+    function approveWithdraw(
+        bytes32 campaignKey,
+        string calldata withdrawalRequestId
+    ) external onlyOwner nonReentrant campaignExists(campaignKey) {
         Campaign storage c = campaigns[campaignKey];
         require(c.status == CampaignStatus.SUCCESS, "Campaign not successful");
         require(c.withdrawRequested, "Creator has not requested withdrawal");
@@ -132,23 +139,19 @@ contract KindlinkCampaign is ReentrancyGuard, Ownable {
         require(total > 0, "Nothing to withdraw");
 
         uint256 fee = (total * platformFeeBps) / FEE_DENOMINATOR;
-        uint256 creatorAmount = total - fee;
+        uint256 netAmount = total - fee;
 
         c.status = CampaignStatus.WITHDRAWN;
         c.raisedAmount = 0;
 
-        // Transfer fee to platform
-        if (fee > 0) {
-            (bool feeSent, ) = platformWallet.call{value: fee}("");
-            require(feeSent, "Fee transfer failed");
-        }
+        // Fee goes to dedicated fee sub-account (same platformWallet for simplicity)
+        // Net goes to platformWallet — admin then pays creator in VND via bank transfer
+        (bool sent, ) = platformWallet.call{value: total}("");
+        require(sent, "Transfer to platform failed");
 
-        // Transfer to creator
-        (bool sent, ) = c.creator.call{value: creatorAmount}("");
-        require(sent, "Creator transfer failed");
-
-        emit WithdrawApproved(campaignKey, c.creator, creatorAmount, fee);
+        emit WithdrawApproved(campaignKey, c.creator, withdrawalRequestId, netAmount, fee);
     }
+
 
     // ---------- Platform Config ----------
 
