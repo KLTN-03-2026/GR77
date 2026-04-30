@@ -35,7 +35,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
     const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
     const [withdrawalAmount, setWithdrawalAmount] = useState('');
     const [withdrawalReason, setWithdrawalReason] = useState('');
-    const [withdrawalMethod, setWithdrawalMethod] = useState<'WALLET' | 'BANK'>('WALLET');
+    const [withdrawalMethod, setWithdrawalMethod] = useState<'WALLET' | 'BANK'>('BANK');
     const [bankName, setBankName] = useState('');
     const [accountNumber, setAccountNumber] = useState('');
     const [accountOwner, setAccountOwner] = useState('');
@@ -609,9 +609,9 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         ></div>
 
                         {/* Modal Content */}
-                        <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative z-10 animate-in fade-in zoom-in duration-300 border border-gray-100">
+                        <div className="bg-white rounded-3xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl relative z-10 animate-in fade-in zoom-in duration-300 border border-gray-100 flex flex-col">
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-green-500 to-green-600 p-8 text-white">
+                            <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white flex-shrink-0">
                                 <h3 className="text-xl font-bold flex items-center gap-3 uppercase tracking-wider">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.55-.22-2.203-.702-1.172-.879-1.172-2.303 0-3.182 1.172-.879 3.07-.879 4.242 0 .493.37.79.88.879 1.414" />
@@ -624,28 +624,19 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                             </div>
 
                             {/* Form */}
-                            <form onSubmit={handleWithdrawalSubmit} className="p-8 space-y-6">
+                            <form onSubmit={handleWithdrawalSubmit} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
                                 {/* Tab Picker */}
-                                <div className="flex p-1 bg-gray-100 rounded-2xl">
-                                    <button
-                                        type="button"
-                                        onClick={() => setWithdrawalMethod('WALLET')}
-                                        className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${withdrawalMethod === 'WALLET' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                    >
-                                        Blockchain Wallet
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setWithdrawalMethod('BANK')}
-                                        className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${withdrawalMethod === 'BANK' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                    >
-                                        Ngân hàng (Bank)
-                                    </button>
+                                <div className="bg-green-50 p-4 rounded-2xl border border-green-100 flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-xl">🏦</div>
+                                    <div>
+                                        <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-0.5">Phương thức rút tiền</p>
+                                        <p className="text-base font-black text-green-900">Chuyển khoản Ngân hàng (VND)</p>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2.5">
-                                        Withdrawal Amount (VND)
+                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                        Số tiền muốn rút (VND)
                                     </label>
                                     <div className="relative">
                                         <input
@@ -657,130 +648,123 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                                 setWithdrawalAmount(value);
                                             }}
                                             placeholder="Enter amount..."
-                                            className={`w-full bg-white border rounded-2xl py-2.5 px-6 text-sm font-medium outline-none transition-all placeholder-gray-400 ${Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)
-                                                ? 'text-red-500 border-red-500 focus:ring-1 focus:ring-red-500'
-                                                : 'text-gray-900 border-gray-300 focus:border-black focus:ring-1 focus:ring-black'
+                                            className={`w-full bg-white border-2 rounded-2xl py-3.5 px-6 text-lg font-black outline-none transition-all placeholder-gray-300 ${Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))
+                                                ? 'text-red-600 border-red-500 focus:ring-2 focus:ring-red-100'
+                                                : 'text-black border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'
                                                 }`}
                                             required
                                         />
                                         <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-300">VND</span>
                                     </div>
-                                    <div className="mt-2.5 flex justify-between items-center px-1">
-                                        <span className="text-[10px] font-medium text-gray-900 uppercase tracking-widest">
-                                            Available Balance:
-                                        </span>
-                                        <span className="text-xs font-black text-gray-900">
-                                            {Number(campaign.currentRaisedAmount || 0).toLocaleString()} VND
-                                        </span>
+                                    <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center px-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Số dư quỹ hiện tại
+                                            </span>
+                                            <span className="text-lg font-black text-green-600">
+                                                {Number(campaign.currentBalance || 0).toLocaleString()} VND
+                                            </span>
+                                        </div>
+                                        <div className="text-right flex flex-col items-end">
+                                            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+                                                Tương đương POL
+                                            </span>
+                                            <span className="text-sm font-black text-blue-600 flex items-center gap-1">
+                                                <span className="text-base">💎</span>
+                                                {(Number(campaign.currentBalance || 0) / 1000).toFixed(2)} POL
+                                            </span>
+                                        </div>
                                     </div>
-                                    {Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0) && (
-                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest animate-pulse">
-                                            ⚠️ Amount exceeds available balance
+                                    {Number(withdrawalAmount) > Number(campaign.currentBalance || 0) && (
+                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest animate-pulse px-1">
+                                            ⚠️ Số tiền rút vượt quá số dư khả dụng trong quỹ
                                         </p>
                                     )}
                                 </div>
 
-                                {withdrawalMethod === 'WALLET' ? (
-                                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-center">
-                                        {campaign.creatorUser?.wallet?.walletAddress ? (
-                                            <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest text-left">Receiving Polygon Wallet</p>
-                                                <p className="text-xs font-mono text-blue-900 break-all">{campaign.creatorUser.wallet.walletAddress}</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-3 py-2">
-                                                <p className="text-xs font-bold text-blue-900">⚠️ You haven't connected a wallet!</p>
-                                                <p className="text-[10px] text-blue-600 uppercase font-black leading-relaxed">Please go to the Wallet page to connect MetaMask.</p>
-                                                <Link href="/wallet" className="inline-block text-[10px] font-black text-white bg-blue-500 px-6 py-2.5 rounded-xl uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-blue-100">Connect Now</Link>
-                                            </div>
-                                        )}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Tên ngân hàng</label>
+                                        <input
+                                            type="text"
+                                            value={bankName}
+                                            onChange={(e) => setBankName(e.target.value)}
+                                            placeholder="Ví dụ: Vietcombank"
+                                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400"
+                                            required
+                                        />
                                     </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Bank Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={bankName}
-                                                    onChange={(e) => setBankName(e.target.value)}
-                                                    placeholder="Ex: Vietcombank"
-                                                    className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all"
-                                                    required={withdrawalMethod === 'BANK'}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Account Number</label>
-                                                <input
-                                                    type="text"
-                                                    value={accountNumber}
-                                                    onChange={(e) => setAccountNumber(e.target.value)}
-                                                    placeholder="Enter Acc No."
-                                                    className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all"
-                                                    required={withdrawalMethod === 'BANK'}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Account Owner</label>
-                                            <input
-                                                type="text"
-                                                value={accountOwner}
-                                                onChange={(e) => setAccountOwner(e.target.value)}
-                                                placeholder="Ex: NGUYEN VAN A"
-                                                className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all uppercase"
-                                                required={withdrawalMethod === 'BANK'}
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Số tài khoản</label>
+                                        <input
+                                            type="text"
+                                            value={accountNumber}
+                                            onChange={(e) => setAccountNumber(e.target.value)}
+                                            placeholder="Số tài khoản..."
+                                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400"
+                                            required
+                                        />
                                     </div>
-                                )}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Tên chủ tài khoản</label>
+                                    <input
+                                        type="text"
+                                        value={accountOwner}
+                                        onChange={(e) => setAccountOwner(e.target.value)}
+                                        placeholder="VD: NGUYEN VAN A"
+                                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400 uppercase"
+                                        required
+                                    />
+                                </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2.5">
-                                        Withdrawal Reason
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2.5">
+                                        Lý do rút tiền
                                     </label>
                                     <textarea
                                         value={withdrawalReason}
                                         onChange={(e) => setWithdrawalReason(e.target.value)}
-                                        placeholder="Please clarify the purpose of using this amount..."
+                                        placeholder="Mô tả mục đích giải ngân..."
                                         rows={3}
-                                        className="w-full bg-white border border-gray-300 rounded-2xl py-4 px-6 text-sm font-medium focus:border-black focus:ring-1 focus:ring-black outline-none transition-all placeholder-gray-400 resize-none text-gray-900"
+                                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400 resize-none"
                                         required
                                     ></textarea>
                                 </div>
 
-                                <div className="flex gap-4 pt-2">
+                                <div className="flex gap-4 pt-4">
                                     <button
                                         type="button"
                                         onClick={() => setWithdrawalModalOpen(false)}
                                         disabled={isSubmittingWithdrawal}
-                                        className="flex-1 px-4 py-4 bg-gray-50 hover:bg-gray-100 text-gray-900 text-[11px] font-black rounded-2xl transition-all uppercase tracking-widest active:scale-95 disabled:opacity-50"
+                                        className="flex-1 px-4 py-4 bg-gray-100 hover:bg-gray-200 text-gray-900 text-[11px] font-black rounded-2xl transition-all uppercase tracking-widest active:scale-95 disabled:opacity-50"
                                     >
-                                        Cancel
+                                        Hủy bỏ
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={isSubmittingWithdrawal || (withdrawalMethod === 'WALLET' && !campaign.creatorUser?.wallet?.walletAddress) || Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)}
-                                        className={`flex-1 px-4 py-4 text-white text-[11px] font-black rounded-2xl shadow-lg transition-all uppercase tracking-widest active:scale-95 flex items-center justify-center gap-2 ${isSubmittingWithdrawal || (withdrawalMethod === 'WALLET' && !campaign.creatorUser?.wallet?.walletAddress) || Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)
-                                            ? 'bg-gray-300 shadow-none cursor-not-allowed'
-                                            : 'bg-green-500 hover:bg-black shadow-green-100'
+                                        disabled={isSubmittingWithdrawal || Number(withdrawalAmount) <= 0 || Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))}
+                                        className={`flex-1 px-4 py-4 text-white text-[11px] font-black rounded-2xl shadow-lg transition-all uppercase tracking-widest active:scale-95 flex items-center justify-center gap-2 ${isSubmittingWithdrawal || Number(withdrawalAmount) <= 0 || Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))
+                                            ? 'bg-gray-300 shadow-none cursor-not-allowed opacity-50'
+                                            : 'bg-green-600 hover:bg-black shadow-green-100'
                                             }`}
                                     >
                                         {isSubmittingWithdrawal ? (
                                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                         ) : (
-                                            'Submit Request'
+                                            'Gửi yêu cầu rút tiền'
                                         )}
                                     </button>
                                 </div>
                             </form>
                         </div>
                     </div>
-                )}
-            </div>
+                )
+                }
+            </div >
 
             {/* Reuse Modals for Report etc. */}
-            <CampaignModals
+            < CampaignModals
                 donateOpen={false}
                 setDonateOpen={() => { }}
                 donateAmount=""

@@ -4,6 +4,7 @@ import { CreateDonationDto } from './dto/create-donation.dto';
 import { ConfigService } from '@nestjs/config';
 import { PayOS } from '@payos/node';
 import { Prisma } from '@prisma/client';
+import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
 export class DonationsService {
@@ -13,6 +14,7 @@ export class DonationsService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly config: ConfigService,
+        private readonly blockchainService: BlockchainService,
     ) {
         const clientId = this.config.get<string>('PAYOS_CLIENT_ID')?.trim();
         const apiKey = this.config.get<string>('PAYOS_API_KEY')?.trim();
@@ -197,6 +199,7 @@ export class DonationsService {
                         where: { id: transaction.donation.campaignId },
                         data: {
                             currentRaisedAmount: { increment: transaction.amount },
+                            currentBalance: { increment: transaction.amount },
                             donationCount: { increment: 1 }
                         }
                     });
@@ -225,6 +228,15 @@ export class DonationsService {
                     }
                 });
                 this.logger.log(`[Webhook] Database updated successfully for order ${orderCode}`);
+
+                // ── Auto-deposit equivalent POL to Smart Contract ───────────
+                // Fire-and-forget: SC failure MUST NOT block the payment confirmation.
+                // The donor's VND payment is already recorded in DB.
+                this.depositPolForBankingDonation(
+                    transaction.donation.campaignId,
+                    Number(transaction.amount),
+                    transaction.donation.userId || 'Guest',
+                );
             } else if (status === 'CANCELED' || status === 'EXPIRED') {
                 this.logger.log(`[Webhook] Payment FAILED/CANCELLED for order ${orderCode}. Status: ${status}`);
                 await (this.prisma as any).$transaction([
@@ -339,4 +351,41 @@ export class DonationsService {
 
         return paymentInfo;
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Private helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Fire-and-forget: deposit equivalent POL into Smart Contract after banking donation.
+     * Hot-wallet calls donate(campaignKey) with POL amount = amountVND * POL_PER_VND.
+     *
+     * IMPORTANT: Must NEVER throw — failure here should not fail the payment flow.
+     */
+    private async depositPolForBankingDonation(
+        campaignId: string,
+        amountVND: number,
+        donorLabel: string,
+    ): Promise<void> {
+        try {
+            const result = await this.blockchainService.depositForBankingDonation(
+                campaignId,
+                amountVND,
+                donorLabel,
+            );
+            this.logger.log(
+                `[HotWallet] Banking donation mirrored on-chain — ` +
+                `campaign: ${campaignId}, ${result.polAmount} POL, tx: ${result.txHash}`,
+            );
+        } catch (err: any) {
+            // Non-fatal: log clearly so ops team can monitor and top-up hot wallet if needed
+            this.logger.warn(
+                `[HotWallet] ⚠️ Failed to mirror banking donation to SC — ` +
+                `campaign: ${campaignId}, amount: ${amountVND} VND. ` +
+                `Error: ${err.message}. ` +
+                `The VND donation is already recorded in DB. Hot wallet may need POL top-up.`,
+            );
+        }
+    }
 }
+

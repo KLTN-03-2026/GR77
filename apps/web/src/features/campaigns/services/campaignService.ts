@@ -42,3 +42,10 @@ export async function fetchCategories(): Promise<CategoryOption[]> {
   if (!res.ok) return [];
   return res.json();
 }
+
+export async function fetchCampaignTransparency(id: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/campaigns/${id}/transparency`);
+  if (!res.ok) throw new Error('Failed to fetch transparency records');
+  return res.json();
+}
+

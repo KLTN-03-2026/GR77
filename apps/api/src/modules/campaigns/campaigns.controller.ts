@@ -98,6 +98,15 @@ export class CampaignsController {
   }
 
   /**
+   * GET /campaigns/:id/transparency
+   * Returns public ledger entries (donations and withdrawals)
+   */
+  @Get(':id/transparency')
+  getTransparency(@Param('id') id: string) {
+    return this.campaignsService.getTransparency(id);
+  }
+
+  /**
    * POST /campaigns
    */
   @UseGuards(AuthGuard('jwt'))

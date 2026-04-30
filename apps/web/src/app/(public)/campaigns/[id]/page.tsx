@@ -85,9 +85,8 @@ function ImageCarousel({ images, title }: { images: string[]; title: string }) {
             <button
               key={i}
               onClick={() => setIdx(i)}
-              className={`relative flex-shrink-0 w-20 h-14 rounded-xl overflow-hidden border-2 transition-all ${
-                i === idx ? 'border-cyan-500 ring-2 ring-cyan-100 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
-              }`}
+              className={`relative flex-shrink-0 w-20 h-14 rounded-xl overflow-hidden border-2 transition-all ${i === idx ? 'border-cyan-500 ring-2 ring-cyan-100 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
+                }`}
             >
               <img src={src} className="w-full h-full object-cover" alt={`thumb ${i}`} />
             </button>
@@ -110,10 +109,8 @@ function DonateGateButton({ campaignId }: { campaignId: string }) {
 
   const handleDonate = () => {
     if (isLoggedIn) {
-      // Navigate to the authenticated campaign detail that has the donate modal
       router.push(`/home/${campaignId}`);
     } else {
-      // Save return URL and redirect to login
       sessionStorage.setItem('returnAfterLogin', `/home/${campaignId}`);
       router.push('/login?reason=donate');
     }
@@ -184,8 +181,7 @@ export default function PublicCampaignDetailPage() {
 
   const pct = progressPct(campaign.currentRaisedAmount, campaign.fundingGoalAmount);
   const left = daysLeft(campaign.endAt);
-  
-  // Combine cover image with additional images
+
   const images: string[] = [];
   if (campaign.coverImageUrl) images.push(campaign.coverImageUrl);
   if (campaign.images && campaign.images.length > 0) {
@@ -200,7 +196,6 @@ export default function PublicCampaignDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Top nav bar (public, no sidebar) */}
       <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-3">
         <div className="max-w-[1200px] mx-auto flex items-center justify-between">
           <Link
@@ -215,13 +210,13 @@ export default function PublicCampaignDetailPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden sm:block px-4 py-1.5 text-xs font-semibold text-cyan-600 border-2 border-cyan-400 rounded-full hover:bg-cyan-100 hover:text-cyan-600 transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
+              className="hidden sm:block px-4 py-1.5 text-xs font-semibold text-cyan-600 border-2 border-cyan-400 rounded-full hover:bg-cyan-100 hover:text-cyan-600 transition-all hover:-translate-y-0.5"
             >
               Sign In
             </Link>
             <Link
               href="/register"
-              className="hidden sm:block px-4 py-1.5 text-xs font-semibold text-white border-2 border-cyan-500 bg-cyan-500 rounded-full hover:bg-cyan-600 transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
+              className="hidden sm:block px-4 py-1.5 text-xs font-semibold text-white border-2 border-cyan-500 bg-cyan-500 rounded-full hover:bg-cyan-600 transition-all"
             >
               Sign Up
             </Link>
@@ -230,25 +225,10 @@ export default function PublicCampaignDetailPage() {
       </nav>
 
       <div className="max-w-[1200px] mx-auto px-4 py-8 lg:py-12">
-
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
-          <Link href="/" className="hover:text-blue-500 transition-colors">Home</Link>
-          <span>/</span>
-          <Link href="/#campaigns" className="hover:text-blue-500 transition-colors">Campaigns</Link>
-          <span>/</span>
-          <span className="text-gray-600 font-medium line-clamp-1">{campaign.title}</span>
-        </div>
-
-        {/* Image carousel */}
         <ImageCarousel images={images} title={campaign.title} />
 
-        {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 mt-8">
-
-          {/* Left: details */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Title + badges */}
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {categoryName && (
@@ -268,18 +248,8 @@ export default function PublicCampaignDetailPage() {
               <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 leading-tight">
                 {campaign.title}
               </h1>
-              {campaign.locationText && (
-                <p className="text-sm text-gray-400 mt-2 flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                  </svg>
-                  {campaign.locationText}
-                </p>
-              )}
             </div>
 
-            {/* Description */}
             {campaign.description && (
               <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed">
                 <h2 className="text-base font-bold text-gray-800 mb-3 not-prose">About this campaign</h2>
@@ -287,7 +257,6 @@ export default function PublicCampaignDetailPage() {
               </div>
             )}
 
-            {/* Timeline */}
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: 'Start Date', value: formatDate(campaign.startAt) },
@@ -300,33 +269,22 @@ export default function PublicCampaignDetailPage() {
               ))}
             </div>
 
-            {/* Creator */}
             {campaign.creator && (
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                  {campaign.creator.profile?.avatarUrl ? (
-                    <img src={campaign.creator.profile.avatarUrl} className="w-full h-full object-cover" alt="creator" />
-                  ) : (
-                    (campaign.creator.profile?.firstName?.[0] ?? campaign.creator.username?.[0] ?? 'K').toUpperCase()
-                  )}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center text-white font-bold text-sm">
+                  {campaign.creator.username?.[0]?.toUpperCase() || 'C'}
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Creator</p>
-                  <p className="text-sm font-bold text-gray-800">
-                    {campaign.creator.profile?.firstName
-                      ? `${campaign.creator.profile.firstName} ${campaign.creator.profile.lastName ?? ''}`
-                      : campaign.creator.username}
-                  </p>
+                  <p className="text-sm font-bold text-gray-800">{campaign.creator.username}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Right: sticky donation box */}
           <div className="lg:col-span-1">
             <div className="sticky top-[80px] space-y-4">
               <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-6 space-y-5">
-                {/* Progress */}
                 <div>
                   <div className="flex justify-between items-end mb-1">
                     <span className="text-2xl font-extrabold text-gray-900">
@@ -337,19 +295,15 @@ export default function PublicCampaignDetailPage() {
                   </div>
                   <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-1000"
+                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
                   <p className="text-xs text-gray-400 mt-2">
-                    Goal:{' '}
-                    <span className="font-bold text-gray-600">
-                      {formatCurrency(campaign.fundingGoalAmount)} VND
-                    </span>
+                    Goal: <span className="font-bold text-gray-600">{formatCurrency(campaign.fundingGoalAmount)} VND</span>
                   </p>
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-3 gap-2 pt-1 border-t border-gray-50">
                   {[
                     { label: 'Donors', value: campaign.donorsCount ?? '—' },
@@ -366,22 +320,8 @@ export default function PublicCampaignDetailPage() {
                   ))}
                 </div>
 
-                {/* Donate CTA */}
                 <DonateGateButton campaignId={id} />
-
-                {/* Info notice */}
-                <p className="text-[10px] text-center text-gray-400 leading-relaxed">
-                  You need to log in to donate.
-                </p>
               </div>
-
-              {/* Minimum donation info */}
-              {campaign.minimumDonationAmount > 0 && (
-                <div className="px-4 py-3 rounded-2xl bg-blue-50 border border-blue-100 text-xs text-blue-700 font-medium">
-                  💡 Minimum donation:{' '}
-                  <strong>{formatCurrency(campaign.minimumDonationAmount)} VND</strong>
-                </div>
-              )}
             </div>
           </div>
         </div>

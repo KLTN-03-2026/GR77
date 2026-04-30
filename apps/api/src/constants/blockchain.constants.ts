@@ -111,6 +111,11 @@ export const KINDLINK_CAMPAIGN_ABI = [
                 "internalType": "bytes32",
                 "name": "campaignKey",
                 "type": "bytes32"
+            },
+            {
+                "internalType": "string",
+                "name": "withdrawalRequestId",
+                "type": "string"
             }
         ],
         "name": "approveWithdraw",
