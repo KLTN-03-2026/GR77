@@ -17,16 +17,38 @@ import { CreateCampaignNewsDto } from './dto/create-campaign-news.dto';
  * CRUD đầy đủ sẽ được thêm sau (POST, PUT, DELETE)
  */
 import { MailService } from '../mail/mail.service';
-
 import { NotificationsService } from '../notifications/notifications.service';
+import { OnModuleInit } from '@nestjs/common';
 
 @Injectable()
-export class CampaignsService {
+export class CampaignsService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService
   ) { }
+
+  async onModuleInit() {
+    // Chạy đồng bộ dữ liệu ngầm để không chặn quá trình khởi động Server
+    this.syncLegacyBalances().catch(err =>
+      console.error('[CampaignsService] Background sync failed:', err)
+    );
+  }
+
+  private async syncLegacyBalances() {
+    console.log('[CampaignsService] Starting sync for legacy currentBalance...');
+    try {
+      const result = await this.prisma.$executeRawUnsafe(`
+        UPDATE campaigns 
+        SET current_balance = current_raised_amount 
+        WHERE (current_balance = 0 OR current_balance IS NULL) 
+        AND current_raised_amount > 0
+      `);
+      console.log(`[CampaignsService] Successfully synced ${result} campaigns.`);
+    } catch (error) {
+      console.error('[CampaignsService] Raw SQL sync error:', error);
+    }
+  }
 
   async findAllAdmin(query: GetCampaignsQueryDto) {
     const page = query.page ?? 1;
@@ -63,6 +85,7 @@ export class CampaignsService {
       items: items.map((c: any) => ({
         ...c,
         currentRaisedAmount: Number(c.currentRaisedAmount || 0),
+        currentBalance: Number(c.currentBalance || 0),
         fundingGoalAmount: Number(c.fundingGoalAmount || 0),
         amountRaised: Number(c.currentRaisedAmount || 0),
         progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
@@ -177,6 +200,7 @@ export class CampaignsService {
           fundingGoalAmount: true,
           minimumDonationAmount: true,
           currentRaisedAmount: true,
+          currentBalance: true,
           startAt: true,
           endAt: true,
           autoCloseWhenGoalReached: true,
@@ -214,6 +238,7 @@ export class CampaignsService {
       items: items.map((c: any) => ({
         ...c,
         currentRaisedAmount: Number(c.currentRaisedAmount || 0),
+        currentBalance: Number(c.currentBalance || 0),
         fundingGoalAmount: Number(c.fundingGoalAmount || 0),
         amountRaised: Number(c.currentRaisedAmount || 0),
         progress: Number(c.fundingGoalAmount) > 0 ? (Number(c.currentRaisedAmount || 0) / Number(c.fundingGoalAmount)) * 100 : 0,
@@ -237,6 +262,7 @@ export class CampaignsService {
         fundingGoalAmount: true,
         minimumDonationAmount: true,
         currentRaisedAmount: true,
+        currentBalance: true,
         startAt: true,
         endAt: true,
         autoCloseWhenGoalReached: true,
@@ -436,9 +462,20 @@ export class CampaignsService {
 
     if (!campaign) throw new NotFoundException('Campaign not found');
 
+    // Auto-sync currentBalance if it's 0 but there is raised amount (for legacy data)
+    let finalBalance = Number(campaign.currentBalance || 0);
+    if (finalBalance === 0 && Number(campaign.currentRaisedAmount) > 0) {
+      await this.prisma.campaign.update({
+        where: { id: campaign.id },
+        data: { currentBalance: campaign.currentRaisedAmount }
+      });
+      finalBalance = Number(campaign.currentRaisedAmount);
+    }
+
     return {
       ...campaign,
       currentRaisedAmount: Number(campaign.currentRaisedAmount || 0),
+      currentBalance: finalBalance,
       fundingGoalAmount: Number(campaign.fundingGoalAmount || 0),
       minimumDonationAmount: Number(campaign.minimumDonationAmount || 0),
       amountRaised: Number(campaign.currentRaisedAmount || 0),
@@ -594,5 +631,78 @@ export class CampaignsService {
     }
 
     return news;
+  }
+  /**
+   * GET Transparency Data
+   * Returns a consolidated view of all inflows (donations) and outflows (withdrawals)
+   */
+  async getTransparency(campaignId: string) {
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: { id: true, title: true, currentRaisedAmount: true }
+    });
+
+    if (!campaign) throw new NotFoundException('Campaign not found');
+
+    // Fetch all successful donations (INFLOW)
+    const inflows = await (this.prisma as any).donation.findMany({
+      where: { campaignId, status: 'SUCCESS' },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            username: true,
+            profile: { select: { firstName: true, lastName: true } }
+          }
+        },
+        paymentTransactions: {
+          where: { status: 'SUCCESS', provider: 'BLOCKCHAIN' },
+          select: { transId: true }
+        }
+      }
+    });
+
+    // Fetch all disbursed withdrawals (OUTFLOW)
+    const outflows = await (this.prisma as any).withdrawalRequest.findMany({
+      where: { campaignId, status: 'DISBURSED' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Map to a unified ledger format
+    const ledger = [
+      ...inflows.map((i: any) => {
+        const cryptoTx = i.paymentTransactions?.[0]?.transId;
+        return {
+          id: i.id,
+          type: 'IN' as const,
+          amount: Number(i.amount),
+          date: i.donatedAt || i.createdAt,
+          actor: i.user?.profile
+            ? `${i.user.profile.firstName || ''} ${i.user.profile.lastName || ''}`.trim()
+            : (i.user?.username || 'An danh'),
+          txHash: cryptoTx,
+          proofUrl: cryptoTx ? `https://amoy.polygonscan.com/tx/${cryptoTx}` : null
+        };
+      }),
+      ...outflows.map((o: any) => ({
+        id: o.id,
+        type: 'OUT' as const,
+        amount: Number(o.amount),
+        date: o.approvedAt || o.createdAt,
+        actor: 'Cơ quan giải ngân Kindlink',
+        txHash: o.onchainTxHash,
+        proofUrl: o.onchainTxHash ? `https://amoy.polygonscan.com/tx/${o.onchainTxHash}` : null,
+        bankProof: o.bankTransferProof,
+        note: o.adminNote,
+        meta: o.polAmount ? { polAmount: o.polAmount, rate: o.exchangeRate } : null
+      }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return {
+      campaignId: campaign.id,
+      title: campaign.title,
+      currentBalance: Number(campaign.currentRaisedAmount),
+      ledger
+    };
   }
 }

@@ -136,6 +136,8 @@ model Campaign {
   createdAt                DateTime              @default(now()) @map("created_at")
   updatedAt                DateTime              @updatedAt @map("updated_at")
   currentRaisedAmount      Decimal               @default(0) @map("current_raised_amount") @db.Decimal(18, 2)
+  currentBalance           Decimal               @default(0) @map("current_balance") @db.Decimal(18, 2)
+
   donationCount            Int                   @default(0) @map("donation_count")
   categoryId               String?               @map("category_id")
   fundLedgers              CampaignFundLedger[]
@@ -159,20 +161,28 @@ model Campaign {
 }
 
 model WithdrawalRequest {
-  id            String           @id @default(uuid())
-  campaignId    String           @map("campaign_id")
-  amount        Decimal          @db.Decimal(18, 2)
-  reason        String?          @db.VarChar(500)
-  method        WithdrawalMethod @default(WALLET)
-  bankName      String?          @map("bank_name")
-  accountNumber String?          @map("account_number")
-  accountOwner  String?          @map("account_owner")
-  walletAddress String?          @map("wallet_address")
-  status        WithdrawalStatus @default(PENDING)
-  txHash        String?          @map("tx_hash") @db.VarChar(100)
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-  campaign      Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  id                  String           @id @default(uuid())
+  campaignId          String           @map("campaign_id")
+  amount              Decimal          @db.Decimal(18, 2)
+  reason              String?          @db.VarChar(500)
+  method              WithdrawalMethod @default(WALLET)
+  bankName            String?          @map("bank_name")
+  accountNumber       String?          @map("account_number")
+  accountOwner        String?          @map("account_owner")
+  walletAddress       String?          @map("wallet_address")
+  status              WithdrawalStatus @default(PENDING)
+  txHash              String?          @map("tx_hash") @db.VarChar(150)
+  // Transparency fields - filled by admin upon disbursement
+  polAmount           Decimal?         @map("pol_amount") @db.Decimal(28, 10) // POL withdrawn from smart contract
+  exchangeRate        Decimal?         @map("exchange_rate") @db.Decimal(18, 4) // VND per 1 POL at time of disbursement
+  onchainTxHash       String?          @map("onchain_tx_hash") @db.VarChar(150) // SC withdrawal tx hash
+  bankTransferProof   String?          @map("bank_transfer_proof") @db.VarChar(1000) // URL of bank transfer screenshot
+  adminNote           String?          @map("admin_note") @db.VarChar(500)
+  approvedAt          DateTime?        @map("approved_at")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  campaign            Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ledgerEntries       CampaignFundLedger[]
 
   @@index([campaignId])
   @@index([status])
@@ -304,18 +314,22 @@ model PaymentTransaction {
 }
 
 model CampaignFundLedger {
-  id         String          @id @default(uuid())
-  campaignId String          @map("campaign_id")
-  donationId String?         @map("donation_id")
-  type       LedgerEntryType
-  amount     Decimal         @db.Decimal(18, 2)
-  note       String?         @db.VarChar(500)
-  createdAt  DateTime        @default(now()) @map("created_at")
-  campaign   Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  donation   Donation?       @relation(fields: [donationId], references: [id])
+  id                  String              @id @default(uuid())
+  campaignId          String              @map("campaign_id")
+  donationId          String?             @map("donation_id")
+  withdrawalRequestId String?             @map("withdrawal_request_id")
+  type                LedgerEntryType
+  amount              Decimal             @db.Decimal(18, 2)
+  note                String?             @db.VarChar(500)
+  txHash              String?             @map("tx_hash") @db.VarChar(150)
+  createdAt           DateTime            @default(now()) @map("created_at")
+  campaign            Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  donation            Donation?           @relation(fields: [donationId], references: [id])
+  withdrawalRequest   WithdrawalRequest?  @relation(fields: [withdrawalRequestId], references: [id])
 
   @@index([campaignId])
   @@index([donationId])
+  @@index([withdrawalRequestId])
   @@index([campaignId, type])
   @@map("campaign_fund_ledger")
 }
@@ -434,6 +448,7 @@ enum WithdrawalStatus {
   PENDING
   APPROVED
   REJECTED
+  DISBURSED // Admin has confirmed bank transfer + on-chain withdrawal done
 }
 
 enum WalletTransactionType {
@@ -483,6 +498,7 @@ enum DonationStatus {
 
 enum LedgerEntryType {
   DONATION_IN
+  WITHDRAWAL_OUT
   REFUND_OUT
   ADJUSTMENT_IN
   ADJUSTMENT_OUT
