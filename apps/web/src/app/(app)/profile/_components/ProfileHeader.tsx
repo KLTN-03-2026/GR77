@@ -13,8 +13,6 @@ interface ProfileHeaderProps {
   avatarInputRef: React.RefObject<HTMLInputElement | null> | any;
   handleCoverChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  avatarFile: File | null;
-  coverFile: File | null;
 }
 
 export function ProfileHeader({
@@ -27,8 +25,6 @@ export function ProfileHeader({
   avatarInputRef,
   handleCoverChange,
   handleAvatarChange,
-  avatarFile,
-  coverFile,
 }: ProfileHeaderProps) {
   return (
     <div className="lg:col-span-1 space-y-6">
@@ -127,13 +123,6 @@ export function ProfileHeader({
         </div>
       </div>
 
-      {/* Preview badges */}
-      {(avatarFile || coverFile) && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-700 font-medium flex items-start gap-2">
-          <ExclamationCircleIcon className="w-5 h-5 shrink-0 mt-0.5" />
-          <span>New images will be saved when you click <strong>"Save changes"</strong>.</span>
-        </div>
-      )}
     </div>
   );
 }

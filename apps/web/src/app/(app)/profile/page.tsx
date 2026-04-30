@@ -13,6 +13,7 @@ import { ProfileHeader } from './_components/ProfileHeader';
 import { PersonalInfoForm } from './_components/PersonalInfoForm';
 import { EmailSection } from './_components/EmailSection';
 import { ChangeEmailModal } from './_components/ChangeEmailModal';
+import { ImageCropModal } from './_components/ImageCropModal';
 import { useGlobalAuth } from '@/contexts/AuthContext';
 
 /** ─── Types ───────────────────────────────────────────────── */
@@ -64,10 +65,13 @@ export default function MyProfilePage() {
   // ─── Image state ────────────────────────────────────────────
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── Crop state ─────────────────────────────────────────────
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropType, setCropType] = useState<'avatar' | 'cover'>('avatar');
+  const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
 
   // ─── Email change state ─────────────────────────────────────
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -152,15 +156,60 @@ export default function MyProfilePage() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    setTempImageSrc(URL.createObjectURL(file));
+    setCropType('avatar');
+    setCropModalOpen(true);
+    e.target.value = '';
   };
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setCoverFile(file);
-    setCoverPreview(URL.createObjectURL(file));
+    setTempImageSrc(URL.createObjectURL(file));
+    setCropType('cover');
+    setCropModalOpen(true);
+    e.target.value = '';
+  };
+
+  const handleCropSave = async (croppedFile: File) => {
+    setIsSaving(true);
+    try {
+      const url = await uploadImage(croppedFile);
+      const body = {
+        [cropType === 'avatar' ? 'avatarUrl' : 'coverImageUrl']: url,
+      };
+
+      const res = await fetch(`${API}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to update image');
+      }
+
+      const data = await res.json();
+      setProfile((prev) => prev ? { ...prev, ...data.user } : prev);
+      updateUser(data.user);
+
+      if (cropType === 'avatar') {
+        setAvatarPreview(url);
+      } else {
+        setCoverPreview(url);
+      }
+      showToast('success', `${cropType === 'avatar' ? 'Avatar' : 'Cover'} updated successfully!`);
+      setCropModalOpen(false);
+    } catch (err: any) {
+      showToast('error', err.message || 'An error occurred while saving image.');
+    } finally {
+      setIsSaving(false);
+      setTempImageSrc(null);
+    }
   };
 
   // ─── Upload image helper ────────────────────────────────────
@@ -183,18 +232,6 @@ export default function MyProfilePage() {
     setIsSaving(true);
 
     try {
-      let avatarUrl: string | undefined;
-      let coverImageUrl: string | undefined;
-
-      // Upload avatar if changed
-      if (avatarFile) {
-        avatarUrl = await uploadImage(avatarFile);
-      }
-      // Upload cover if changed
-      if (coverFile) {
-        coverImageUrl = await uploadImage(coverFile);
-      }
-
       const body: any = {
         firstName,
         lastName,
@@ -203,8 +240,6 @@ export default function MyProfilePage() {
         ward,
         address,
       };
-      if (avatarUrl) body.avatarUrl = avatarUrl;
-      if (coverImageUrl) body.coverImageUrl = coverImageUrl;
 
       const res = await fetch(`${API}/auth/profile`, {
         method: 'PATCH',
@@ -232,8 +267,6 @@ export default function MyProfilePage() {
       setOriginalWard(ward);
       setOriginalAddress(address);
 
-      setAvatarFile(null);
-      setCoverFile(null);
       setIsEditing(false);
 
       showToast('success', 'Profile updated successfully!');
@@ -358,8 +391,6 @@ export default function MyProfilePage() {
           avatarInputRef={avatarInputRef}
           handleCoverChange={handleCoverChange}
           handleAvatarChange={handleAvatarChange}
-          avatarFile={avatarFile}
-          coverFile={coverFile}
         />
 
         {/* ════ Right Column: Edit Form ════ */}
@@ -397,6 +428,22 @@ export default function MyProfilePage() {
         handleRequestEmailChange={handleRequestEmailChange}
         handleVerifyEmailChange={handleVerifyEmailChange}
       />
+
+      {/* ════ Image Crop Modal ════ */}
+      {tempImageSrc && (
+        <ImageCropModal
+          isOpen={cropModalOpen}
+          onClose={() => {
+            setCropModalOpen(false);
+            setTempImageSrc(null);
+          }}
+          imageSrc={tempImageSrc}
+          onSave={handleCropSave}
+          isSaving={isSaving}
+          aspectRatio={cropType === 'avatar' ? 1 : 16 / 5}
+          circularCrop={cropType === 'avatar'}
+        />
+      )}
 
       {/* Keyframe animations */}
       <style jsx global>{`

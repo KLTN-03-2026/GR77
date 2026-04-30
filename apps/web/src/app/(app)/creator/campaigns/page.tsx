@@ -142,7 +142,7 @@ export default function CreatorCampaignsPage() {
                     <DocumentTextIcon className="w-5 h-5 sm:w-7 sm:h-7 text-[#0891B2]" />
                     My Campaigns
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-9">Quản lý các chiến dịch của bạn</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 ml-7 sm:ml-9">Manage your campaigns</p>
             </div>
 
             {/* Search + Table Card */}
