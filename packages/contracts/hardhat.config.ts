@@ -20,7 +20,7 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {},
         amoy: {
-            url: 'https://rpc-amoy.polygon.technology',
+            url: 'https://polygon-amoy-bor-rpc.publicnode.com',
             accounts: [DEPLOYER_PRIVATE_KEY],
             chainId: 80002,
         },

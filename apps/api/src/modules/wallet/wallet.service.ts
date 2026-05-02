@@ -133,12 +133,13 @@ export class WalletService {
 
         // 2. Create PayOS Link
         try {
+            const webUrl = this.config.get('WEB_URL') || 'http://localhost:3000';
             const body = {
                 orderCode,
                 amount: dto.amount,
                 description: `Topup ${orderCode}`,
-                cancelUrl: `${this.config.get('WEB_URL')}/wallet`,
-                returnUrl: `${this.config.get('WEB_URL')}/wallet?status=success`,
+                cancelUrl: `${webUrl}/wallet`,
+                returnUrl: `${webUrl}/wallet?status=success`,
             };
 
             const paymentLink = await this.payOS.paymentRequests.create(body);

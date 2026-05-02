@@ -27,6 +27,7 @@ interface UnifiedTransaction {
   actor: string; // Donor name or Creator name
   email?: string;
   message?: string;
+  txHash?: string | null;
 }
 
 // ── Utils ──────────────────────────────────────────────────────────
@@ -115,7 +116,8 @@ export default function AdminTransactionsPage() {
       title: tx.campaign?.title || 'Unknown',
       actor: tx.isAnonymous ? 'Ẩn danh' : (tx.user?.profile ? `${tx.user.profile.firstName} ${tx.user.profile.lastName}`.trim() : tx.user?.username || 'Guest'),
       email: tx.user?.email,
-      message: tx.message
+      message: tx.message,
+      txHash: tx.txHash
     }));
 
     const listOut: UnifiedTransaction[] = outflow.map(tx => ({
@@ -127,7 +129,8 @@ export default function AdminTransactionsPage() {
       createdAt: tx.createdAt,
       title: tx.campaign?.title || 'Unknown',
       actor: tx.campaign?.creatorUser?.username || 'Creator',
-      email: tx.campaign?.creatorUser?.email
+      email: tx.campaign?.creatorUser?.email,
+      txHash: tx.txHash
     }));
 
     return [...listIn, ...listOut].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -233,6 +236,24 @@ export default function AdminTransactionsPage() {
                         )}
                       </span>
                       <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase leading-none">{tx.method}</p>
+                      {tx.txHash && (
+                        <div className="mt-1.5 flex items-center gap-1">
+                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">On-chain:</span>
+                          <code className="text-[9px] font-mono text-[#0891B2] bg-cyan-50/50 px-1 py-0.5 rounded border border-cyan-100/50" title={tx.txHash}>
+                            {tx.txHash.length > 20 ? `${tx.txHash.substring(0, 6)}...${tx.txHash.substring(tx.txHash.length - 4)}` : tx.txHash}
+                          </code>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`https://amoy.polygonscan.com/tx/${tx.txHash}`, '_blank');
+                            }}
+                            className="hover:text-[#0891B2] text-gray-400 transition-colors"
+                            title="View on PolygonScan"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td className="px-5 py-4 border-r border-gray-300 text-right">
                       <p className={`text-base font-black ${tx.type === 'IN' ? 'text-green-600' : 'text-red-500'}`}>

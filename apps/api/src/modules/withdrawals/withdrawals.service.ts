@@ -262,10 +262,11 @@ export class WithdrawalsService {
         const onchainResult = await this.blockchainService.disburseWithdrawal(
             request.campaignId,
             requestId,
+            Number(request.amount),
         );
         this.logger.log(
             `[Disburse] SC confirmed — txHash: ${onchainResult.txHash} | ` +
-            `POL sent: ${onchainResult.polSentToPlatform} | fee: ${onchainResult.feeCollected}`,
+            `POL sent to Creator: ${onchainResult.polSentToCreator} | fee: ${onchainResult.feeCollected}`,
         );
 
         // ── Step 2: Persist to DB (use SC result, not DTO) ────────────────────
@@ -280,7 +281,7 @@ export class WithdrawalsService {
                     status: 'DISBURSED',
                     onchainTxHash: onchainResult.txHash,
                     txHash: onchainResult.txHash,
-                    polAmount: parseFloat(onchainResult.polSentToPlatform),
+                    polAmount: parseFloat(onchainResult.polSentToCreator),
                     exchangeRate,
                     bankTransferProof: dto.bankTransferProof ?? null,
                     adminNote: dto.adminNote ?? null,
@@ -307,7 +308,7 @@ export class WithdrawalsService {
                     txHash: onchainResult.txHash,
                     note: [
                         `[DISBURSED ON-CHAIN] ${Number(request.amount).toLocaleString('vi-VN')} VNĐ`,
-                        `≈ ${onchainResult.polSentToPlatform} POL @ ${exchangeRate.toLocaleString('vi-VN')} VNĐ/POL`,
+                        `≈ ${onchainResult.polSentToCreator} POL (Net) @ ${exchangeRate.toLocaleString('vi-VN')} VNĐ/POL`,
                         request.method === 'BANK'
                             ? `→ ${request.bankName} | ${request.accountNumber} | ${request.accountOwner}`
                             : `→ Wallet: ${request.walletAddress}`,

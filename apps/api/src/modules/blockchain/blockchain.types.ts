@@ -8,9 +8,9 @@ export interface OnchainCampaign {
     creator: string;
     goalAmount: bigint;
     raisedAmount: bigint;
-    /** 0=ACTIVE | 1=SUCCESS | 2=FAILED | 3=WITHDRAWN */
+    withdrawnAmount: bigint;
+    /** 0=ACTIVE | 1=SUCCESS | 2=FAILED | 3=COMPLETED */
     status: number;
-    withdrawRequested: boolean;
     exists: boolean;
 }
 
@@ -24,7 +24,7 @@ export interface DepositResult {
 export interface DisburseResult {
     txHash: string;
     blockNumber: number;
-    polSentToPlatform: string; // human-readable POL after fee
-    feeCollected: string;      // 2% platform fee in POL
+    polSentToCreator: string;  // human-readable POL after fee
+    feeCollected: string;      // platform fee in POL
     gasUsed: string;
 }

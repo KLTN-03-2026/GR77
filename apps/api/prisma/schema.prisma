@@ -269,6 +269,7 @@ model Donation {
   paymentMethod       PaymentMethod        @map("payment_method")
   status              DonationStatus       @default(PENDING)
   donatedAt           DateTime?            @map("donated_at")
+  txHash              String?              @map("tx_hash") @db.VarChar(200)
   createdAt           DateTime             @default(now()) @map("created_at")
   updatedAt           DateTime             @updatedAt @map("updated_at")
   ledgerEntries       CampaignFundLedger[]

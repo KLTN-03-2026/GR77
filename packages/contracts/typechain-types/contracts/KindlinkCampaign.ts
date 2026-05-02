@@ -29,8 +29,8 @@ export declare namespace KindlinkCampaign {
     creator: AddressLike;
     goalAmount: BigNumberish;
     raisedAmount: BigNumberish;
+    withdrawnAmount: BigNumberish;
     status: BigNumberish;
-    withdrawRequested: boolean;
     exists: boolean;
   };
 
@@ -39,16 +39,16 @@ export declare namespace KindlinkCampaign {
     creator: string,
     goalAmount: bigint,
     raisedAmount: bigint,
+    withdrawnAmount: bigint,
     status: bigint,
-    withdrawRequested: boolean,
     exists: boolean
   ] & {
     offchainId: string;
     creator: string;
     goalAmount: bigint;
     raisedAmount: bigint;
+    withdrawnAmount: bigint;
     status: bigint;
-    withdrawRequested: boolean;
     exists: boolean;
   };
 }
@@ -71,7 +71,6 @@ export interface KindlinkCampaignInterface extends Interface {
       | "platformFeeBps"
       | "platformWallet"
       | "renounceOwnership"
-      | "requestWithdraw"
       | "setPlatformFee"
       | "setPlatformWallet"
       | "transferOwnership"
@@ -88,7 +87,6 @@ export interface KindlinkCampaignInterface extends Interface {
       | "PlatformWalletUpdated"
       | "RefundClaimed"
       | "WithdrawApproved"
-      | "WithdrawRequested"
   ): EventFragment;
 
   encodeFunctionData(
@@ -97,7 +95,7 @@ export interface KindlinkCampaignInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "approveWithdraw",
-    values: [BytesLike, string]
+    values: [BytesLike, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "claimRefund",
@@ -144,10 +142,6 @@ export interface KindlinkCampaignInterface extends Interface {
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "requestWithdraw",
-    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setPlatformFee",
@@ -211,10 +205,6 @@ export interface KindlinkCampaignInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "requestWithdraw",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -366,35 +356,22 @@ export namespace WithdrawApprovedEvent {
     campaignKey: BytesLike,
     creator: AddressLike,
     withdrawalRequestId: string,
-    amount: BigNumberish,
+    netAmount: BigNumberish,
     fee: BigNumberish
   ];
   export type OutputTuple = [
     campaignKey: string,
     creator: string,
     withdrawalRequestId: string,
-    amount: bigint,
+    netAmount: bigint,
     fee: bigint
   ];
   export interface OutputObject {
     campaignKey: string;
     creator: string;
     withdrawalRequestId: string;
-    amount: bigint;
+    netAmount: bigint;
     fee: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace WithdrawRequestedEvent {
-  export type InputTuple = [campaignKey: BytesLike, creator: AddressLike];
-  export type OutputTuple = [campaignKey: string, creator: string];
-  export interface OutputObject {
-    campaignKey: string;
-    creator: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -448,7 +425,11 @@ export interface KindlinkCampaign extends BaseContract {
   FEE_DENOMINATOR: TypedContractMethod<[], [bigint], "view">;
 
   approveWithdraw: TypedContractMethod<
-    [campaignKey: BytesLike, withdrawalRequestId: string],
+    [
+      campaignKey: BytesLike,
+      withdrawalRequestId: string,
+      amountWei: BigNumberish
+    ],
     [void],
     "nonpayable"
   >;
@@ -503,12 +484,6 @@ export interface KindlinkCampaign extends BaseContract {
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-  requestWithdraw: TypedContractMethod<
-    [campaignKey: BytesLike],
-    [void],
-    "nonpayable"
-  >;
-
   setPlatformFee: TypedContractMethod<
     [newFeeBps: BigNumberish],
     [void],
@@ -537,7 +512,11 @@ export interface KindlinkCampaign extends BaseContract {
   getFunction(
     nameOrSignature: "approveWithdraw"
   ): TypedContractMethod<
-    [campaignKey: BytesLike, withdrawalRequestId: string],
+    [
+      campaignKey: BytesLike,
+      withdrawalRequestId: string,
+      amountWei: BigNumberish
+    ],
     [void],
     "nonpayable"
   >;
@@ -592,9 +571,6 @@ export interface KindlinkCampaign extends BaseContract {
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "requestWithdraw"
-  ): TypedContractMethod<[campaignKey: BytesLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setPlatformFee"
   ): TypedContractMethod<[newFeeBps: BigNumberish], [void], "nonpayable">;
@@ -667,13 +643,6 @@ export interface KindlinkCampaign extends BaseContract {
     WithdrawApprovedEvent.InputTuple,
     WithdrawApprovedEvent.OutputTuple,
     WithdrawApprovedEvent.OutputObject
-  >;
-  getEvent(
-    key: "WithdrawRequested"
-  ): TypedContractEvent<
-    WithdrawRequestedEvent.InputTuple,
-    WithdrawRequestedEvent.OutputTuple,
-    WithdrawRequestedEvent.OutputObject
   >;
 
   filters: {
@@ -774,17 +743,6 @@ export interface KindlinkCampaign extends BaseContract {
       WithdrawApprovedEvent.InputTuple,
       WithdrawApprovedEvent.OutputTuple,
       WithdrawApprovedEvent.OutputObject
-    >;
-
-    "WithdrawRequested(bytes32,address)": TypedContractEvent<
-      WithdrawRequestedEvent.InputTuple,
-      WithdrawRequestedEvent.OutputTuple,
-      WithdrawRequestedEvent.OutputObject
-    >;
-    WithdrawRequested: TypedContractEvent<
-      WithdrawRequestedEvent.InputTuple,
-      WithdrawRequestedEvent.OutputTuple,
-      WithdrawRequestedEvent.OutputObject
     >;
   };
 }

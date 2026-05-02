@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Rss, HandCoins, Landmark, ChevronDown, ChevronUp } from "lucide-react";
+import { Rss, HandCoins, Landmark, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { formatCurrency, formatDate } from "../../../home/[id]/_utils/formatters";
 
 interface CampaignTabsProps {
@@ -107,6 +107,40 @@ export function CampaignTabs({ campaign, currentUser }: CampaignTabsProps) {
                                                         "{donation.message}"
                                                     </div>
                                                 )}
+
+                                                <div className="ml-16 mt-3 flex flex-col gap-2">
+                                                    {/* Banking Reference (PayOS) */}
+                                                    {donation.paymentMethod === 'PAYOS' && donation.paymentTransactions?.[0] && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Mã đơn PayOS:</span>
+                                                            <span className="text-[11px] font-bold text-gray-600">#{donation.paymentTransactions[0].orderId}</span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* On-chain Verification Hash */}
+                                                    {donation.txHash ? (
+                                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-500">
+                                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Xác thực On-chain:</span>
+                                                            <code className="text-[11px] font-mono text-[#0891B2] bg-cyan-50/50 px-2 py-1 rounded border border-cyan-100/50">
+                                                                {donation.txHash.substring(0, 10)}...{donation.txHash.substring(donation.txHash.length - 8)}
+                                                            </code>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    window.open(`https://amoy.polygonscan.com/tx/${donation.txHash}`, '_blank');
+                                                                }}
+                                                                className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-gray-400 hover:text-[#0891B2] transition-all border border-transparent hover:border-gray-200"
+                                                                title="Xem trên PolygonScan"
+                                                            >
+                                                                <ExternalLink className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    ) : donation.paymentMethod === 'PAYOS' && (
+                                                        <div className="flex items-center gap-2 text-amber-500">
+                                                            <span className="text-[10px] font-black uppercase tracking-tighter italic">Đang đồng bộ on-chain...</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -153,11 +187,26 @@ export function CampaignTabs({ campaign, currentUser }: CampaignTabsProps) {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-black text-red-500">-{formatCurrency(Number(wd.amount))} VND</p>
-                                                <p className={`text-xs font-bold mt-1 inline-block px-2 py-1 rounded-md ${wd.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                <p className={`text-xs font-bold mt-1 inline-block px-2 py-1 rounded-md ${wd.status === 'DISBURSED' ? 'bg-green-100 text-green-700' : (wd.status === 'APPROVED' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700')}`}>
                                                     {wd.status}
                                                 </p>
                                             </div>
                                         </div>
+                                        {wd.txHash && (
+                                            <div className="mt-3 flex items-center gap-2 border-t border-gray-50 pt-3">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">On-chain:</span>
+                                                <code className="text-[11px] font-mono text-[#E11D48] bg-rose-50/50 px-2 py-1 rounded border border-rose-100/50">
+                                                    {wd.txHash.substring(0, 10)}...{wd.txHash.substring(wd.txHash.length - 8)}
+                                                </code>
+                                                <button
+                                                    onClick={() => window.open(`https://amoy.polygonscan.com/tx/${wd.txHash}`, '_blank')}
+                                                    className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-rose-600 transition-all border border-transparent hover:border-gray-100"
+                                                    title="View on PolygonScan"
+                                                >
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             ) : (

@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/constants/endpoints";
+import { executeBlockchainDonate } from "@/lib/blockchain/donate";
 
-export function useDonation(campaignId: string, minimumDonationAmount: number) {
+export function useDonation(campaignId: string, minimumDonationAmount: number, isJoined: boolean = false) {
+    const router = useRouter();
     const [donateOpen, setDonateOpen] = useState(false);
     const [donateAmount, setDonateAmount] = useState("");
     const [isDonating, setIsDonating] = useState(false);
@@ -12,18 +15,30 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
     const [blockchainLoading, setBlockchainLoading] = useState(false);
     const [blockchainError, setBlockchainError] = useState<string | null>(null);
     const [message, setMessage] = useState("");
+    const [showJoinInvitation, setShowJoinInvitation] = useState(false);
 
     const fetchCampaign = () => {
-        // Since we are in a hook, we don't have direct access to setCampaign
-        // but we trigger a page reload or let the parent handle it.
-        // For simplicity, we just reload if status sync is successful
-        window.location.reload();
+        // Refresh data in place without closing the modal immediately
+        if (isJoined) {
+            router.refresh();
+        } else {
+            setDonateOpen(false);
+            setDonated(false);
+            setShowJoinInvitation(true);
+        }
     };
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const status = urlParams.get("status");
         const code = urlParams.get("code");
+        if (status === "CANCELLED") {
+            setDonateOpen(true);
+            setBlockchainError("Bạn có thể thử lại.");
+            window.history.replaceState({}, '', window.location.pathname);
+            return;
+        }
+
         if (status === "PAID" || code === "00") {
             setDonated(true);
             setDonateOpen(true);
@@ -32,15 +47,12 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
             window.history.replaceState({}, '', window.location.pathname);
 
             if (orderCode) {
-                // console.log(`[PayOS Sync] Triggering status check for order: ${orderCode}`);
                 fetch(`${API_BASE_URL}/donations/check-status/${orderCode}`)
                     .then(res => res.json())
-                    .then(data => {
-                        // console.log("[PayOS Sync] Response from server:", data);
+                    .then(() => {
                         fetchCampaign();
                     })
-                    .catch(err => {
-                        // console.error("[PayOS Sync] Error during sync:", err);
+                    .catch(() => {
                         fetchCampaign();
                     });
             } else {
@@ -53,61 +65,35 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
         return Number(amount).toLocaleString("vi-VN");
     };
 
-    const handleBlockchainDonate = async (amountVnd: number, forceDemo = false) => {
-        if (!forceDemo && typeof window.ethereum === 'undefined') {
-            setBlockchainError('Please install MetaMask!');
+    const handleBlockchainDonate = async (amountVnd: number) => {
+        if (typeof window.ethereum === 'undefined') {
+            setBlockchainError('Vui lòng cài đặt MetaMask!');
             return;
         }
 
         setBlockchainLoading(true);
         setBlockchainError(null);
         try {
-            let from = '0xDEMO_WALLET_ADDRESS';
-            let txHash = '0xDEMO_TX_HASH_' + Date.now();
-
-            if (!forceDemo) {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                from = accounts[0];
-
-                const platformWallet = process.env.NEXT_PUBLIC_PLATFORM_WALLET_ADDRESS;
-                if (!platformWallet) {
-                    throw new Error('Hệ thống chưa cấu hình ví nhận tiền (Platform Wallet).');
-                }
-
-                // Tiền sẽ được gửi vào ví Escrow của hệ thống trước khi giải ngân
-                // Tỷ giá giả định 1 MATIC = 20,000 VND
-                const MATIC_PRICE_VND = 20000;
-                const ethAmount = (amountVnd / MATIC_PRICE_VND).toFixed(8);
-                const weiValue = '0x' + (BigInt(Math.floor(Number(ethAmount) * 1e18))).toString(16);
-
-                txHash = await window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [{
-                        from,
-                        to: platformWallet,
-                        value: weiValue
-                    }],
-                });
-            }
-
             const token = localStorage.getItem("accessToken");
-            await fetch(`${API_BASE_URL}/donations/blockchain`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify({ campaignId, amount: amountVnd, txHash, walletAddress: from, message }),
-            });
+            await executeBlockchainDonate({ campaignId, amountVnd, message, token });
 
             setDonated(true);
-            setTimeout(() => {
-                setDonateOpen(false);
-                setDonated(false);
-                window.location.reload();
-            }, 3000);
+            fetchCampaign();
+            // Modal stays open until user clicks "Tuyệt vời"
         } catch (err: any) {
-            setBlockchainError(err.message || 'Blockchain transaction error');
+            let userFriendlyMessage = err.message;
+
+            if (err?.code === 4001 || err?.code === 'ACTION_REJECTED') {
+                userFriendlyMessage = 'Giao dịch đã bị huỷ.';
+            } else if (err?.code === 'INSUFFICIENT_FUNDS') {
+                userFriendlyMessage = 'Số dư ví của bạn không đủ POL để thực hiện quyên góp và trả phí gas.';
+            } else if (err?.code === 'CALL_EXCEPTION') {
+                userFriendlyMessage = 'Giao dịch bị từ chối bởi Smart Contract. Có thể chiến dịch này chưa sẵn sàng trên Blockchain.';
+            } else if (err.message?.includes('estimateGas') || err.message?.includes('revert')) {
+                userFriendlyMessage = 'Lỗi ước tính Gas: Có thể số dư không đủ hoặc chiến dịch chưa được kích hoạt.';
+            }
+
+            setBlockchainError(userFriendlyMessage);
         } finally {
             setBlockchainLoading(false);
         }
@@ -163,6 +149,7 @@ export function useDonation(campaignId: string, minimumDonationAmount: number) {
         blockchainError, setBlockchainError,
         handleDonate,
         handleBlockchainDonate,
-        message, setMessage
+        message, setMessage,
+        showJoinInvitation, setShowJoinInvitation
     };
 }

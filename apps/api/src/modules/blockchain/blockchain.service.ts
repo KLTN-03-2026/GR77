@@ -32,6 +32,9 @@ export class BlockchainService implements OnModuleInit {
     /** Signed with HOT-WALLET key — for donate() calls */
     private hotContract: ethers.Contract;
 
+    private ownerWallet: ethers.Wallet;
+    private hotWallet: ethers.Wallet;
+
     /** Read-only instance for view calls */
     private readContract: ethers.Contract;
 
@@ -49,27 +52,31 @@ export class BlockchainService implements OnModuleInit {
     async onModuleInit() {
         try {
             const rpc = this.config.getOrThrow<string>('POLYGON_RPC_URL');
-            const contractAddress = this.config.getOrThrow<string>('CONTRACT_ADDRESS');
+            const contractAddress = this.config.getOrThrow<string>('CONTRACT_ADDRESS').trim();
             const ownerKey = this.config.getOrThrow<string>('OWNER_WALLET_PRIVATE_KEY');
             const hotKey = this.config.getOrThrow<string>('HOT_WALLET_PRIVATE_KEY');
 
+            if (!ethers.isAddress(contractAddress)) {
+                throw new Error(`Invalid CONTRACT_ADDRESS in .env: "${contractAddress}"`);
+            }
+
+            const cleanAddress = ethers.getAddress(contractAddress);
+
             this.provider = new ethers.JsonRpcProvider(rpc);
 
-            const ownerWallet = new ethers.Wallet(ownerKey, this.provider);
-            const hotWallet = new ethers.Wallet(hotKey, this.provider);
+            this.ownerWallet = new ethers.Wallet(ownerKey, this.provider);
+            this.hotWallet = new ethers.Wallet(hotKey, this.provider);
 
-            this.ownerContract = new ethers.Contract(contractAddress, KINDLINK_CAMPAIGN_ABI, ownerWallet);
-            this.hotContract = new ethers.Contract(contractAddress, KINDLINK_CAMPAIGN_ABI, hotWallet);
-            this.readContract = new ethers.Contract(contractAddress, KINDLINK_CAMPAIGN_ABI, this.provider);
+            this.ownerContract = new ethers.Contract(cleanAddress, KINDLINK_CAMPAIGN_ABI, this.ownerWallet);
+            this.hotContract = new ethers.Contract(cleanAddress, KINDLINK_CAMPAIGN_ABI, this.hotWallet);
+            this.readContract = new ethers.Contract(cleanAddress, KINDLINK_CAMPAIGN_ABI, this.provider);
 
             this.logger.log(`✅ BlockchainService initialised`);
-            this.logger.log(`   Owner  : ${ownerWallet.address}`);
-            this.logger.log(`   HotWallet: ${hotWallet.address}`);
-            this.logger.log(`   Contract : ${contractAddress}`);
-            this.logger.log(`   Rate     : 1 POL = ${1 / this.VND_TO_POL} VND`);
+            this.logger.log(`   Owner Wallet  : ${this.ownerWallet.address}`);
+            this.logger.log(`   Hot Wallet    : ${this.hotWallet.address}`);
+            this.logger.log(`   Contract Addr : ${cleanAddress}`);
         } catch (err: any) {
-            this.logger.error(`❌ BlockchainService init FAILED: ${err.message}`);
-            // Do not throw — allow app to boot; individual calls will return safe errors.
+            this.logger.error(`❌ BlockchainService init FAILED: ${err.stack || err.message}`);
         }
     }
 
@@ -96,11 +103,29 @@ export class BlockchainService implements OnModuleInit {
         const polWei = ethers.parseEther(polAmount.toFixed(18));
         const campaignKey = await this.getCampaignKey(campaignId);
 
+        const balance = await this.provider.getBalance(this.hotContract.target);
         this.logger.log(
-            `[HotWallet] deposit ${polAmount} POL (${amountVND} VND) for campaign ${campaignId} — donor: ${donorLabel}`,
+            `[HotWallet] deposit ${polAmount} POL (${amountVND} VND) for campaign ${campaignId}. ` +
+            `Key: ${campaignKey}. Target: ${this.hotContract.target}. Balance: ${ethers.formatEther(balance)} POL`,
         );
 
         try {
+            if (!campaignKey || !campaignKey.startsWith('0x')) {
+                throw new Error(`Invalid campaign key received: ${campaignKey}`);
+            }
+
+            // Check if campaign exists on-chain first (prevents confusing gas estimation errors)
+            const onchain = await this.getOnchainCampaign(campaignId);
+            if (!onchain.exists) {
+                throw new Error(`Chiến dịch này chưa được khởi tạo trên Smart Contract mới. Vui lòng duyệt lại chiến dịch.`);
+            }
+
+            // Check Hot Wallet balance
+            const balance = await this.provider.getBalance(this.hotWallet.address);
+            if (balance < polWei) {
+                throw new Error(`Số dư ví hệ thống (Hot Wallet) không đủ: Cần ${polAmount} POL nhưng hiện chỉ có ${ethers.formatEther(balance)} POL.`);
+            }
+
             const tx: ethers.TransactionResponse = await this.hotContract.donate(campaignKey, {
                 value: polWei,
             });
@@ -118,9 +143,16 @@ export class BlockchainService implements OnModuleInit {
             return result;
         } catch (err: any) {
             this.logger.error(`[HotWallet] deposit FAILED: ${err.message}`);
-            throw new InternalServerErrorException(
-                `Blockchain deposit failed: ${err.shortMessage ?? err.message}`,
-            );
+
+            // Refine error message for UX
+            let userFriendlyMessage = err.message;
+            if (err.code === 'INSUFFICIENT_FUNDS') {
+                userFriendlyMessage = "Ví hệ thống không đủ phí gas để thực hiện giao dịch.";
+            } else if (err.code === 'CALL_EXCEPTION') {
+                userFriendlyMessage = "Giao dịch bị từ chối bởi Smart Contract (có thể do chiến dịch chưa sẵn sàng).";
+            }
+
+            throw new InternalServerErrorException(`Lỗi Blockchain: ${userFriendlyMessage}`);
         }
     }
 
@@ -135,36 +167,40 @@ export class BlockchainService implements OnModuleInit {
      * @param campaignId  Off-chain UUID
      * @returns           DisburseResult with txHash and amounts
      */
-    async disburseWithdrawal(campaignId: string, withdrawalRequestId: string): Promise<DisburseResult> {
+    async disburseWithdrawal(campaignId: string, withdrawalRequestId: string, amountVND: number): Promise<DisburseResult> {
         this.ensureReady();
 
         const campaignKey = await this.getCampaignKey(campaignId);
 
-        // Snapshot balance BEFORE withdraw so we can compute amounts
-        const onchain = await this.getOnchainCampaign(campaignId);
-        const totalPolWei = onchain.raisedAmount;
+        // Convert VND amount to Wei for the specific withdrawal request
+        const polAmount = this.vndToPol(amountVND);
+        const amountWei = ethers.parseEther(polAmount.toFixed(18));
 
         // Mirror the SC fee computation (same formula as SC)
         const feeBps = await this.readContract.platformFeeBps() as bigint;
         const feeDenominator = await this.readContract.FEE_DENOMINATOR() as bigint;
-        const feeWei = (totalPolWei * feeBps) / feeDenominator;
-        const creatorAmountWei = totalPolWei - feeWei;
+        const feeWei = (amountWei * feeBps) / feeDenominator;
 
         this.logger.log(
             `[OwnerWallet] approveWithdraw campaign ${campaignId} — ` +
-            `total: ${ethers.formatEther(totalPolWei)} POL, ` +
+            `request: ${polAmount} POL, ` +
             `fee: ${ethers.formatEther(feeWei)} POL`,
         );
 
         try {
-            const tx: ethers.TransactionResponse = await this.ownerContract.approveWithdraw(campaignKey, withdrawalRequestId);
+            // New Version 2 signature: approveWithdraw(bytes32 campaignKey, string withdrawalRequestId, uint256 amountWei)
+            const tx: ethers.TransactionResponse = await this.ownerContract.approveWithdraw(
+                campaignKey,
+                withdrawalRequestId,
+                amountWei
+            );
             const receipt = await tx.wait();
             if (!receipt) throw new Error('Transaction receipt is null');
 
             const result: DisburseResult = {
                 txHash: receipt.hash,
                 blockNumber: receipt.blockNumber,
-                polSentToPlatform: ethers.formatEther(creatorAmountWei),
+                polSentToCreator: ethers.formatEther(amountWei - feeWei),
                 feeCollected: ethers.formatEther(feeWei),
                 gasUsed: receipt.gasUsed.toString(),
             };
@@ -174,8 +210,94 @@ export class BlockchainService implements OnModuleInit {
         } catch (err: any) {
             this.logger.error(`[OwnerWallet] approveWithdraw FAILED: ${err.message}`);
             throw new InternalServerErrorException(
-                `Blockchain withdraw failed: ${err.shortMessage ?? err.message}`,
+                `Blockchain approveWithdraw failed: ${err.shortMessage ?? err.message}`
             );
+        }
+    }
+
+    /** Mark a campaign as SUCCESS on-chain (allows withdrawals) */
+    async markCampaignSuccess(campaignId: string): Promise<string> {
+        this.ensureReady();
+        const campaignKey = await this.getCampaignKey(campaignId);
+        try {
+            const tx: ethers.TransactionResponse = await this.ownerContract.markSuccess(campaignKey);
+            const receipt = await tx.wait();
+            return receipt?.hash || '';
+        } catch (err: any) {
+            this.logger.error(`[OwnerWallet] markSuccess FAILED: ${err.message}`);
+            throw new InternalServerErrorException(`markSuccess failed: ${err.shortMessage ?? err.message}`);
+        }
+    }
+
+    /** Mark a campaign as FAILED on-chain (allows refunds) */
+    async markCampaignFailed(campaignId: string): Promise<string> {
+        this.ensureReady();
+        const campaignKey = await this.getCampaignKey(campaignId);
+        try {
+            const tx: ethers.TransactionResponse = await this.ownerContract.markFailed(campaignKey);
+            const receipt = await tx.wait();
+            return receipt?.hash || '';
+        } catch (err: any) {
+            this.logger.error(`[OwnerWallet] markFailed FAILED: ${err.message}`);
+            throw new InternalServerErrorException(`markFailed failed: ${err.shortMessage ?? err.message}`);
+        }
+    }
+
+    /**
+     * Called by CampaignsService when admin approves a campaign.
+     * Owner-wallet calls createCampaign() on SC.
+     * @param campaignId Off-chain UUID
+     * @param creatorAddress EVM wallet address of the creator
+     * @param goalAmountVND Goal amount in VND
+     */
+    async createCampaignOnchain(campaignId: string, creatorAddress: string | null, goalAmountVND: number): Promise<string> {
+        this.ensureReady();
+        const polAmount = this.vndToPol(goalAmountVND);
+        const polWei = ethers.parseEther(polAmount.toFixed(18));
+
+        // If creator hasn't linked a valid EVM address, we fallback to platform owner temporarily
+        // so the SC function doesn't revert from invalid address.
+        let validCreator: string;
+        if (creatorAddress && ethers.isAddress(creatorAddress)) {
+            validCreator = ethers.getAddress(creatorAddress);
+        } else {
+            // Use the address from the signer
+            const signer = this.ownerContract.runner as ethers.Wallet;
+            validCreator = signer.address;
+        }
+
+        this.logger.log(`[OwnerWallet] createCampaignOnchain ${campaignId} - goal: ${polAmount} POL, creator: ${validCreator}`);
+
+        try {
+            // Check Owner Wallet balance
+            const balance = await this.provider.getBalance(this.ownerWallet.address);
+            // Rough gas estimate for createCampaign is ~150k gas. With 50 Gwei, that's ~0.0075 POL.
+            // Actual error reports need ~0.07 POL in total.
+            if (balance < ethers.parseEther("0.1")) { // Require at least 0.1 POL for safety
+                this.logger.warn(`[OwnerWallet] Low balance: ${ethers.formatEther(balance)} POL. Transaction might fail.`);
+            }
+
+            const tx: ethers.TransactionResponse = await this.ownerContract.createCampaign(
+                campaignId,
+                validCreator,
+                polWei
+            );
+            const receipt = await tx.wait();
+            if (!receipt) throw new Error('Transaction receipt is null');
+
+            this.logger.log(`[OwnerWallet] ✅ createCampaign confirmed - txHash: ${receipt.hash}`);
+            return receipt.hash;
+        } catch (err: any) {
+            this.logger.error(`[OwnerWallet] createCampaign FAILED: ${err.message}`);
+
+            let userFriendlyMessage = err.message;
+            if (err.code === 'INSUFFICIENT_FUNDS') {
+                userFriendlyMessage = `Ví Owner không đủ số dư để tạo chiến dịch trên Blockchain. (Hiện có: ${ethers.formatEther(await this.provider.getBalance(this.ownerWallet.address))} POL)`;
+            } else if (err.code === 'CALL_EXCEPTION') {
+                userFriendlyMessage = "Lỗi thực thi Smart Contract khi tạo chiến dịch.";
+            }
+
+            throw new InternalServerErrorException(`Lỗi Blockchain: ${userFriendlyMessage}`);
         }
     }
 
@@ -193,16 +315,16 @@ export class BlockchainService implements OnModuleInit {
             creator: raw.creator,
             goalAmount: raw.goalAmount,
             raisedAmount: raw.raisedAmount,
+            withdrawnAmount: raw.withdrawnAmount,
             status: Number(raw.status),
-            withdrawRequested: raw.withdrawRequested,
             exists: raw.exists,
         };
     }
 
     /** Get the bytes32 key used by SC for a campaign UUID */
     async getCampaignKey(campaignId: string): Promise<string> {
-        this.ensureReady();
-        return this.readContract.getCampaignKey(campaignId);
+        // SC logic: keccak256(abi.encodePacked(offchainId))
+        return ethers.solidityPackedKeccak256(['string'], [campaignId]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

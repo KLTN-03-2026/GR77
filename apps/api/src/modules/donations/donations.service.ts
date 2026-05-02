@@ -124,12 +124,13 @@ export class DonationsService {
 
         const orderCode = Number(String(Date.now()).slice(-9));
         try {
+            const webUrl = this.config.get('WEB_URL') || 'http://localhost:3000';
             const body = {
                 orderCode,
                 amount: Number(dto.amount),
                 description: `Donate ${orderCode}`,
-                cancelUrl: `${this.config.get('WEB_URL')}/home/${dto.campaignId}`,
-                returnUrl: `${this.config.get('WEB_URL')}/home/${dto.campaignId}?status=success&orderCode=${orderCode}`,
+                cancelUrl: `${webUrl}/joined/${dto.campaignId}?status=CANCELLED`,
+                returnUrl: `${webUrl}/joined/${dto.campaignId}?status=PAID&orderCode=${orderCode}`,
             };
 
             const paymentLink = await this.payOS.paymentRequests.create(body);
@@ -175,17 +176,31 @@ export class DonationsService {
             });
 
             if (!transaction) {
-                this.logger.warn(`[Webhook] Transaction not found for orderId: ${orderCode}`);
+                this.logger.warn(`[Webhook] ❌ Transaction NOT FOUND for orderId: ${orderCode}`);
                 return;
             }
 
+            this.logger.log(`[Webhook] Found transaction ${transaction.id}. Donation: ${transaction.donation?.id}, Campaign: ${transaction.donation?.campaign?.title}`);
+
             if (transaction.status !== 'PENDING') {
                 this.logger.log(`[Webhook] Transaction ${orderCode} already processed (Status: ${transaction.status})`);
+
+                // Special case: If it was success but MIRROR failed (no txHash), try mirroring again
+                if (transaction.status === 'SUCCESS' && transaction.donation && !transaction.donation.txHash) {
+                    this.logger.log(`[Webhook] Real Hash missing for SUCCESS donation ${transaction.donation.id}. Retrying mirror...`);
+                    this.depositPolForBankingDonation(
+                        transaction.donation.id,
+                        transaction.donation.campaignId,
+                        Number(transaction.amount),
+                        transaction.donation.userId || 'Guest',
+                        transaction.orderId
+                    );
+                }
                 return;
             }
 
             if (code === '00' || status === 'PAID' || success === true) {
-                this.logger.log(`[Webhook] Payment SUCCESS for order ${orderCode}. Updating database...`);
+                this.logger.log(`[Webhook] ✅ Payment confirmed for order ${orderCode}. Processing database updates...`);
                 await (this.prisma as any).$transaction(async (tx: any) => {
                     await tx.paymentTransaction.update({
                         where: { id: transaction.id },
@@ -195,14 +210,7 @@ export class DonationsService {
                         where: { id: transaction.donationId },
                         data: { status: 'SUCCESS', donatedAt: new Date() }
                     });
-                    await tx.campaign.update({
-                        where: { id: transaction.donation.campaignId },
-                        data: {
-                            currentRaisedAmount: { increment: transaction.amount },
-                            currentBalance: { increment: transaction.amount },
-                            donationCount: { increment: 1 }
-                        }
-                    });
+
                     await tx.campaignFundLedger.create({
                         data: {
                             campaignId: transaction.donation.campaignId,
@@ -212,8 +220,15 @@ export class DonationsService {
                             note: `PayOS donation sync - User ${transaction.donation.userId || 'Guest'}`
                         }
                     });
+                    await tx.campaign.update({
+                        where: { id: transaction.donation.campaignId },
+                        data: {
+                            currentRaisedAmount: { increment: transaction.amount },
+                            currentBalance: { increment: transaction.amount },
+                            donationCount: { increment: 1 }
+                        }
+                    });
 
-                    // 5. Create Wallet Transaction for User History
                     if (transaction.donation.userId) {
                         await tx.walletTransaction.create({
                             data: {
@@ -227,17 +242,16 @@ export class DonationsService {
                         });
                     }
                 });
-                this.logger.log(`[Webhook] Database updated successfully for order ${orderCode}`);
-
-                // ── Auto-deposit equivalent POL to Smart Contract ───────────
-                // Fire-and-forget: SC failure MUST NOT block the payment confirmation.
-                // The donor's VND payment is already recorded in DB.
+                this.logger.log(`[Webhook] Database updated. Initiating Blockchain Mirror...`);
                 this.depositPolForBankingDonation(
+                    transaction.donation.id,
                     transaction.donation.campaignId,
                     Number(transaction.amount),
                     transaction.donation.userId || 'Guest',
+                    transaction.orderId
                 );
-            } else if (status === 'CANCELED' || status === 'EXPIRED') {
+            }
+            else if (status === 'CANCELED' || status === 'EXPIRED') {
                 this.logger.log(`[Webhook] Payment FAILED/CANCELLED for order ${orderCode}. Status: ${status}`);
                 await (this.prisma as any).$transaction([
                     (this.prisma as any).paymentTransaction.update({
@@ -258,55 +272,62 @@ export class DonationsService {
     async createBlockchainDonation(userId: string | null, dto: { campaignId: string, amount: number, txHash: string, walletAddress: string, message?: string, isAnonymous?: boolean }) {
         this.logger.log(`Blockchain donation: Campaign ${dto.campaignId}, Amount ${dto.amount}, Hash ${dto.txHash}`);
 
-        return await (this.prisma as any).$transaction(async (tx: any) => {
-            const donation = await tx.donation.create({
-                data: {
-                    userId,
-                    campaignId: dto.campaignId,
-                    amount: new Prisma.Decimal(dto.amount),
-                    message: dto.message || `Blockchain tx: ${dto.txHash.slice(0, 8)}...`,
-                    isAnonymous: false,
-                    paymentMethod: 'BLOCKCHAIN',
-                    status: 'SUCCESS',
-                    donatedAt: new Date()
-                },
-                include: { campaign: true }
-            });
-
-            await tx.campaign.update({
-                where: { id: dto.campaignId },
-                data: {
-                    currentRaisedAmount: { increment: new Prisma.Decimal(dto.amount) },
-                    donationCount: { increment: 1 }
-                }
-            });
-
-            await tx.campaignFundLedger.create({
-                data: {
-                    campaignId: dto.campaignId,
-                    donationId: donation.id,
-                    amount: new Prisma.Decimal(dto.amount),
-                    type: 'DONATION_IN',
-                    note: `Blockchain payment by ${dto.walletAddress}`
-                }
-            });
-
-            // 4. Create Wallet Transaction for User History
-            if (userId) {
-                await tx.walletTransaction.create({
+        try {
+            return await (this.prisma as any).$transaction(async (tx: any) => {
+                const donation = await tx.donation.create({
                     data: {
                         userId,
-                        type: 'DONATION',
+                        campaignId: dto.campaignId,
                         amount: new Prisma.Decimal(dto.amount),
+                        message: dto.message || `Blockchain tx: ${dto.txHash.slice(0, 8)}...`,
+                        isAnonymous: false,
+                        paymentMethod: 'CRYPTO',
                         status: 'SUCCESS',
-                        description: `Blockchain Donate: ${donation.campaign.title}`,
-                        orderId: dto.txHash // Use txHash as orderId for uniqueness/reference
+                        txHash: dto.txHash,
+                        donatedAt: new Date()
+                    },
+                    include: { campaign: true }
+                });
+
+                await tx.campaign.update({
+                    where: { id: dto.campaignId },
+                    data: {
+                        currentRaisedAmount: { increment: new Prisma.Decimal(dto.amount) },
+                        currentBalance: { increment: new Prisma.Decimal(dto.amount) },
+                        donationCount: { increment: 1 }
                     }
                 });
-            }
 
-            return donation;
-        });
+                await tx.campaignFundLedger.create({
+                    data: {
+                        campaignId: dto.campaignId,
+                        donationId: donation.id,
+                        amount: new Prisma.Decimal(dto.amount),
+                        type: 'DONATION_IN',
+                        note: `Blockchain payment by ${dto.walletAddress}`
+                    }
+                });
+
+                // 4. Create Wallet Transaction for User History
+                if (userId) {
+                    await tx.walletTransaction.create({
+                        data: {
+                            userId,
+                            type: 'DONATION',
+                            amount: new Prisma.Decimal(dto.amount),
+                            status: 'SUCCESS',
+                            description: `Blockchain Donate: ${donation.campaign.title}`,
+                            orderId: dto.txHash
+                        }
+                    });
+                }
+
+                return donation;
+            });
+        } catch (error: any) {
+            this.logger.error(`Error in createBlockchainDonation: ${error.message}`, error.stack);
+            throw new BadRequestException('Lỗi hệ thống khi lưu giao dịch: ' + error.message);
+        }
     }
 
     async adminListAll(filters: { status?: string; method?: string; campaignId?: string }) {
@@ -363,10 +384,13 @@ export class DonationsService {
      * IMPORTANT: Must NEVER throw — failure here should not fail the payment flow.
      */
     private async depositPolForBankingDonation(
+        donationId: string,
         campaignId: string,
         amountVND: number,
         donorLabel: string,
+        payosOrderId?: string,
     ): Promise<void> {
+        this.logger.log(`[HotWallet] Starting mirror for donation ${donationId} (Order: ${payosOrderId})`);
         try {
             const result = await this.blockchainService.depositForBankingDonation(
                 campaignId,
@@ -377,6 +401,42 @@ export class DonationsService {
                 `[HotWallet] Banking donation mirrored on-chain — ` +
                 `campaign: ${campaignId}, ${result.polAmount} POL, tx: ${result.txHash}`,
             );
+
+            // ── UPDATE REAL HASH INTO DB ──
+            try {
+                // 1. Update Donation record directly by ID
+                const updatedDonation = await this.prisma.donation.update({
+                    where: { id: donationId },
+                    data: { txHash: result.txHash }
+                });
+                this.logger.log(`[HotWallet] ✅ Donation ${donationId} updated with real hash: ${result.txHash}`);
+
+                // 2. Update Wallet Transaction precisely using payosOrderId
+                if (payosOrderId) {
+                    await this.prisma.walletTransaction.updateMany({
+                        where: {
+                            orderId: payosOrderId,
+                            type: 'DONATION'
+                        },
+                        data: { orderId: result.txHash }
+                    });
+                    this.logger.log(`[HotWallet] ✅ Wallet transactions for order ${payosOrderId} updated with real hash`);
+                } else if (updatedDonation.userId) {
+                    // Fallback
+                    await this.prisma.walletTransaction.updateMany({
+                        where: {
+                            userId: updatedDonation.userId,
+                            type: 'DONATION',
+                            status: 'SUCCESS',
+                            amount: updatedDonation.amount,
+                            createdAt: { gte: new Date(Date.now() - 300000) }
+                        },
+                        data: { orderId: result.txHash }
+                    });
+                }
+            } catch (updateErr: any) {
+                this.logger.error(`[HotWallet] Failed to update txHash in DB: ${updateErr.message}`);
+            }
         } catch (err: any) {
             // Non-fatal: log clearly so ops team can monitor and top-up hot wallet if needed
             this.logger.warn(
@@ -386,6 +446,14 @@ export class DonationsService {
                 `The VND donation is already recorded in DB. Hot wallet may need POL top-up.`,
             );
         }
+    }
+
+    async getDebugHashes() {
+        return (this.prisma as any).donation.findMany({
+            take: 10,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, amount: true, paymentMethod: true, txHash: true, status: true }
+        });
     }
 }
 

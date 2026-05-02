@@ -18,6 +18,7 @@ import { CreateCampaignNewsDto } from './dto/create-campaign-news.dto';
  */
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
 import { OnModuleInit } from '@nestjs/common';
 
 @Injectable()
@@ -25,7 +26,8 @@ export class CampaignsService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
-    private readonly notificationsService: NotificationsService
+    private readonly notificationsService: NotificationsService,
+    private readonly blockchainService: BlockchainService
   ) { }
 
   async onModuleInit() {
@@ -105,8 +107,26 @@ export class CampaignsService implements OnModuleInit {
         reviewedAt: new Date(),
         reviewNote: 'Approved by administrator'
       },
-      include: { creatorUser: true }
+      include: {
+        creatorUser: {
+          include: { wallet: true }
+        }
+      }
     });
+
+    // On-chain Registration
+    try {
+      const creatorWalletAddr = campaign.creatorUser?.wallet?.walletAddress || null;
+      await this.blockchainService.createCampaignOnchain(
+        campaign.id,
+        creatorWalletAddr,
+        Number(campaign.fundingGoalAmount)
+      );
+    } catch (err) {
+      console.error('[CampaignsService] Failed to create campaign on SC:', err);
+      // Optional: Maybe you don't want to revert the SQL status or you do. 
+      // For now, we just log to not break approval if SC fails.
+    }
 
     await this.notificationsService.create({
       userId: campaign.creatorUserId,
@@ -446,6 +466,13 @@ export class CampaignsService implements OnModuleInit {
                   }
                 }
               }
+            },
+            paymentTransactions: {
+              select: {
+                orderId: true,
+                provider: true
+              },
+              take: 1
             }
           }
         },
@@ -680,8 +707,8 @@ export class CampaignsService implements OnModuleInit {
           actor: i.user?.profile
             ? `${i.user.profile.firstName || ''} ${i.user.profile.lastName || ''}`.trim()
             : (i.user?.username || 'An danh'),
-          txHash: cryptoTx,
-          proofUrl: cryptoTx ? `https://amoy.polygonscan.com/tx/${cryptoTx}` : null
+          txHash: i.txHash || cryptoTx,
+          proofUrl: (i.txHash || cryptoTx) ? `https://amoy.polygonscan.com/tx/${i.txHash || cryptoTx}` : null
         };
       }),
       ...outflows.map((o: any) => ({

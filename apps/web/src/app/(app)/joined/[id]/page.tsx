@@ -47,7 +47,8 @@ export default function JoinedCampaignDetailPage({
         showLeaveModal, setShowLeaveModal,
         isLeaving,
         handleToggleLike,
-        handleLeave
+        handleLeave,
+        handleJoin
     } = useJoinedCampaign(id);
 
     // 2. Donation Hooks
@@ -61,8 +62,9 @@ export default function JoinedCampaignDetailPage({
         blockchainError, setBlockchainError,
         handleDonate,
         handleBlockchainDonate,
-        message, setMessage
-    } = useDonation(id, campaign?.minimumDonationAmount);
+        message, setMessage,
+        showJoinInvitation, setShowJoinInvitation
+    } = useDonation(id, campaign?.minimumDonationAmount, isJoined);
 
     // 3. Comments & Reporting Hooks
     const {
@@ -175,7 +177,7 @@ export default function JoinedCampaignDetailPage({
                                     isCreator={currentUser?.id === campaign?.creatorUserId}
                                     campaignId={campaign?.id}
                                     setDonateOpen={setDonateOpen}
-                                    handleJoin={() => { }} // Cannot join again from this page
+                                    handleJoin={handleJoin}
                                     handleLeave={() => setShowLeaveModal(true)}
                                     handleToggleLike={handleToggleLike}
                                     onReport={() => setCampaignReportModalOpen(true)}
@@ -186,7 +188,9 @@ export default function JoinedCampaignDetailPage({
                     </div>
 
                     {/* Container 2: Multi-Tab Area */}
-                    <CampaignTabs campaign={campaign} currentUser={currentUser} />
+                    {isJoined && (
+                        <CampaignTabs campaign={campaign} currentUser={currentUser} />
+                    )}
 
                     {/* Container 3: Community Discussion */}
                     <div className="px-4 sm:px-8 pb-12 max-w-7xl mx-auto mt-4">
@@ -239,6 +243,11 @@ export default function JoinedCampaignDetailPage({
                 campaignReportReason={campaignReportReason}
                 setCampaignReportReason={setCampaignReportReason}
                 handleReportCampaign={handleReportCampaign}
+                showJoinInvitation={showJoinInvitation}
+                setShowJoinInvitation={setShowJoinInvitation}
+                handleJoin={handleJoin}
+                isJoining={false} // handleJoin in hook doesn't expose isJoining yet, but we use it
+                isJoined={isJoined}
             />
 
             {/* --- LEAVE MODAL --- */}

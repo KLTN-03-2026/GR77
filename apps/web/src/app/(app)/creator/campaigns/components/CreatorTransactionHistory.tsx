@@ -31,6 +31,8 @@ interface DonationRecord {
         username: string;
         profile?: { firstName: string; lastName: string; avatarUrl: string | null };
     };
+    txHash?: string | null;
+    paymentTransactions?: Array<{ orderId: string; provider: string }>;
 }
 
 function formatVND(n: number) {
@@ -150,6 +152,37 @@ export function CreatorTransactionHistory({ campaignId, onBack }: Props) {
                                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                                                         {formatDate(d.donatedAt || d.createdAt)} · {d.paymentMethod}
                                                     </p>
+                                                    <div className="mt-1.5 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-500">
+                                                        {/* PayOS Reference */}
+                                                        {d.paymentMethod === 'PAYOS' && d.paymentTransactions?.[0] && (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Đơn PayOS:</span>
+                                                                <span className="text-[10px] font-bold text-gray-600">#{d.paymentTransactions[0].orderId}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* On-chain Link */}
+                                                        {d.txHash ? (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Xác thực:</span>
+                                                                <code className="text-[10px] font-mono text-[#0891B2] bg-cyan-50/50 px-1.5 py-0.5 rounded border border-cyan-100/50">
+                                                                    {d.txHash.substring(0, 8)}...{d.txHash.substring(d.txHash.length - 6)}
+                                                                </code>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        window.open(`https://amoy.polygonscan.com/tx/${d.txHash}`, '_blank');
+                                                                    }}
+                                                                    className="p-1 hover:bg-white hover:shadow-sm rounded text-gray-400 hover:text-[#0891B2] transition-all border border-transparent hover:border-gray-200"
+                                                                    title="Xem trên PolygonScan"
+                                                                >
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        ) : d.paymentMethod === 'PAYOS' && (
+                                                            <span className="text-[10px] font-black uppercase tracking-tighter italic text-amber-500">Đang đồng bộ...</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="text-right">
