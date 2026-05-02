@@ -7,6 +7,7 @@ import {
     EllipsisHorizontalIcon,
     InboxIcon,
     ArchiveBoxArrowDownIcon,
+    FlagIcon,
 } from '@heroicons/react/24/outline';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
@@ -232,9 +233,17 @@ export function NotificationsView({ isAdmin }: { isAdmin?: boolean }) {
                                 {/* Avatar / Icon */}
                                 <div className={`shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shadow-sm ${n.type.includes('CAMPAIGN')
                                     ? 'bg-orange-50 text-orange-500 border border-orange-100'
-                                    : 'bg-blue-50 text-blue-500 border border-blue-100'
+                                    : n.type === 'REPORT'
+                                        ? 'bg-red-50 text-red-500 border border-red-100'
+                                        : 'bg-blue-50 text-blue-500 border border-blue-100'
                                     }`}>
-                                    {n.type.includes('CAMPAIGN') ? <ArchiveBoxArrowDownIcon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" /> : <BellIcon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" />}
+                                    {n.type.includes('CAMPAIGN') ? (
+                                        <ArchiveBoxArrowDownIcon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" />
+                                    ) : n.type === 'REPORT' ? (
+                                        <FlagIcon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2] text-red-500" />
+                                    ) : (
+                                        <BellIcon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" />
+                                    )}
                                 </div>
 
                                 {/* Content */}

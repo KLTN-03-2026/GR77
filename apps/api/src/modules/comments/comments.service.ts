@@ -194,7 +194,7 @@ export class CommentsService {
             throw new NotFoundException('Comment not found');
         }
 
-        return this.prisma.report.create({
+        const report = await this.prisma.report.create({
             data: {
                 submitterId: userId,
                 targetCommentId: commentId,
@@ -202,7 +202,28 @@ export class CommentsService {
                 targetCampaignId: comment.campaignId,
                 reason: dto.reason,
                 details: dto.details
+            },
+            include: {
+                submitter: {
+                    select: {
+                        username: true,
+                        profile: { select: { firstName: true, lastName: true } }
+                    }
+                }
             }
         });
+
+        const submitterName = report.submitter.profile?.firstName
+            ? `${report.submitter.profile.firstName} ${report.submitter.profile.lastName || ''}`.trim()
+            : report.submitter.username;
+
+        await this.notificationsService.notifyAdmins({
+            title: 'Báo cáo bình luận mới',
+            message: `${submitterName} đã báo cáo một bình luận với lý do: ${dto.reason}`,
+            type: 'REPORT',
+            link: '/admin/report',
+        });
+
+        return report;
     }
 }
