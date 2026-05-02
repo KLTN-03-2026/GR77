@@ -585,15 +585,39 @@ export class CampaignsService implements OnModuleInit {
       },
     });
 
-    return this.prisma.report.create({
+    const report = await this.prisma.report.create({
       data: {
         submitterId: userId,
         targetCampaignId: campaignId,
         targetUserId: campaign.creatorUserId,
         reason: dto.reason,
         details: dto.details
+      },
+      include: {
+        submitter: {
+          select: {
+            username: true,
+            profile: { select: { firstName: true, lastName: true } }
+          }
+        },
+        targetCampaign: {
+          select: { title: true }
+        }
       }
     });
+
+    const submitterName = report.submitter.profile?.firstName
+      ? `${report.submitter.profile.firstName} ${report.submitter.profile.lastName || ''}`.trim()
+      : report.submitter.username;
+
+    await this.notificationsService.notifyAdmins({
+      title: 'Báo cáo chiến dịch mới',
+      message: `${submitterName} đã báo cáo chiến dịch "${report.targetCampaign?.title}" với lý do: ${dto.reason}`,
+      type: 'REPORT',
+      link: '/admin/report',
+    });
+
+    return report;
   }
 
   async postNews(userId: string, campaignId: string, dto: CreateCampaignNewsDto) {
