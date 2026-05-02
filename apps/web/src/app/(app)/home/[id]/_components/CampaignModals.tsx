@@ -1,5 +1,7 @@
+import { useRouter } from "next/navigation";
 import { DonateModal } from "@/components/campaign/DonateModal";
 import { ReportModal } from "@/components/campaign/ReportModal";
+import { JoinInvitationModal } from "@/components/campaign/JoinInvitationModal";
 
 interface CampaignModalsProps {
     donateOpen: boolean;
@@ -15,16 +17,25 @@ interface CampaignModalsProps {
     blockchainError: string | null;
     setBlockchainError: (val: string | null) => void;
     handleDonate: () => void;
-    handleBlockchainDonate: (amountVnd: number, forceDemo?: boolean) => void;
+    handleBlockchainDonate: (amountVnd: number) => void;
     QUICK_AMOUNTS: number[];
     message: string;
     setMessage: (val: string) => void;
+
+    showJoinInvitation?: boolean;
+    setShowJoinInvitation?: (open: boolean) => void;
+    handleJoin?: () => void;
+    isJoining?: boolean;
+    isJoined?: boolean;
 
     reportModalOpen: boolean;
     setReportModalOpen: (open: boolean) => void;
     reportReason: string;
     setReportReason: (reason: string) => void;
     handleReportComment: () => void;
+    // ...
+    // ...
+    // (rest of interface)
 
     campaignReportModalOpen: boolean;
     setCampaignReportModalOpen: (open: boolean) => void;
@@ -63,7 +74,13 @@ export function CampaignModals({
     campaignReportReason,
     setCampaignReportReason,
     handleReportCampaign,
+    showJoinInvitation,
+    setShowJoinInvitation,
+    handleJoin,
+    isJoining,
+    isJoined,
 }: CampaignModalsProps) {
+    const router = useRouter();
     return (
         <>
             <DonateModal
@@ -85,6 +102,22 @@ export function CampaignModals({
                 message={message}
                 setMessage={setMessage}
             />
+
+            {showJoinInvitation && setShowJoinInvitation && handleJoin && !isJoined && (
+                <JoinInvitationModal
+                    isOpen={showJoinInvitation}
+                    onClose={() => {
+                        setShowJoinInvitation(false);
+                        router.refresh();
+                    }}
+                    onJoin={async () => {
+                        await handleJoin();
+                        setShowJoinInvitation(false);
+                        router.refresh();
+                    }}
+                    isJoining={isJoining}
+                />
+            )}
 
             <ReportModal
                 reportModalOpen={reportModalOpen}

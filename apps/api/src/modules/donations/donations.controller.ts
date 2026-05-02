@@ -32,6 +32,7 @@ export class DonationsController {
         @Req() req: any
     ) {
         const userId = req.user.id;
+        console.log('Blockchain donation request:', { userId, dto });
         return this.donationsService.createBlockchainDonation(userId, dto);
     }
 
@@ -59,5 +60,10 @@ export class DonationsController {
         @Query('campaignId') campaignId?: string,
     ) {
         return this.donationsService.adminListAll({ status, method, campaignId });
+    }
+
+    @Get('/debug/hashes')
+    async debugHashes() {
+        return this.donationsService.getDebugHashes();
     }
 }

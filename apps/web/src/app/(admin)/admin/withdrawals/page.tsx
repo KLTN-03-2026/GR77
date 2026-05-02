@@ -14,8 +14,10 @@ import {
 } from '@heroicons/react/24/outline';
 import { CurrencyDollarIcon } from '@heroicons/react/24/solid';
 import { API_BASE_URL } from '@/lib/constants/endpoints';
+import { POL_PER_VND } from '@/lib/constants/blockchain';
 
-// ── Types ──────────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────
+const DEFAULT_EXCHANGE_RATE = Math.round(1 / POL_PER_VND);
 type WithdrawalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISBURSED';
 
 interface WithdrawalRequest {
@@ -73,7 +75,6 @@ function getPageNumbers(current: number, total: number) {
   return rangeWithDots;
 }
 
-const DEFAULT_EXCHANGE_RATE = 1000;
 
 // ── Sub-components ──────────────────────────────────────────────────
 function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {

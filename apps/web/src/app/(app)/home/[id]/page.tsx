@@ -4,6 +4,8 @@ import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGlobalAuth } from "@/contexts/AuthContext";
 import { API_BASE_URL } from "@/lib/constants/endpoints";
+import { KINDLINK_CAMPAIGN_ABI, POL_PER_VND } from "@/lib/constants/blockchain";
+import { executeBlockchainDonate } from "@/lib/blockchain/donate";
 
 // Shared Components
 import { CampaignDiscussion } from "@/components/campaign/CampaignDiscussion";
@@ -307,59 +309,16 @@ export default function CampaignDetailPage({
         }
     };
 
-    const handleBlockchainDonate = async (amountVnd: number, forceDemo = false) => {
-        if (!forceDemo && typeof window.ethereum === 'undefined') {
+    const handleBlockchainDonate = async (amountVnd: number) => {
+        if (typeof window.ethereum === 'undefined') {
             setBlockchainError('Vui lòng cài đặt MetaMask!');
             return;
         }
-
         setBlockchainLoading(true);
         setBlockchainError(null);
         try {
-            let from = '0xDEMO_WALLET_ADDRESS';
-            let txHash = '0xDEMO_TX_HASH_' + Date.now();
-
-            if (!forceDemo) {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                from = accounts[0];
-
-                const platformWallet = process.env.NEXT_PUBLIC_PLATFORM_WALLET_ADDRESS;
-                if (!platformWallet) {
-                    throw new Error('Hệ thống chưa cấu hình ví nhận tiền. Vui lòng liên hệ quản trị viên.');
-                }
-
-                // Tiền sẽ được gửi vào ví Escrow của hệ thống trước khi giải ngân
-                // Tỷ giá giả định 1 MATIC = 20,000 VND
-                const MATIC_PRICE_VND = 20000;
-                const ethAmount = (amountVnd / MATIC_PRICE_VND).toFixed(8);
-                const weiValue = '0x' + (BigInt(Math.floor(Number(ethAmount) * 1e18))).toString(16);
-
-                txHash = await window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [{
-                        from,
-                        to: platformWallet,
-                        value: weiValue
-                    }],
-                });
-            }
-
             const token = localStorage.getItem("accessToken");
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/donations/blockchain`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    campaignId: id,
-                    amount: amountVnd,
-                    txHash,
-                    walletAddress: from,
-                    message: donationMessage,
-                }),
-            });
-
+            await executeBlockchainDonate({ campaignId: id, amountVnd, message: donationMessage, token });
             setDonated(true);
             setTimeout(() => {
                 setDonateOpen(false);
@@ -367,7 +326,11 @@ export default function CampaignDetailPage({
                 window.location.reload();
             }, 3000);
         } catch (err: any) {
-            setBlockchainError(err.message || 'Lỗi giao dịch Blockchain');
+            if (err?.code === 4001 || err?.code === 'ACTION_REJECTED') {
+                setBlockchainError('Giao dịch đã bị huỷ.');
+            } else {
+                setBlockchainError(err.message || 'Lỗi giao dịch Blockchain');
+            }
         } finally {
             setBlockchainLoading(false);
         }
@@ -620,7 +583,7 @@ export default function CampaignDetailPage({
                 setCampaignReportReason={setCampaignReportReason}
                 handleReportCampaign={handleReportCampaign}
             />
-            
+
             <LeaveCampaignModal
                 showLeaveModal={showLeaveModal}
                 setShowLeaveModal={setShowLeaveModal}

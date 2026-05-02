@@ -29,7 +29,10 @@ export function useJoinedCampaign(campaignId: string) {
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
-                const res = await fetch(`${API_BASE_URL}/campaigns/${campaignId}`, { headers });
+                const res = await fetch(`${API_BASE_URL}/campaigns/${campaignId}`, {
+                    headers,
+                    cache: 'no-store'
+                });
                 if (!res.ok) throw new Error("Campaign not found");
                 const data = await res.json();
                 setCampaign(data);
@@ -63,7 +66,7 @@ export function useJoinedCampaign(campaignId: string) {
             })
                 .then((res) => res.json())
                 .then((data) => {
-                    if (data.joined) setIsJoined(true);
+                    setIsJoined(!!data.joined);
                     if (data.hasDonated) setHasDonated(true);
                 })
                 .catch(() => { });
@@ -122,8 +125,12 @@ export function useJoinedCampaign(campaignId: string) {
             const data = await res.json();
 
             if (res.ok) {
-                alert("Left the campaign successfully!");
-                router.push('/joined');
+                // alert("Left the campaign successfully!");
+                setIsJoined(false);
+                setCampaign((prev: any) => ({
+                    ...prev,
+                    participantsCount: Math.max(0, (prev?.participantsCount || 0) - 1)
+                }));
             } else {
                 alert(data.message || "Error leaving the campaign");
             }
@@ -132,6 +139,38 @@ export function useJoinedCampaign(campaignId: string) {
         } finally {
             setIsLeaving(false);
             setShowLeaveModal(false);
+        }
+    };
+
+    const handleJoin = async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            router.push('/login');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/participants`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ campaignId })
+            });
+
+            if (res.ok) {
+                setIsJoined(true);
+                setCampaign((prev: any) => ({
+                    ...prev,
+                    participantsCount: (prev?.participantsCount || 0) + 1
+                }));
+            } else {
+                const data = await res.json();
+                alert(data.message || "Error joining the campaign");
+            }
+        } catch (err) {
+            alert("Connection error");
         }
     };
 
@@ -145,6 +184,7 @@ export function useJoinedCampaign(campaignId: string) {
         showLeaveModal, setShowLeaveModal,
         isLeaving,
         handleToggleLike,
-        handleLeave
+        handleLeave,
+        handleJoin
     };
 }
