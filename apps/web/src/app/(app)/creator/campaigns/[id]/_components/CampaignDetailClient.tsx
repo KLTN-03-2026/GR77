@@ -25,6 +25,10 @@ import { API_BASE_URL } from '@/lib/constants/endpoints';
 import { CampaignDiscussion } from '@/components/campaign/CampaignDiscussion';
 import { CampaignModals } from '@/app/(app)/home/[id]/_components/CampaignModals';
 import { CreatorTransactionHistory } from '../../components/CreatorTransactionHistory';
+import { CreatorCampaignHeader } from './CreatorCampaignHeader';
+import { CreatorCampaignProgress } from './CreatorCampaignProgress';
+import { CreatorCampaignStats } from './CreatorCampaignStats';
+import { CreatorCampaignNews } from './CreatorCampaignNews';
 
 export default function CampaignDetailClient({ id }: { id: string }) {
     const [campaign, setCampaign] = useState<any>(null);
@@ -34,6 +38,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
     const [withdrawalAmount, setWithdrawalAmount] = useState('');
+    const [showFullDescription, setShowFullDescription] = useState(false);
     const [withdrawalReason, setWithdrawalReason] = useState('');
     const [withdrawalMethod, setWithdrawalMethod] = useState<'WALLET' | 'BANK'>('BANK');
     const [bankName, setBankName] = useState('');
@@ -254,6 +259,22 @@ export default function CampaignDetailClient({ id }: { id: string }) {
         }
     };
 
+    // Auto-slide effect
+    useEffect(() => {
+        if (!campaign) return;
+        const currentImages = campaign.images?.length
+            ? campaign.images.map((img: any) => img.url).filter(Boolean)
+            : (campaign.coverImageUrl ? [campaign.coverImageUrl] : []);
+
+        if (currentImages.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentImageIndex((prev) => (prev + 1) % currentImages.length);
+        }, 3000); // 3 seconds
+
+        return () => clearInterval(interval);
+    }, [campaign]);
+
     if (isLoading) {
         return (
             <div className="w-full flex items-center justify-center py-20">
@@ -316,11 +337,11 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                 </Link>
                 <div className="flex gap-2">
                     <button className="p-2.5 rounded-2xl border border-gray-100 bg-white shadow-sm hover:bg-gray-50 transition-all active:scale-95 group" title="Chia sẻ">
-                        <ShareIcon className="h-4 w-4 text-gray-500 group-hover:text-blue-500 transition-colors" />
+                        <ShareIcon className="h-4 w-4 text-gray-500 group-hover:text-[#0891B2] transition-colors" />
                     </button>
                     <Link
                         href={`/creator/campaigns/${id}/edit`}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-blue-100 border-2 border-blue-500 text-blue-700 font-bold text-sm shadow-sm hover:bg-blue-200 transition-all active:scale-95"
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0891B2]/5 border-2 border-[#0891B2] text-[#0891B2] font-bold text-sm shadow-sm hover:bg-[#0891B2] hover:text-white transition-all active:scale-95"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -330,87 +351,112 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-                {/* Left Column: Cover, Info, Comments */}
-                <div className="lg:col-span-8 space-y-8">
+            <div className="space-y-6">
+                {/* Row 1: Image & Header */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-4">
+                        <div className="relative aspect-square rounded-xl overflow-hidden shadow-md ring-1 ring-black/5 group">
+                            {images.length > 0 ? (
+                                <>
+                                    <img
+                                        src={images[currentImageIndex]}
+                                        alt={campaign.title || 'Campaign image'}
+                                        className="w-full h-full object-cover transition-all duration-500"
+                                    />
+                                    {images.length > 1 && (
+                                        <>
+                                            <button
+                                                onClick={prevImage}
+                                                className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 bg-black/20 backdrop-blur-md hover:bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all border border-white/20"
+                                            >
+                                                <ChevronLeftIcon className="h-5 w-5 stroke-[3]" />
+                                            </button>
+                                            <button
+                                                onClick={nextImage}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 bg-black/20 backdrop-blur-md hover:bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all border border-white/20"
+                                            >
+                                                <ChevronRightIcon className="h-5 w-5 stroke-[3]" />
+                                            </button>
+                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                                                {images.map((_: string, i: number) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`h-1.5 rounded-full transition-all ${i === currentImageIndex ? 'w-6 bg-white shadow-sm' : 'w-1.5 bg-white/50 hover:bg-white'}`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+                                    <PhotoIcon className="h-20 w-20 text-gray-200" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="lg:col-span-8">
+                        <CreatorCampaignHeader campaign={campaign} setWithdrawalModalOpen={setWithdrawalModalOpen} />
+                    </div>
+                </div>
 
-                    {/* Cover Image Slider */}
-                    <div className="relative aspect-video rounded-xl overflow-hidden shadow-xl ring-1 ring-black/5 group">
-                        {images.length > 0 ? (
+                {/* Row 2: Description */}
+                <div className="py-2">
+                    <h3 className="text-lg font-black text-gray-900 italic mb-4">
+                        Campaign Description
+                    </h3>
+                    <div className="relative">
+                        <p className={`text-gray-600 text-justify leading-relaxed text-sm whitespace-pre-wrap font-medium transition-all duration-500 ease-in-out overflow-hidden ${!showFullDescription && (campaign.description?.length > 800) ? 'max-h-[150px]' : 'max-h-[2000px]'}`}>
+                            {campaign.description || 'No description provided for this campaign yet.'}
+                        </p>
+
+                        {campaign.description?.length > 800 && (
                             <>
-                                <img
-                                    src={images[currentImageIndex]}
-                                    alt={campaign.title || 'Campaign image'}
-                                    className="w-full h-full object-cover transition-all duration-500"
-                                />
-                                {images.length > 1 && (
-                                    <>
-                                        <button
-                                            onClick={prevImage}
-                                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 bg-black/20 backdrop-blur-md hover:bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all border border-white/20"
-                                        >
-                                            <ChevronLeftIcon className="h-5 w-5 stroke-[3]" />
-                                        </button>
-                                        <button
-                                            onClick={nextImage}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 bg-black/20 backdrop-blur-md hover:bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all border border-white/20"
-                                        >
-                                            <ChevronRightIcon className="h-5 w-5 stroke-[3]" />
-                                        </button>
-                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                                            {images.map((_: string, i: number) => (
-                                                <div
-                                                    key={i}
-                                                    className={`h-1.5 rounded-full transition-all ${i === currentImageIndex ? 'w-6 bg-white shadow-sm' : 'w-1.5 bg-white/50 hover:bg-white'}`}
-                                                />
-                                            ))}
-                                        </div>
-                                    </>
+                                {!showFullDescription && (
+                                    <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
                                 )}
+                                <button
+                                    onClick={() => setShowFullDescription(!showFullDescription)}
+                                    className="text-gray-500 font-bold text-xs mt-2 hover:text-[#0891B2] transition-colors relative z-10"
+                                >
+                                    {showFullDescription ? 'Collapse' : 'See more...'}
+                                </button>
                             </>
-                        ) : (
-                            <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-                                <PhotoIcon className="h-20 w-20 text-gray-200" />
-                            </div>
                         )}
-                        <div className="absolute top-6 left-6">
-                            <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 border border-blue-50/50">
-                                <TagIcon className="h-4 w-4 text-blue-500 font-bold" strokeWidth={2.5} />
-                                <span className="text-xs font-bold text-gray-800 uppercase tracking-widest">{campaign.category || 'GENERAL'}</span>
-                            </div>
-                        </div>
                     </div>
+                </div>
 
-                    {/* Campaign Info */}
-                    <div className="bg-white rounded-xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-                        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight mb-4 tracking-tight">
-                            {campaign.title}
-                        </h1>
-
-                        <div className="flex flex-wrap items-center gap-6 mb-8 py-5 border-b border-gray-50">
-                            <div className="flex items-center gap-2">
-                                <MapPinIcon className="h-5 w-5 text-gray-400" />
-                                <span className="text-sm font-bold text-gray-600">{campaign.locationText || 'Unknown'}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <CalendarIcon className="h-5 w-5 text-gray-400" />
-                                <span className="text-sm font-bold text-gray-600">Created Date: {campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : '---'}</span>
-                            </div>
-                        </div>
-
-                        <div className="prose prose-slate max-w-none">
-                            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-                                Campaign Description
-                            </h3>
-                            <p className="text-gray-600 leading-relaxed text-base whitespace-pre-wrap font-medium">
-                                {campaign.description || 'No description provided for this campaign yet.'}
-                            </p>
-                        </div>
+                {/* Row 3: Progress & Stats */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-8">
+                        <CreatorCampaignProgress campaign={campaign} progress={progress} />
                     </div>
+                    <div className="lg:col-span-4">
+                        <CreatorCampaignStats campaign={campaign} />
+                    </div>
+                </div>
 
+                {/* Row 4: News & History */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-6">
+                        <CreatorCampaignNews
+                            campaign={campaign}
+                            updateTitle={updateTitle}
+                            setUpdateTitle={setUpdateTitle}
+                            updateContent={updateContent}
+                            setUpdateContent={setUpdateContent}
+                            isPostingUpdate={isPostingUpdate}
+                            handlePostUpdate={handlePostUpdate}
+                            creatorAvatar={creatorAvatar}
+                        />
+                    </div>
+                    <div className="lg:col-span-6">
+                        <CreatorTransactionHistory campaignId={id} />
+                    </div>
+                </div>
 
-                    {/* Discussion Section */}
+                {/* Row 5: Discussion */}
+                <div className="mt-8">
                     <CampaignDiscussion
                         comments={comments}
                         campaign={campaign}
@@ -426,342 +472,171 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         setReportModalOpen={setReportModalOpen}
                         getAvatar={getAvatar}
                     />
-
-                    {/* Transaction History Section */}
-                    <CreatorTransactionHistory campaignId={id} />
-
                 </div>
+            </div>
 
-                {/* Right Column: Status, Funding, Wallet Button, Creator */}
-                <div className="lg:col-span-4">
-                    {/* Status and Funding Card */}
-                    <div className="bg-white rounded-xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(8,112,184,0.07)] border border-blue-50/50">
-                        <div className="flex justify-between items-center mb-10">
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Current Status</span>
-                            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black flex items-center gap-2 shadow-sm border ${campaign.status === 'ACTIVE'
-                                ? 'bg-green-50 text-green-600 border-green-100'
-                                : campaign.status === 'PENDING' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' : 'bg-red-50 text-red-600 border-red-100'
-                                }`}>
-                                <div className={`h-2 w-2 rounded-full animate-pulse ${campaign.status === 'ACTIVE' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                                {campaign.status === 'ACTIVE' ? 'ACTIVE' : campaign.status}
-                            </div>
-                        </div>
+            {/* Withdrawal Modal */}
+            {withdrawalModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+                        onClick={() => !isSubmittingWithdrawal && setWithdrawalModalOpen(false)}
+                    ></div>
 
-                        <div className="mb-8">
-                            <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-4xl font-black text-gray-900 tracking-tight">{Number(campaign.currentRaisedAmount || 0).toLocaleString()}</span>
-                                <span className="text-xs font-black text-gray-400 uppercase">VND</span>
-                            </div>
-                            <p className="text-[13px] font-bold text-gray-500 leading-relaxed">
-                                raised out of <span className="font-black text-gray-900">{Number(campaign.fundingGoalAmount || 0).toLocaleString()} VND</span> funding goal
+                    {/* Modal Content */}
+                    <div className="bg-white rounded-3xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl relative z-10 animate-in fade-in zoom-in duration-300 border border-gray-100 flex flex-col">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white flex-shrink-0">
+                            <h3 className="text-xl font-bold flex items-center gap-3 uppercase tracking-wider">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.55-.22-2.203-.702-1.172-.879-1.172-2.303 0-3.182 1.172-.879 3.07-.879 4.242 0 .493.37.79.88.879 1.414" />
+                                </svg>
+                                Request Withdrawal
+                            </h3>
+                            <p className="text-green-50 text-xs mt-2 font-bold uppercase tracking-widest opacity-80">
+                                Chiến dịch: {campaign.title}
                             </p>
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="w-full h-3.5 bg-gray-100 rounded-full mb-8 overflow-hidden p-0.5 border border-gray-50">
-                            <div
-                                className="h-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-1000 ease-out"
-                                style={{ width: `${Math.min(progress, 100)}%` }}
-                            ></div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mb-8">
-                            <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100 text-center hover:bg-gray-50 transition-all flex flex-col justify-center">
-                                <div className="text-lg font-black text-blue-600 mb-1">{campaign.participantsCount || 0}</div>
-                                <div className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest">Joined</div>
-                            </div>
-                            <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100 text-center hover:bg-gray-50 transition-all flex flex-col justify-center">
-                                <div className="text-lg font-black text-gray-900 mb-1">
-                                    {campaign.endAt ? Math.max(0, Math.ceil((new Date(campaign.endAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : '---'}
-                                </div>
-                                <div className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest">Days left</div>
-                            </div>
-                        </div>
-
-                        {/* Public Link Button */}
-                        <div className="space-y-3 mb-8">
-                            <Link
-                                href={`/home/${campaign.id}?from=creator/campaigns`}
-                                className="w-full bg-gray-50 border-2 border-cyan-500 text-cyan-700 hover:bg-cyan-100 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
-                            >
-                                <ShareIcon className="h-5 w-5" />
-                                View Public Page
-                            </Link>
-
-                            <button
-                                onClick={() => setWithdrawalModalOpen(true)}
-                                className="w-full bg-green-50 border-2 border-green-500 hover:bg-green-200 text-green-700 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.55-.22-2.203-.702-1.172-.879-1.172-2.303 0-3.182 1.172-.879 3.07-.879 4.242 0 .493.37.79.88.879 1.414m-7.333 4.19-.068.581c-.135.53-.418 1.012-.879 1.414m-12.019-12 1.642 1.642" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 8.25V7.5A2.25 2.25 0 0 0 12.75 5.25h-1.5A2.25 2.25 0 0 0 9 7.5v.75m6 7.5V16.5a2.25 2.25 0 0 1-2.25 2.25h-1.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
-                                </svg>
-                                Request Withdrawal
-                            </button>
-                        </div>
-
-                        <div className="pt-8 border-t border-gray-100 text-left">
-                            <div className="flex items-center gap-4 group">
-                                <div className="relative">
-                                    {creatorAvatar ? (
-                                        <img src={creatorAvatar} alt={creatorName} className="h-14 w-14 rounded-full object-cover shadow-lg border-2 border-white transition-transform group-hover:scale-105 bg-white" />
-                                    ) : (
-                                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center shadow-lg border-2 border-white transition-transform group-hover:scale-105">
-                                            <UserIcon className="w-7 h-7 text-cyan-300" />
-                                        </div>
-                                    )}
-                                    {campaign.creatorUser?.isVerified && (
-                                        <div className="absolute -bottom-1.5 -right-1.5 bg-blue-500 rounded-full p-1 shadow-md border-2 border-white">
-                                            <CheckBadgeIcon className="h-3.5 w-3.5 text-white" />
-                                        </div>
-                                    )}
-                                </div>
+                        {/* Form */}
+                        <form onSubmit={handleWithdrawalSubmit} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
+                            {/* Tab Picker */}
+                            <div className="bg-green-50 p-4 rounded-2xl border border-green-100 flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-xl">🏦</div>
                                 <div>
-                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Organizer</div>
-                                    <div className="text-sm font-black text-gray-900 group-hover:text-blue-500 transition-colors">{creatorName}</div>
+                                    <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-0.5">Phương thức rút tiền</p>
+                                    <p className="text-base font-black text-green-900">Chuyển khoản Ngân hàng (VND)</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Updates Section - Moved to Sidebar */}
-                    <div className="bg-white rounded-xl p-6 sm:p-8 mt-8 shadow-[0_20px_50px_rgba(8,112,184,0.07)] border border-blue-50/50">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="p-2.5 bg-blue-50 rounded-xl">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 text-blue-500">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
-                                </svg>
-                            </div>
                             <div>
-                                <h2 className="text-lg font-bold text-gray-900 leading-none mb-1">Post News</h2>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                    Notify your supporters
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 mb-8">
-                            <div className="flex gap-3">
-                                {creatorAvatar ? (
-                                    <img src={creatorAvatar} alt="Your Avatar" className="h-10 w-10 rounded-full object-cover shadow-sm bg-white" />
-                                ) : (
-                                    <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
-                                        <UserIcon className="w-5 h-5 text-blue-300" />
-                                    </div>
-                                )}
-                                <input
-                                    type="text"
-                                    value={updateTitle}
-                                    onChange={(e) => setUpdateTitle(e.target.value)}
-                                    placeholder="News Title..."
-                                    className="flex-1 bg-gray-50 border border-gray-100 rounded-xl py-2.5 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold"
-                                />
-                            </div>
-                            <textarea
-                                value={updateContent}
-                                onChange={(e) => setUpdateContent(e.target.value)}
-                                placeholder="Write your news here..."
-                                rows={3}
-                                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-none mb-3"
-                            ></textarea>
-                            <button
-                                onClick={handlePostUpdate}
-                                disabled={isPostingUpdate || !updateTitle.trim() || !updateContent.trim()}
-                                className="w-full bg-blue-500 border-2 border-blue-500 text-white text-[11px] font-black py-3.5 rounded-full hover:bg-blue-600 transition-all shadow-lg shadow-blue-100 active:scale-95 uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isPostingUpdate ? (
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                ) : (
-                                    'Publish News'
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Render News History List */}
-                        <div className="space-y-4 pt-6 border-t border-gray-100">
-                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">News History</h3>
-                            {campaign?.news?.length > 0 ? (
-                                <div className="space-y-4">
-                                    {campaign.news.map((item: any) => (
-                                        <div key={item.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                            <p className="text-[10px] uppercase font-bold text-blue-500 tracking-widest mb-1.5">
-                                                {new Date(item.createdAt).toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                            </p>
-                                            <h4 className="text-sm font-bold text-gray-900 mb-2">{item.title}</h4>
-                                            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{item.content}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-xs text-gray-400 italic text-center py-4">Chưa có bản tin nào được đăng.</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Withdrawal Modal */}
-                {withdrawalModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        {/* Backdrop */}
-                        <div
-                            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
-                            onClick={() => !isSubmittingWithdrawal && setWithdrawalModalOpen(false)}
-                        ></div>
-
-                        {/* Modal Content */}
-                        <div className="bg-white rounded-3xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl relative z-10 animate-in fade-in zoom-in duration-300 border border-gray-100 flex flex-col">
-                            {/* Header */}
-                            <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white flex-shrink-0">
-                                <h3 className="text-xl font-bold flex items-center gap-3 uppercase tracking-wider">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.55-.22-2.203-.702-1.172-.879-1.172-2.303 0-3.182 1.172-.879 3.07-.879 4.242 0 .493.37.79.88.879 1.414" />
-                                    </svg>
-                                    Request Withdrawal
-                                </h3>
-                                <p className="text-green-50 text-xs mt-2 font-bold uppercase tracking-widest opacity-80">
-                                    Chiến dịch: {campaign.title}
-                                </p>
-                            </div>
-
-                            {/* Form */}
-                            <form onSubmit={handleWithdrawalSubmit} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
-                                {/* Tab Picker */}
-                                <div className="bg-green-50 p-4 rounded-2xl border border-green-100 flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-xl">🏦</div>
-                                    <div>
-                                        <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-0.5">Phương thức rút tiền</p>
-                                        <p className="text-base font-black text-green-900">Chuyển khoản Ngân hàng (VND)</p>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                                        Số tiền muốn rút (VND)
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            value={withdrawalAmount}
-                                            onChange={(e) => {
-                                                const value = e.target.value.replace(/[^0-9]/g, '');
-                                                setWithdrawalAmount(value);
-                                            }}
-                                            placeholder="Enter amount..."
-                                            className={`w-full bg-white border-2 rounded-2xl py-3.5 px-6 text-lg font-black outline-none transition-all placeholder-gray-300 ${Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))
-                                                ? 'text-red-600 border-red-500 focus:ring-2 focus:ring-red-100'
-                                                : 'text-black border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'
-                                                }`}
-                                            required
-                                        />
-                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-300">VND</span>
-                                    </div>
-                                    <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center px-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                                Số dư quỹ hiện tại
-                                            </span>
-                                            <span className="text-lg font-black text-green-600">
-                                                {Number(campaign.currentBalance || 0).toLocaleString()} VND
-                                            </span>
-                                        </div>
-                                        <div className="text-right flex flex-col items-end">
-                                            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
-                                                Tương đương POL
-                                            </span>
-                                            <span className="text-sm font-black text-blue-600 flex items-center gap-1">
-                                                <span className="text-base">💎</span>
-                                                {(Number(campaign.currentBalance || 0) / 1000).toFixed(2)} POL
-                                            </span>
-                                        </div>
-                                    </div>
-                                    {Number(withdrawalAmount) > Number(campaign.currentBalance || 0) && (
-                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest animate-pulse px-1">
-                                            ⚠️ Số tiền rút vượt quá số dư khả dụng trong quỹ
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Tên ngân hàng</label>
-                                        <input
-                                            type="text"
-                                            value={bankName}
-                                            onChange={(e) => setBankName(e.target.value)}
-                                            placeholder="Ví dụ: Vietcombank"
-                                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Số tài khoản</label>
-                                        <input
-                                            type="text"
-                                            value={accountNumber}
-                                            onChange={(e) => setAccountNumber(e.target.value)}
-                                            placeholder="Số tài khoản..."
-                                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Tên chủ tài khoản</label>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                    Số tiền muốn rút (VND)
+                                </label>
+                                <div className="relative">
                                     <input
                                         type="text"
-                                        value={accountOwner}
-                                        onChange={(e) => setAccountOwner(e.target.value)}
-                                        placeholder="VD: NGUYEN VAN A"
-                                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400 uppercase"
+                                        inputMode="numeric"
+                                        value={withdrawalAmount}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/[^0-9]/g, '');
+                                            setWithdrawalAmount(value);
+                                        }}
+                                        placeholder="Enter amount..."
+                                        className={`w-full bg-white border-2 rounded-2xl py-3.5 px-6 text-lg font-black outline-none transition-all placeholder-gray-300 ${Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))
+                                            ? 'text-red-600 border-red-500 focus:ring-2 focus:ring-red-100'
+                                            : 'text-black border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'
+                                            }`}
+                                        required
+                                    />
+                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-300">VND</span>
+                                </div>
+                                <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center px-4">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Số dư quỹ hiện tại
+                                        </span>
+                                        <span className="text-lg font-black text-green-600">
+                                            {Number(campaign.currentBalance || 0).toLocaleString()} VND
+                                        </span>
+                                    </div>
+                                    <div className="text-right flex flex-col items-end">
+                                        <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+                                            Tương đương POL
+                                        </span>
+                                        <span className="text-sm font-black text-blue-600 flex items-center gap-1">
+                                            <span className="text-base">💎</span>
+                                            {(Number(campaign.currentBalance || 0) / 1000).toFixed(2)} POL
+                                        </span>
+                                    </div>
+                                </div>
+                                {Number(withdrawalAmount) > Number(campaign.currentBalance || 0) && (
+                                    <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest animate-pulse px-1">
+                                        ⚠️ Số tiền rút vượt quá số dư khả dụng trong quỹ
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Tên ngân hàng</label>
+                                    <input
+                                        type="text"
+                                        value={bankName}
+                                        onChange={(e) => setBankName(e.target.value)}
+                                        placeholder="Ví dụ: Vietcombank"
+                                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400"
                                         required
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2.5">
-                                        Lý do rút tiền
-                                    </label>
-                                    <textarea
-                                        value={withdrawalReason}
-                                        onChange={(e) => setWithdrawalReason(e.target.value)}
-                                        placeholder="Mô tả mục đích giải ngân..."
-                                        rows={3}
-                                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400 resize-none"
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Số tài khoản</label>
+                                    <input
+                                        type="text"
+                                        value={accountNumber}
+                                        onChange={(e) => setAccountNumber(e.target.value)}
+                                        placeholder="Số tài khoản..."
+                                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400"
                                         required
-                                    ></textarea>
+                                    />
                                 </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Tên chủ tài khoản</label>
+                                <input
+                                    type="text"
+                                    value={accountOwner}
+                                    onChange={(e) => setAccountOwner(e.target.value)}
+                                    placeholder="VD: NGUYEN VAN A"
+                                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400 uppercase"
+                                    required
+                                />
+                            </div>
 
-                                <div className="flex gap-4 pt-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setWithdrawalModalOpen(false)}
-                                        disabled={isSubmittingWithdrawal}
-                                        className="flex-1 px-4 py-4 bg-gray-100 hover:bg-gray-200 text-gray-900 text-[11px] font-black rounded-2xl transition-all uppercase tracking-widest active:scale-95 disabled:opacity-50"
-                                    >
-                                        Hủy bỏ
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmittingWithdrawal || Number(withdrawalAmount) <= 0 || Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))}
-                                        className={`flex-1 px-4 py-4 text-white text-[11px] font-black rounded-2xl shadow-lg transition-all uppercase tracking-widest active:scale-95 flex items-center justify-center gap-2 ${isSubmittingWithdrawal || Number(withdrawalAmount) <= 0 || Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))
-                                            ? 'bg-gray-300 shadow-none cursor-not-allowed opacity-50'
-                                            : 'bg-green-600 hover:bg-black shadow-green-100'
-                                            }`}
-                                    >
-                                        {isSubmittingWithdrawal ? (
-                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        ) : (
-                                            'Gửi yêu cầu rút tiền'
-                                        )}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2.5">
+                                    Lý do rút tiền
+                                </label>
+                                <textarea
+                                    value={withdrawalReason}
+                                    onChange={(e) => setWithdrawalReason(e.target.value)}
+                                    placeholder="Mô tả mục đích giải ngân..."
+                                    rows={3}
+                                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400 resize-none"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div className="flex gap-4 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setWithdrawalModalOpen(false)}
+                                    disabled={isSubmittingWithdrawal}
+                                    className="flex-1 px-4 py-4 bg-gray-100 hover:bg-gray-200 text-gray-900 text-[11px] font-black rounded-2xl transition-all uppercase tracking-widest active:scale-95 disabled:opacity-50"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingWithdrawal || Number(withdrawalAmount) <= 0 || Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))}
+                                    className={`flex-1 px-4 py-4 text-white text-[11px] font-black rounded-2xl shadow-lg transition-all uppercase tracking-widest active:scale-95 flex items-center justify-center gap-2 ${isSubmittingWithdrawal || Number(withdrawalAmount) <= 0 || Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))
+                                        ? 'bg-gray-300 shadow-none cursor-not-allowed opacity-50'
+                                        : 'bg-green-600 hover:bg-black shadow-green-100'
+                                        }`}
+                                >
+                                    {isSubmittingWithdrawal ? (
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    ) : (
+                                        'Gửi yêu cầu rút tiền'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                )
-                }
-            </div >
+                </div>
+            )
+            }
 
             {/* Reuse Modals for Report etc. */}
             < CampaignModals

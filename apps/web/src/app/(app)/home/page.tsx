@@ -11,7 +11,6 @@ import {
   ArrowTrendingUpIcon,
   ArrowRightIcon,
   MagnifyingGlassIcon,
-  StarIcon,
   BriefcaseIcon
 } from '@heroicons/react/24/outline';
 import { useGlobalAuth } from '@/contexts/AuthContext';
@@ -42,6 +41,11 @@ export default function CampaignsPage() {
   const [myCampaigns, setMyCampaigns] = useState<any[]>([]);
   const [trendingCampaigns, setTrendingCampaigns] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Stats counts
+  const [totalFavoritesCount, setTotalFavoritesCount] = useState(0);
+  const [totalJoinedCount, setTotalJoinedCount] = useState(0);
+  const [totalMyCampaignsCount, setTotalMyCampaignsCount] = useState(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -78,10 +82,25 @@ export default function CampaignsPage() {
             fetch(`${apiUrl}/campaigns/me/list?limit=4`, { headers }),
           ]);
 
-          if (favRes.ok) setFavoriteCampaigns(mapList(await favRes.json()));
+          if (favRes.ok) {
+            const data = await favRes.json();
+            const items = mapList(data);
+            setFavoriteCampaigns(items);
+            setTotalFavoritesCount(data.meta?.total ?? data.meta?.totalItems ?? data.total ?? (Array.isArray(data) ? data.length : items.length));
+          }
           if (actRes.ok) setActivityHistory(mapList(await actRes.json()));
-          if (joinRes.ok) setJoinedCampaigns(mapList(await joinRes.json()));
-          if (myRes.ok) setMyCampaigns(mapList(await myRes.json()));
+          if (joinRes.ok) {
+            const data = await joinRes.json();
+            const items = mapList(data);
+            setJoinedCampaigns(items);
+            setTotalJoinedCount(data.meta?.total ?? data.meta?.totalItems ?? data.total ?? (Array.isArray(data) ? data.length : items.length));
+          }
+          if (myRes.ok) {
+            const data = await myRes.json();
+            const items = mapList(data);
+            setMyCampaigns(items);
+            setTotalMyCampaignsCount(data.meta?.total ?? data.meta?.totalItems ?? data.total ?? (Array.isArray(data) ? data.length : items.length));
+          }
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
@@ -159,9 +178,9 @@ export default function CampaignsPage() {
 
           <div className="flex-shrink-0 flex flex-wrap gap-3 justify-center">
             {[
-              { icon: HeartIcon, val: favoriteCampaigns.length, color: 'text-pink-400' },
-              { icon: UserGroupIcon, val: joinedCampaigns.length, color: 'text-emerald-400' },
-              { icon: BriefcaseIcon, val: myCampaigns.length, color: 'text-orange-300' }
+              { icon: HeartIcon, val: totalFavoritesCount, color: 'text-pink-400' },
+              { icon: UserGroupIcon, val: totalJoinedCount, color: 'text-emerald-400' },
+              { icon: BriefcaseIcon, val: totalMyCampaignsCount, color: 'text-orange-300' }
             ].map((stat, i) => (
               <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 p-3 px-5 rounded-2xl flex items-center gap-2">
                 <stat.icon className={`w-4 h-4 ${stat.color}`} />

@@ -90,7 +90,7 @@ export default function FavoriteButton({
                 inline-flex items-center justify-center
                 rounded-full font-bold
                 border-2 border-pink-400
-                transition-all duration-200 select-none active:scale-95
+                select-none active:scale-95
                 ${loading ? 'opacity-60 cursor-wait' : 'cursor-pointer'}
                 ${favorited
                     ? 'bg-pink-500 text-white hover:bg-pink-600'
