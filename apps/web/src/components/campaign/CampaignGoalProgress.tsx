@@ -146,7 +146,7 @@ export function CampaignGoalProgress({
                             ) : (
                                 <button
                                     onClick={() => setDonateOpen(true)}
-                                    className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg shadow-yellow-100/50"
+                                    className="flex-1 py-2.5 sm:py-3 border-2 border-[#FACC15] bg-[#FACC15]/10 hover:bg-[#FACC15] hover:text-white text-[#FACC15] font-black text-sm sm:text-base rounded-full transition-all active:scale-95"
                                 >
                                     Donate Now
                                 </button>
