@@ -160,7 +160,7 @@ export default function Sidebar({ isOpen, onClose, menuItems, roleLabel }: Sideb
       <aside
         className={`
           hidden md:fixed md:bottom-0 md:left-0 md:flex md:w-64 md:flex-col
-          transition-all duration-300 z-30 bg-white border-r border-gray-200/80
+          z-30 bg-white border-r border-gray-200/80
           ${isOpen ? 'md:translate-x-0' : 'md:-translate-x-full'}
         `}
         style={{ top: 'var(--header-h)' }}

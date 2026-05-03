@@ -77,7 +77,7 @@ export default function AppLayout({
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
 
-        <div className={`flex flex-col min-h-dvh transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-0'}`}>
+        <div className={`flex flex-col min-h-dvh ${sidebarOpen ? 'md:pl-64' : 'md:pl-0'}`}>
 
           <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isOpen={sidebarOpen} />
 

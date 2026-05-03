@@ -152,7 +152,7 @@ export default function ActivityPage() {
                         placeholder="Search history"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-1.5 bg-gray-50 border-2 border-gray-300 rounded-2xl text-[14px] text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
+                        className="w-full pl-11 pr-4 py-1.5 bg-gray-50 border-2 border-gray-300 rounded-2xl text-[14px] text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-cyan-500 outline-none transition-colors"
                     />
                 </div>
             </div>
@@ -254,7 +254,7 @@ export default function ActivityPage() {
                                                 <div className="flex items-stretch md:gap-[1cqi] gap-2 w-full md:w-auto">
                                                     <Link
                                                         href={`/home/${campaign.id}?from=activity`}
-                                                        className="inline-flex items-center justify-center flex-1 md:flex-none md:w-[13cqi] md:h-[3.5cqi] md:px-[1cqi] md:py-[0.5cqi] md:text-[1.3cqi] h-9 text-xs font-bold bg-white rounded-full border-2 shadow-sm transition-all duration-200 active:scale-95"
+                                                        className="inline-flex items-center justify-center flex-1 md:flex-none md:w-[13cqi] md:h-[3.5cqi] md:px-[1cqi] md:py-[0.5cqi] md:text-[1.3cqi] h-9 text-xs font-bold bg-white rounded-full border-2 shadow-sm active:scale-95"
                                                         style={{
                                                             color: TEAL,
                                                             borderColor: TEAL
@@ -307,7 +307,7 @@ export default function ActivityPage() {
                                     <button
                                         key={idx}
                                         onClick={() => handlePageChange(item)}
-                                        className="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all"
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors"
                                         style={
                                             currentPage === item
                                                 ? { backgroundColor: TEAL, color: '#fff' }
@@ -348,7 +348,7 @@ export default function ActivityPage() {
                     <p className="text-gray-500 mb-6">Bạn chưa xem chiến dịch nào.</p>
                     <Link
                         href="/list"
-                        className="px-8 py-3 text-white font-bold rounded-full shadow-lg hover:scale-105 transition-all inline-block"
+                        className="px-8 py-3 text-white font-bold rounded-full shadow-lg hover:scale-105 transition-colors inline-block"
                         style={{ backgroundColor: TEAL }}
                     >
                         Khám phá ngay

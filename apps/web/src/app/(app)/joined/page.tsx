@@ -267,7 +267,7 @@ export default function JoinedCampaignsPage() {
                                                 <div className="flex items-stretch md:gap-[1cqi] gap-2 w-full md:w-auto">
                                                     <Link
                                                         href={`/joined/${campaign.id}`}
-                                                        className="inline-flex items-center justify-center flex-1 md:flex-none md:w-[13cqi] md:h-[3.5cqi] md:px-[1cqi] md:py-[0.5cqi] md:text-[1.3cqi] h-9 text-xs font-bold bg-white rounded-full border-2 shadow-sm transition-all duration-200 active:scale-95"
+                                                        className="inline-flex items-center justify-center flex-1 md:flex-none md:w-[13cqi] md:h-[3.5cqi] md:px-[1cqi] md:py-[0.5cqi] md:text-[1.3cqi] h-9 text-xs font-bold bg-white rounded-full border-2 shadow-sm active:scale-95"
                                                         style={{
                                                             color: TEAL,
                                                             borderColor: TEAL

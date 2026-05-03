@@ -39,7 +39,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             <button
                 disabled={currentPage === 1}
                 onClick={() => onPageChange(currentPage - 1)}
-                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-30"
             >
                 <ChevronLeftIcon className="w-4 h-4" />
             </button>
@@ -49,7 +49,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
                     <button
                         key={idx}
                         onClick={() => onPageChange(item)}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all"
+                        className="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold"
                         style={
                             currentPage === item
                                 ? { backgroundColor: TEAL, color: '#fff' }
@@ -76,7 +76,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             <button
                 disabled={currentPage === totalPages}
                 onClick={() => onPageChange(currentPage + 1)}
-                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-30"
             >
                 <ChevronRightIcon className="w-4 h-4" />
             </button>
