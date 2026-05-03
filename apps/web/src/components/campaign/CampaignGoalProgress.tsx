@@ -109,16 +109,16 @@ export function CampaignGoalProgress({
                             {isJoined && !handleLeave ? (
                                 <button
                                     disabled
-                                    className="flex-1 py-2.5 sm:py-3 border-2 border-gray-200 font-black text-sm sm:text-base rounded-full bg-gray-50 text-gray-400 cursor-not-allowed shadow-none"
+                                    className="flex-1 py-2.5 sm:py-3 border border-gray-200 font-black text-sm sm:text-base rounded-full bg-gray-50 text-gray-400 cursor-not-allowed"
                                 >
                                     Joined
                                 </button>
                             ) : (
                                 <button
                                     onClick={isJoined ? (hasDonated ? () => alert("Bạn không thể rời chiến dịch vì đã thực hiện quyên góp thành công.") : handleLeave) : handleJoin}
-                                    className={`flex-1 py-2.5 sm:py-3 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg ${isJoined
-                                        ? (hasDonated ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed opacity-70" : "bg-white border-red-500 text-red-500 hover:bg-red-50 shadow-red-100/50")
-                                        : "bg-white border-pink-500 text-pink-500 hover:bg-pink-50 shadow-pink-100/50"
+                                    className={`flex-1 py-2.5 sm:py-3 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 ${isJoined
+                                        ? (hasDonated ? "bg-gray-100 border-2 border-gray-300 text-gray-400 cursor-not-allowed opacity-70" : "bg-white border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white")
+                                        : "bg-[#0891B2]/10 text-[#0891B2] border-[#0891B2] border-2 hover:bg-[#0891B2] hover:text-white"
                                         }`}
                                 >
                                     {isJoined ? (hasDonated ? "Donated Member" : "Leave") : "Join Free"}
@@ -126,9 +126,9 @@ export function CampaignGoalProgress({
                             )}
                             <button
                                 onClick={() => setDonateOpen(true)}
-                                className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full transition-all active:scale-95"
+                                className="flex-1 py-2.5 sm:py-3 border-2 border-[#FACC15] bg-[#FACC15]/10 hover:bg-[#FACC15] hover:text-white text-[#FACC15] font-black text-sm sm:text-base rounded-full transition-all active:scale-95"
                             >
-                                Donate
+                                Donate Now
                             </button>
                         </div>
                     </div>
@@ -136,7 +136,7 @@ export function CampaignGoalProgress({
                     <div className="w-full shrink-0 pt-6 flex justify-center">
                         <a
                             href={`/creator/campaigns/${campaignId}`}
-                            className="w-full sm:w-auto px-8 py-3 rounded-full font-bold text-cyan-600 border border-cyan-600 bg-cyan-50 hover:bg-cyan-100 text-sm transition-all shadow-sm flex items-center justify-center gap-2 active:scale-95"
+                            className="w-full sm:w-auto px-8 py-3 rounded-full font-black text-[#0891B2] border-2 border-[#0891B2] bg-[#0891B2]/10 hover:bg-[#0891B2] hover:text-white text-sm transition-all flex items-center justify-center gap-2 active:scale-95"
                         >
                             Manage Campaign
                         </a>

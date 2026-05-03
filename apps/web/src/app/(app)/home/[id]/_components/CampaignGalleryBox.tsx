@@ -18,7 +18,7 @@ export function CampaignGalleryBox({
     onReport,
 }: CampaignGalleryBoxProps) {
     return (
-        <div className="bg-white border border-gray-300 shadow-md rounded-[24px] p-2 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border-1 border-gray-300 p-2 overflow-hidden">
             <div className="relative w-full aspect-square">
                 <CampaignHeader
                     title=""

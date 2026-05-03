@@ -63,7 +63,7 @@ export function CampaignHeader({ title, status, images, isCreator, isLiked, onTo
         <section className="w-full h-full">
             {title && <h1 className="text-4xl font-extrabold text-gray-900 mb-6 tracking-tight">{title}</h1>}
             <div
-                className="relative overflow-hidden bg-black w-full h-full group rounded-2xl touch-pan-y"
+                className="relative overflow-hidden bg-black w-full h-full group rounded-xl touch-pan-y"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}

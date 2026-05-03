@@ -73,7 +73,7 @@ export function CampaignDiscussion({
             {/* Header */}
             <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-3">
-                    <MessageSquare className="w-6 h-6 text-blue-500" />
+                    <MessageSquare className="w-6 h-6 text-[#0891B2]" />
                     <h2 className="text-xl italic font-black text-gray-900 tracking-tight">Discussion</h2>
                 </div>
                 <span className="text-[10px] sm:text-[12px] font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
@@ -81,8 +81,7 @@ export function CampaignDiscussion({
                 </span>
             </div>
 
-            {/* Card */}
-            <div className="bg-white overflow-hidden flex flex-col rounded-[20px] sm:rounded-[24px] border border-gray-200 shadow-sm">
+            <div className="bg-white overflow-hidden flex flex-col rounded-xl border border-gray-100 shadow-sm">
                 {/* Scrollable comment list */}
                 <div
                     ref={listRef}
