@@ -57,6 +57,18 @@ export class CampaignsController {
   }
 
   /**
+   * POST /campaigns/:id/close
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.CAMPAIGNS_APPROVE)
+  @Post(':id/close')
+  close(@Param('id') id: string, @Request() req: any) {
+    const adminId = req.user.userId || req.user.sub;
+    return this.campaignsService.close(id, adminId);
+  }
+
+  /**
    * GET /campaigns
    * 
    * Public list of active campaigns

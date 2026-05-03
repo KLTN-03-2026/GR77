@@ -20,9 +20,13 @@ import { EkycModule } from './modules/ekyc/ekyc.module';
 import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.module';
 import { ReportModule } from './modules/report/report.module';
 import { BlockchainModule } from './modules/blockchain/blockchain.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     // Environment configuration (global)
     ConfigModule.forRoot({
       isGlobal: true,
@@ -47,7 +51,8 @@ import { BlockchainModule } from './modules/blockchain/blockchain.module';
     EkycModule,
     AdminDashboardModule,
     ReportModule,
-    BlockchainModule,   // Global — BlockchainService injectable everywhere
+    BlockchainModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

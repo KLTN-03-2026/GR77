@@ -513,6 +513,9 @@ export default function CampaignDetailPage({
                                     isLiked={isLiked}
                                     isCreator={currentUser?.id === campaign?.creatorUserId}
                                     campaignId={campaign?.id}
+                                    status={campaign?.status}
+                                    endAt={campaign?.endAt}
+                                    autoCloseWhenGoalReached={campaign?.autoCloseWhenGoalReached}
                                     setDonateOpen={setDonateOpen}
                                     handleJoin={handleJoin}
                                     handleLeave={() => setShowLeaveModal(true)}

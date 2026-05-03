@@ -135,6 +135,20 @@ export default function AdminCampaignsPage() {
     } catch (err: any) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
+  const handleClose = async (id: string) => {
+    if (!confirm('Bạn có muốn ĐÓNG chiến dịch này không? Sau khi đóng, chiến dịch sẽ không nhận quyên góp nữa.')) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}/close`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAccessToken')}` }
+      });
+      if (!res.ok) throw new Error('Failed to close campaign');
+      await fetchData();
+      setIsDetailOpen(false);
+    } catch (err: any) { alert(err.message); } finally { setIsSubmitting(false); }
+  };
+
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(campaign => {
       const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -287,6 +301,9 @@ export default function AdminCampaignsPage() {
                           <button onClick={() => handleReject(campaign.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><XCircleIcon className="w-5 h-5" /></button>
                         </>
                       )}
+                      {campaign.status === 'ACTIVE' && (
+                        <button onClick={() => handleClose(campaign.id)} className="p-1.5 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" title="Đóng chiến dịch"><XMarkIcon className="w-5 h-5" /></button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -374,8 +391,15 @@ export default function AdminCampaignsPage() {
             </div>
 
             <div className="p-8 bg-gray-50 border-t flex gap-6">
-              <button onClick={() => handleReject(selectedCampaign.id)} disabled={isSubmitting || selectedCampaign.status !== 'PENDING'} className="flex-1 py-5 bg-white border-2 border-red-500 text-red-500 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-50 transition-all disabled:opacity-30">Từ chối</button>
-              <button onClick={() => handleApprove(selectedCampaign.id)} disabled={isSubmitting || selectedCampaign.status !== 'PENDING'} className="flex-1 py-5 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black shadow-xl shadow-blue-900/10 transition-all disabled:opacity-30">Phê duyệt</button>
+              {selectedCampaign.status === 'PENDING' && (
+                <>
+                  <button onClick={() => handleReject(selectedCampaign.id)} disabled={isSubmitting} className="flex-1 py-5 bg-white border-2 border-red-500 text-red-500 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-50 transition-all">Từ chối</button>
+                  <button onClick={() => handleApprove(selectedCampaign.id)} disabled={isSubmitting} className="flex-1 py-5 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black shadow-xl shadow-blue-900/10 transition-all">Phê duyệt</button>
+                </>
+              )}
+              {selectedCampaign.status === 'ACTIVE' && (
+                <button onClick={() => handleClose(selectedCampaign.id)} disabled={isSubmitting} className="flex-1 py-5 bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-700 shadow-xl shadow-red-900/10 transition-all">Đóng chiến dịch ngay</button>
+              )}
             </div>
           </div>
         </div>
