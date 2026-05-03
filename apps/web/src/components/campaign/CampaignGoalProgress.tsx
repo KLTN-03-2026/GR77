@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import FavoriteButton from "./FavoriteButton";
+import { ParticipantsModal } from "./ParticipantsModal";
 
 interface CampaignGoalProgressProps {
     raisedPercent: number;
@@ -46,125 +47,137 @@ export function CampaignGoalProgress({
     const isFormallyClosed = status !== 'ACTIVE';
 
     const isClosed = isFormallyClosed || isExpired || (isGoalReached && autoCloseWhenGoalReached);
+    const [showMembersModal, setShowMembersModal] = useState(false);
 
     return (
-        <section className="w-full h-full flex flex-col">
-            <div className="flex flex-col items-center flex-1 w-full">
+        <>
+            <section className="w-full h-full flex flex-col">
+                <div className="flex flex-col items-center flex-1 w-full">
 
-                <div className="flex-1 flex flex-col justify-center w-full items-center py-4">
-                    <div className="relative w-40 h-40 sm:w-56 sm:h-56 lg:w-72 lg:h-72 shrink-0">
-                        <svg viewBox="0 0 40 40" className="w-full h-full -rotate-90">
-                            <defs>
-                                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stopColor="#47c9e5" />
-                                    <stop offset="100%" stopColor="#2b9ec5" />
-                                </linearGradient>
-                            </defs>
-                            {/* Track */}
-                            <path
-                                className="text-gray-100/80"
-                                strokeDasharray="100, 100"
-                                d="M20 4.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.8"
-                            />
-                            {/* Progress Arc */}
-                            <path
-                                stroke="url(#progressGradient)"
-                                style={{
-                                    transition: 'stroke-dasharray 1s ease-out'
-                                }}
-                                strokeDasharray={`${raisedPercent}, 100`}
-                                d="M20 4.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                fill="none"
-                                strokeWidth="2.8"
-                                strokeLinecap="round"
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <div className="flex flex-col items-center mb-[-4px]">
-                                <span className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 leading-none tracking-tighter">
-                                    {raisedPercent > 0 && raisedPercent < 1 ? "<1" : Math.round(raisedPercent)}
-                                    <span className="text-lg sm:text-2xl lg:text-3xl ml-0.5 text-cyan-500">%</span>
-                                </span>
+                    <div className="flex-1 flex flex-col justify-center w-full items-center py-4">
+                        <div className="relative w-40 h-40 sm:w-56 sm:h-56 lg:w-72 lg:h-72 shrink-0">
+                            <svg viewBox="0 0 40 40" className="w-full h-full -rotate-90">
+                                <defs>
+                                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stopColor="#47c9e5" />
+                                        <stop offset="100%" stopColor="#2b9ec5" />
+                                    </linearGradient>
+                                </defs>
+                                {/* Track */}
+                                <path
+                                    className="text-gray-100/80"
+                                    strokeDasharray="100, 100"
+                                    d="M20 4.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.8"
+                                />
+                                {/* Progress Arc */}
+                                <path
+                                    stroke="url(#progressGradient)"
+                                    style={{
+                                        transition: 'stroke-dasharray 1s ease-out'
+                                    }}
+                                    strokeDasharray={`${raisedPercent}, 100`}
+                                    d="M20 4.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    strokeWidth="2.8"
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <div className="flex flex-col items-center mb-[-4px]">
+                                    <span className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 leading-none tracking-tighter">
+                                        {raisedPercent > 0 && raisedPercent < 1 ? "<1" : Math.round(raisedPercent)}
+                                        <span className="text-lg sm:text-2xl lg:text-3xl ml-0.5 text-cyan-500">%</span>
+                                    </span>
+                                </div>
+                                <span className="text-[9px] sm:text-[11px] lg:text-[13px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Raised</span>
                             </div>
-                            <span className="text-[9px] sm:text-[11px] lg:text-[13px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Raised</span>
                         </div>
                     </div>
-                </div>
 
-                {/* 2. Progress Stats Area - Centered in Middle */}
-                <div className="flex-1 flex flex-col justify-center w-full max-w-md py-4">
-                    <div className="space-y-3 w-full">
-                        <div className="flex justify-between p-4 bg-gray-50 border border-gray-200 rounded-[20px] items-center shadow-sm">
-                            <span className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-widest">Goal</span>
-                            <span className="font-black text-gray-900 text-sm sm:text-lg">{formatCurrency(fundingGoal)} VND</span>
-                        </div>
-                        <div className="flex justify-between p-4 bg-gray-50 border border-gray-200 rounded-[20px] items-center shadow-sm">
-                            <span className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-widest">Raised</span>
-                            <span className="font-black text-gray-900 text-sm sm:text-base lg:text-lg">{formatCurrency(totalRaised)} VND</span>
-                        </div>
-                        {participantsCount !== undefined && (
-                            <div className="flex justify-between p-4 bg-cyan-50 border border-cyan-100 rounded-[20px] items-center shadow-sm">
-                                <span className="text-xs sm:text-sm font-bold text-cyan-600 uppercase tracking-widest">Joined</span>
-                                <span className="font-black text-cyan-700 text-sm sm:text-lg">{participantsCount} Member{participantsCount !== 1 ? 's' : ''}</span>
+                    {/* 2. Progress Stats Area - Centered in Middle */}
+                    <div className="flex-1 flex flex-col justify-center w-full max-w-md py-4">
+                        <div className="space-y-3 w-full">
+                            <div className="flex justify-between p-4 bg-gray-50 border border-gray-200 rounded-[20px] items-center shadow-sm">
+                                <span className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-widest">Goal</span>
+                                <span className="font-black text-gray-900 text-sm sm:text-lg">{formatCurrency(fundingGoal)} VND</span>
                             </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* 3. Buttons Area - Anchored Bottom */}
-                {!isCreator ? (
-                    <div className="w-full shrink-0 pt-6">
-                        <div className="flex gap-4">
-                            {isJoined && !handleLeave ? (
-                                <button
-                                    disabled
-                                    className="flex-1 py-2.5 sm:py-3 border border-gray-200 font-black text-sm sm:text-base rounded-full bg-gray-50 text-gray-400 cursor-not-allowed"
+                            <div className="flex justify-between p-4 bg-gray-50 border border-gray-200 rounded-[20px] items-center shadow-sm">
+                                <span className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-widest">Raised</span>
+                                <span className="font-black text-gray-900 text-sm sm:text-base lg:text-lg">{formatCurrency(totalRaised)} VND</span>
+                            </div>
+                            {participantsCount !== undefined && (
+                                <div
+                                    className="group flex justify-between p-4 bg-cyan-50 border border-cyan-100 rounded-[20px] items-center shadow-sm cursor-pointer hover:bg-[#0891B2]/50 transition-colors"
+                                    onClick={() => setShowMembersModal(true)}
                                 >
-                                    Joined
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={isJoined ? (hasDonated ? () => alert("Bạn không thể rời chiến dịch vì đã thực hiện quyên góp thành công.") : handleLeave) : handleJoin}
-                                    className={`flex-1 py-2.5 sm:py-3 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 ${isJoined
-                                        ? (hasDonated ? "bg-gray-100 border-2 border-gray-300 text-gray-400 cursor-not-allowed opacity-70" : "bg-white border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white")
-                                        : "bg-[#0891B2]/10 text-[#0891B2] border-[#0891B2] border-2 hover:bg-[#0891B2] hover:text-white"
-                                        }`}
-                                >
-                                    {isJoined ? (hasDonated ? "Donated Member" : "Leave") : "Join Free"}
-                                </button>
-                            )}
-                            {isClosed ? (
-                                <button
-                                    disabled
-                                    className="flex-1 py-2.5 sm:py-3 bg-gray-100 border-2 border-gray-200 text-gray-400 font-black text-sm sm:text-base rounded-full cursor-not-allowed uppercase tracking-wider"
-                                >
-                                    CLOSED
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => setDonateOpen(true)}
-                                    className="flex-1 py-2.5 sm:py-3 border-2 border-[#FACC15] bg-[#FACC15]/10 hover:bg-[#FACC15] hover:text-white text-[#FACC15] font-black text-sm sm:text-base rounded-full transition-all active:scale-95"
-                                >
-                                    Donate Now
-                                </button>
+                                    <span className="text-xs sm:text-sm font-bold text-cyan-600 uppercase tracking-widest group-hover:text-black group-hover:underline transition-colors">Members</span>
+                                    <span className="font-black text-cyan-700 text-sm sm:text-lg group-hover:text-black group-hover:underline transition-colors ">{participantsCount} Member{participantsCount !== 1 ? 's' : ''}</span>
+                                </div>
                             )}
                         </div>
                     </div>
-                ) : (
-                    <div className="w-full shrink-0 pt-6 flex justify-center">
-                        <a
-                            href={`/creator/campaigns/${campaignId}`}
-                            className="w-full sm:w-auto px-8 py-3 rounded-full font-black text-[#0891B2] border-2 border-[#0891B2] bg-[#0891B2]/10 hover:bg-[#0891B2] hover:text-white text-sm transition-all flex items-center justify-center gap-2 active:scale-95"
-                        >
-                            Manage Campaign
-                        </a>
-                    </div>
-                )}
 
-            </div>
-        </section>
+                    {/* 3. Buttons Area - Anchored Bottom */}
+                    {!isCreator ? (
+                        <div className="w-full shrink-0 pt-6">
+                            <div className="flex gap-4">
+                                {isJoined && !handleLeave ? (
+                                    <button
+                                        disabled
+                                        className="flex-1 py-2.5 sm:py-3 border border-gray-200 font-black text-sm sm:text-base rounded-full bg-gray-50 text-gray-400 cursor-not-allowed"
+                                    >
+                                        Joined
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={isJoined ? (hasDonated ? () => alert("Bạn không thể rời chiến dịch vì đã thực hiện quyên góp thành công.") : handleLeave) : handleJoin}
+                                        className={`flex-1 py-2.5 sm:py-3 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 ${isJoined
+                                            ? (hasDonated ? "bg-gray-100 border-2 border-gray-300 text-gray-400 cursor-not-allowed opacity-70" : "bg-white border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white")
+                                            : "bg-[#0891B2]/10 text-[#0891B2] border-[#0891B2] border-2 hover:bg-[#0891B2] hover:text-white"
+                                            }`}
+                                    >
+                                        {isJoined ? (hasDonated ? "Donated Member" : "Leave") : "Join Free"}
+                                    </button>
+                                )}
+                                {isClosed ? (
+                                    <button
+                                        disabled
+                                        className="flex-1 py-2.5 sm:py-3 bg-gray-100 border-2 border-gray-200 text-gray-400 font-black text-sm sm:text-base rounded-full cursor-not-allowed uppercase tracking-wider"
+                                    >
+                                        CLOSED
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setDonateOpen(true)}
+                                        className="flex-1 py-2.5 sm:py-3 border-2 border-[#FACC15] bg-[#FACC15]/10 hover:bg-[#FACC15] hover:text-white text-[#FACC15] font-black text-sm sm:text-base rounded-full transition-all active:scale-95"
+                                    >
+                                        Donate Now
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="w-full shrink-0 pt-6 flex justify-center">
+                            <a
+                                href={`/creator/campaigns/${campaignId}`}
+                                className="w-full sm:w-auto px-8 py-3 rounded-full font-black text-[#0891B2] border-2 border-[#0891B2] bg-[#0891B2]/10 hover:bg-[#0891B2] hover:text-white text-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+                            >
+                                Manage Campaign
+                            </a>
+                        </div>
+                    )}
+
+                </div>
+            </section>
+
+            <ParticipantsModal
+                isOpen={showMembersModal}
+                onClose={() => setShowMembersModal(false)}
+                campaignId={campaignId}
+            />
+        </>
     );
 }

@@ -307,7 +307,7 @@ export default function PublicCampaignDetailPage() {
                 <div className="grid grid-cols-3 gap-2 pt-1 border-t border-gray-50">
                   {[
                     { label: 'Donors', value: campaign.donorsCount ?? '—' },
-                    { label: 'Joined', value: campaign.participantsCount ?? '—' },
+                    { label: 'Members', value: campaign.participantsCount ?? '—' },
                     {
                       label: left !== null && left >= 0 ? 'Days Left' : 'Days',
                       value: left !== null ? (left >= 0 ? left : 'Ended') : '—',

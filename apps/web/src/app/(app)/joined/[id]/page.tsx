@@ -176,6 +176,9 @@ export default function JoinedCampaignDetailPage({
                                     isLiked={isLiked}
                                     isCreator={currentUser?.id === campaign?.creatorUserId}
                                     campaignId={campaign?.id}
+                                    status={campaign?.status}
+                                    endAt={campaign?.endAt}
+                                    autoCloseWhenGoalReached={campaign?.autoCloseWhenGoalReached}
                                     setDonateOpen={setDonateOpen}
                                     handleJoin={handleJoin}
                                     handleLeave={() => setShowLeaveModal(true)}
@@ -250,7 +253,6 @@ export default function JoinedCampaignDetailPage({
                 isJoined={isJoined}
             />
 
-            {/* --- LEAVE MODAL --- */}
             <LeaveCampaignModal
                 showLeaveModal={showLeaveModal}
                 setShowLeaveModal={setShowLeaveModal}
