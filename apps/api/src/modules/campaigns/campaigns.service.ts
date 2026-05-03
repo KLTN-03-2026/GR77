@@ -762,4 +762,41 @@ export class CampaignsService implements OnModuleInit {
       ledger
     };
   }
+
+  async getParticipants(campaignId: string) {
+    const participants = await this.prisma.campaignParticipant.findMany({
+      where: { campaignId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            username: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatarUrl: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return participants.map((p: any) => {
+      const name = p.user?.profile?.firstName || p.user?.profile?.lastName 
+        ? `${p.user.profile.firstName || ''} ${p.user.profile.lastName || ''}`.trim() 
+        : p.user?.username || 'Anonymous';
+        
+      return {
+        id: p.id,
+        userId: p.userId,
+        name,
+        avatarUrl: p.user?.profile?.avatarUrl,
+        status: p.status,
+        joinedAt: p.joinedAt,
+        leftAt: p.leftAt
+      };
+    });
+  }
 }

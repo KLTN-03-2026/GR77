@@ -119,6 +119,15 @@ export class CampaignsController {
   }
 
   /**
+   * GET /campaigns/:id/participants
+   * Returns list of participants
+   */
+  @Get(':id/participants')
+  getParticipants(@Param('id') id: string) {
+    return this.campaignsService.getParticipants(id);
+  }
+
+  /**
    * POST /campaigns
    */
   @UseGuards(AuthGuard('jwt'))
