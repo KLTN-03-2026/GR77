@@ -175,6 +175,36 @@ export class CampaignsService implements OnModuleInit {
     return campaign;
   }
 
+  async close(id: string, adminId: string) {
+    console.log(`[CampaignsService] Attempting to close campaign ${id} by admin ${adminId}`);
+    try {
+      const campaign = await this.prisma.campaign.update({
+        where: { id },
+        data: {
+          status: 'COMPLETED',
+          reviewedByAdminId: adminId,
+          reviewedAt: new Date(),
+          reviewNote: 'Closed manually by administrator'
+        },
+        include: { creatorUser: true }
+      });
+      console.log(`[CampaignsService] Successfully closed campaign ${id}`);
+
+      await this.notificationsService.create({
+        userId: campaign.creatorUserId,
+        title: 'Chiến dịch đã bị đóng',
+        message: `Quản trị viên đã chủ động đóng chiến dịch "${campaign.title}" của bạn.`,
+        type: 'CAMPAIGN_CLOSED',
+        link: `/creator/campaigns/${campaign.id}`
+      });
+
+      return campaign;
+    } catch (err) {
+      console.error(`[CampaignsService] Failed to close campaign ${id}:`, err);
+      throw err;
+    }
+  }
+
   async list(query: GetCampaignsQueryDto, userId?: string | null) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;

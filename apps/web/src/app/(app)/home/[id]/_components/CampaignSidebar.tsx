@@ -10,6 +10,9 @@ interface CampaignSidebarProps {
     isLiked: boolean;
     isCreator: boolean;
     campaignId: string;
+    status: string;
+    endAt: string | null;
+    autoCloseWhenGoalReached: boolean;
     setDonateOpen: (open: boolean) => void;
     handleJoin: () => void;
     handleLeave?: () => void;
@@ -28,6 +31,9 @@ export function CampaignSidebar({
     isLiked,
     isCreator,
     campaignId,
+    status,
+    endAt,
+    autoCloseWhenGoalReached,
     setDonateOpen,
     handleJoin,
     handleLeave,
@@ -53,6 +59,9 @@ export function CampaignSidebar({
                     isLiked={isLiked}
                     isCreator={isCreator}
                     campaignId={campaignId}
+                    status={status}
+                    endAt={endAt}
+                    autoCloseWhenGoalReached={autoCloseWhenGoalReached}
                     setDonateOpen={setDonateOpen}
                     handleJoin={handleJoin}
                     handleLeave={handleLeave}
