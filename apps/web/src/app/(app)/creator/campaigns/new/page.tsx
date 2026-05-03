@@ -24,6 +24,8 @@ export default function NewCampaignPage() {
         removeGalleryImage,
         handleGalleryChange,
         handleSubmit,
+        handleFormChange,
+        fieldErrors,
         router,
         isKycVerified,
         isKycCheckLoading
@@ -61,12 +63,13 @@ export default function NewCampaignPage() {
             )}
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8">
-                <form className="space-y-8" onSubmit={handleSubmit}>
+                <form className="space-y-8" onSubmit={handleSubmit} onChange={handleFormChange}>
                     <fieldset disabled={!isKycVerified || isKycCheckLoading} className="space-y-8 disabled:opacity-50 min-w-0">
                         <BasicInfoSection
                             categories={categories}
                             selectedCategoryId={selectedCategoryId}
                             setSelectedCategoryId={setSelectedCategoryId}
+                            fieldErrors={fieldErrors}
                         />
 
                         <MediaSection
@@ -78,11 +81,12 @@ export default function NewCampaignPage() {
                             galleryInputRef={galleryInputRef}
                             removeGalleryImage={removeGalleryImage}
                             handleGalleryChange={handleGalleryChange}
+                            fieldErrors={fieldErrors}
                         />
 
-                        <FundingSection />
+                        <FundingSection fieldErrors={fieldErrors} />
 
-                        <TimelineSection />
+                        <TimelineSection fieldErrors={fieldErrors} />
 
                         {error && (
                             <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium flex items-center gap-3 shadow-sm anim-up-0">

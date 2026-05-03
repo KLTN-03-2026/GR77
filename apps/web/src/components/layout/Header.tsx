@@ -20,6 +20,7 @@ import NotificationBell from './NotificationBell';
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 import { useGlobalAuth } from '@/contexts/AuthContext';
 import { API_BASE_URL } from '@/lib/constants/endpoints';
+import UserAvatar from '@/components/common/UserAvatar';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -69,11 +70,42 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
   }, []);
 
   const userName = [user?.profile?.firstName, user?.profile?.lastName].filter(Boolean).join(' ') || user?.username || 'User';
-  const userAvatar = user?.profile?.avatarUrl;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userAvatar = user?.profile?.avatarUrl || (user as any)?.avatarUrl || (user as any)?.picture;
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dynamicCampaignName, setDynamicCampaignName] = useState('');
+
+  // Fetch campaign name if pathname contains an ID at the end for known campaign routes
+  useEffect(() => {
+    const parts = pathname.split('/').filter(Boolean);
+    let campaignId = null;
+
+    if (pathname.startsWith('/home/') && parts.length === 2) {
+      campaignId = parts[1];
+    } else if (pathname.startsWith('/joined/') && parts.length === 2) {
+      campaignId = parts[1];
+    } else if (pathname.startsWith('/creator/campaigns/') && parts.length === 3 && parts[2] !== 'new' && parts[2] !== 'edit') {
+      campaignId = parts[2];
+    }
+
+    if (campaignId) {
+      fetch(`${API_BASE_URL}/campaigns/${campaignId}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.title) {
+            setDynamicCampaignName(data.title);
+          } else {
+            setDynamicCampaignName('');
+          }
+        })
+        .catch(() => setDynamicCampaignName(''));
+    } else {
+      setDynamicCampaignName('');
+    }
+  }, [pathname]);
 
   useEffect(() => {
     // Close dropdown on click outside
@@ -92,7 +124,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     if (isLoggingOut) return;
     setIsLoggingOut(true);
 
-    const isAdminLogout = pathname.startsWith('/admin') || roleLabel === 'ADMIN';
+    const isAdminLogout = pathname.startsWith('/admin') || roleLabel === 'ADMIN' || roleLabel === 'SUPER ADMIN';
 
     try {
       const refreshToken = localStorage.getItem(isAdminLogout ? 'adminRefreshToken' : 'refreshToken');
@@ -128,7 +160,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     }
   };
 
-  const isAdmin = roleLabel === 'ADMIN';
+  const isAdmin = roleLabel === 'ADMIN' || roleLabel === 'SUPER ADMIN';
 
   // Render breadcrumbs based on pathname
   const renderBreadcrumbs = () => {
@@ -147,6 +179,8 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     if (pathname.includes('/creator/campaigns') && pathname.includes('/edit')) {
       return (
         <>
+          <Link href="/home" className="hover:text-blue-600 transition-colors">Home</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
           <Link href="/creator/campaigns" className="hover:text-blue-600">My Campaigns</Link>
           <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
           <span className="text-gray-900 font-medium">Edit</span>
@@ -154,15 +188,19 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
       );
     }
 
-    if (pathname.startsWith('/creator/campaigns/') && !pathname.includes('/new')) {
+    if (pathname.startsWith('/creator/campaigns/') && !pathname.includes('/new') && !pathname.includes('/edit')) {
       const parts = pathname.split('/');
       const campaignId = parts[parts.length - 1];
       const idx = searchParams.get('idx');
       return (
         <>
+          <Link href="/home" className="hover:text-blue-600 transition-colors">Home</Link>
+          <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
           <Link href="/creator/campaigns" className="hover:text-blue-600">My Campaigns</Link>
           <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
-          <span className="text-gray-900 font-medium">{idx ? `#${idx}` : `#${campaignId.length > 8 ? campaignId.slice(-4) : campaignId}`}</span>
+          <span className="text-gray-900 font-medium line-clamp-1 max-w-[300px]">
+            {dynamicCampaignName || (idx ? `#${idx}` : `#${campaignId.length > 8 ? campaignId.slice(-4) : campaignId}`)}
+          </span>
         </>
       );
     }
@@ -179,21 +217,47 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
     if (pathname.includes('/admin/settings')) return <><span>{translate('menu.settings')}</span><ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} /></>;
 
     // Default user breadcrumbs
+    const fromParam = searchParams.get('from');
+    const activePath = fromParam ? `/${fromParam}` : pathname;
+
     let title = 'Home';
-    if (pathname.includes('/home')) title = 'Home';
-    else if (pathname.includes('/favorites')) title = 'Favorite Campaigns';
-    else if (pathname.includes('/activity')) title = 'Activity History';
-    else if (pathname.includes('/joined')) title = 'Joined Campaigns';
-    else if (pathname.includes('/creator')) title = 'My Campaigns';
-    else if (pathname.includes('/list')) title = 'All Campaigns';
-    else if (pathname.includes('/wallet')) title = 'Wallet';
-    else if (pathname.includes('/settings')) title = 'Setting';
-    else if (pathname.includes('/notifications')) title = 'Notifications';
+    let basePath = '/home';
+    if (activePath.startsWith('/home')) { title = 'Home'; basePath = '/home'; }
+    else if (activePath.startsWith('/favorites')) { title = 'Favorite Campaigns'; basePath = '/favorites'; }
+    else if (activePath.startsWith('/activity')) { title = 'Activity History'; basePath = '/activity'; }
+    else if (activePath.startsWith('/joined')) { title = 'Joined Campaigns'; basePath = '/joined'; }
+    else if (activePath.startsWith('/creator')) { title = 'My Campaigns'; basePath = '/creator/campaigns'; }
+    else if (activePath.startsWith('/list')) { title = 'All Campaigns'; basePath = '/list'; }
+    else if (activePath.startsWith('/wallet')) { title = 'Wallet'; basePath = '/wallet'; }
+    else if (activePath.startsWith('/settings')) { title = 'Setting'; basePath = '/settings'; }
+    else if (activePath.startsWith('/notifications')) { title = 'Notifications'; basePath = '/notifications'; }
 
     return (
       <>
-        <span>{title}</span>
-        <ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} />
+        {dynamicCampaignName ? (
+          <>
+            {basePath !== '/home' && basePath !== '/list' && basePath !== '/wallet' && basePath !== '/settings' && (
+              <>
+                <Link href="/home" className="hover:text-blue-600 transition-colors">Home</Link>
+                <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+              </>
+            )}
+            <Link href={basePath} className="hover:text-blue-600 transition-colors">{title}</Link>
+            <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+            <span className="text-gray-900 font-medium line-clamp-1 max-w-[300px]">{dynamicCampaignName}</span>
+          </>
+        ) : (
+          <>
+            {basePath !== '/home' && basePath !== '/list' && basePath !== '/wallet' && basePath !== '/settings' && (
+              <>
+                <Link href="/home" className="hover:text-blue-600 transition-colors">Home</Link>
+                <ChevronRightIcon className="h-3 w-3 mx-2" strokeWidth={3} />
+              </>
+            )}
+            <span>{title}</span>
+            <ChevronRightIcon className="h-3 w-3 ml-2" strokeWidth={3} />
+          </>
+        )}
       </>
     );
   };
@@ -227,7 +291,7 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
             {isAdmin ? translate('header.welcome') : 'Welcome back,'}{' '}
             <span
               style={{
-                color: roleLabel === 'ADMIN' ? '#24305E' : '#F6349B',
+                color: isAdmin ? '#24305E' : '#F6349B',
                 fontWeight: 'bold'
               }}
             >
@@ -245,35 +309,23 @@ export default function Header({ onToggleSidebar, isOpen, roleLabel }: HeaderPro
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center justify-center p-0.5 rounded-full border-2 border-[#47c9e5] hover:shadow-md transition-all overflow-hidden"
+                  className="flex items-center justify-center transition-all"
                 >
-                  {userAvatar ? (
-                    <img src={userAvatar} alt="Avatar" className="h-6 w-6 sm:h-10 sm:w-10 rounded-full object-cover bg-white relative z-0" />
-                  ) : (
-                    <div className="h-6 w-6 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-                      <UserIcon className="w-4 h-4 sm:w-6 sm:h-6 text-cyan-300" />
-                    </div>
-                  )}
+                  <UserAvatar src={userAvatar} role={user?.role} className="sm:scale-x-110 sm:scale-y-110" />
                 </button>
+
 
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Header: User Info - Compact */}
                     <div className="px-5 py-4 flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
-                        {userAvatar ? (
-                          <img src={userAvatar} alt="Avatar" className="h-full w-full object-cover bg-white" />
-                        ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-                            <UserIcon className="w-6 h-6 text-cyan-300" />
-                          </div>
-                        )}
-                      </div>
+                      <UserAvatar src={userAvatar} role={user?.role} size="md" />
                       <div className="overflow-hidden">
                         <p className="text-base font-bold text-[#1d2951] truncate leading-tight">{userName}</p>
                         <p className="text-xs font-medium text-[#8ea1c1] truncate mt-0.5">{user?.email}</p>
                       </div>
                     </div>
+
 
                     <div className="border-t border-gray-50"></div>
 

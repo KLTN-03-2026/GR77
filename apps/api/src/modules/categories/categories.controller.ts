@@ -15,6 +15,9 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { MinRole } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../auth/permissions.decorator';
+import { AdminPermission } from '../../constants/permissions';
 
 @Controller('categories')
 export class CategoriesController {
@@ -34,15 +37,17 @@ export class CategoriesController {
     }
 
     @Post()
-    @UseGuards(JwtAuthGuard, RolesGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
     @MinRole(Role.ADMIN)
+    @RequirePermissions(AdminPermission.CATEGORIES_MANAGE)
     create(@Body() createCategoryDto: CreateCategoryDto) {
         return this.categoriesService.create(createCategoryDto);
     }
 
     @Patch(':id')
-    @UseGuards(JwtAuthGuard, RolesGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
     @MinRole(Role.ADMIN)
+    @RequirePermissions(AdminPermission.CATEGORIES_MANAGE)
     update(
         @Param('id') id: string,
         @Body() updateCategoryDto: UpdateCategoryDto,
@@ -51,8 +56,9 @@ export class CategoriesController {
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard, RolesGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
     @MinRole(Role.ADMIN)
+    @RequirePermissions(AdminPermission.CATEGORIES_MANAGE)
     remove(@Param('id') id: string) {
         return this.categoriesService.remove(id);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   AreaChart,
@@ -36,6 +36,24 @@ export interface ActivityLogItem {
   activity: string;
   date: string; 
   type: string;
+}
+
+function getPageNumbers(current: number, total: number) {
+  const delta = 1;
+  const range: (number | string)[] = [];
+  const rangeWithDots: (number | string)[] = [];
+  let last: number | undefined;
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+      range.push(i);
+    }
+  }
+  for (const i of range) {
+    if (last !== undefined && typeof i === 'number' && i - last > 1) rangeWithDots.push('...');
+    rangeWithDots.push(i);
+    if (typeof i === 'number') last = i;
+  }
+  return rangeWithDots;
 }
 
 // ── STAT CARD ─────────────────────────────────────────────────────────
@@ -92,6 +110,8 @@ export default function AdminDashboardPage() {
   const [fundDistribution, setFundDistribution] = useState<FundDistributionData[]>([]);
   const [activityLog, setActivityLog] = useState<ActivityLogItem[]>([]);
   const [filter, setFilter] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -125,13 +145,22 @@ export default function AdminDashboardPage() {
       try {
         const url = filter ? `${apiUrl}/admin-dashboard/activity-log?filter=${filter}` : `${apiUrl}/admin-dashboard/activity-log`;
         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) setActivityLog(await res.json());
+        if (res.ok) {
+          setActivityLog(await res.json());
+          setCurrentPage(1);
+        }
       } catch (error) {
         console.error('Error fetching activity log:', error);
       }
     };
     fetchLogs();
   }, [filter]);
+
+  const totalPages = Math.ceil(activityLog.length / itemsPerPage);
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return activityLog.slice(start, start + itemsPerPage);
+  }, [activityLog, currentPage]);
 
   return (
     <div className="space-y-5">
@@ -172,7 +201,7 @@ export default function AdminDashboardPage() {
 
         {/* Donation Growth – Area Chart */}
         <div className="lg:col-span-2 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-start justify-between mb-1">
+          <div className="flex items-start justify-between mb-6">
             <div>
               <h2 className="text-lg font-bold text-gray-800">Tăng trưởng quyên góp</h2>
               <p className="text-xs text-gray-400">Biểu đồ đường</p>
@@ -212,7 +241,7 @@ export default function AdminDashboardPage() {
         {/* Funds Distribution – Donut Chart */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800">Phân bổ quỹ</h2>
-          <p className="text-xs text-gray-400 mb-2">Biểu đồ tròn theo danh mục</p>
+          <p className="text-xs text-gray-400 mb-6">Biểu đồ tròn theo danh mục</p>
           {fundDistribution.length > 0 ? (
             <div className="flex items-center gap-6">
               <ResponsiveContainer width={180} height={180}>
@@ -259,9 +288,9 @@ export default function AdminDashboardPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Table header button and filter */}
         <div className="px-5 pt-4 pb-2 flex justify-between items-center bg-white border-b border-gray-100">
-          <button className="px-4 py-1.5 rounded-lg border border-transparent text-sm font-semibold text-black bg-[#7598C1] hover:bg-[#5DA2D5] transition-colors shadow-sm">
+          <h2 className="text-lg font-bold text-gray-800">
             Nhật ký hoạt động gần đây
-          </button>
+          </h2>
           <select 
             value={filter} 
             onChange={(e) => setFilter(e.target.value)}
@@ -287,7 +316,7 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {activityLog.length > 0 ? activityLog.map((row, index) => {
+              {paginatedLogs.length > 0 ? paginatedLogs.map((row, index) => {
                 const getRowColor = (type: string) => {
                   switch (type) {
                     case 'REGISTER': return 'bg-blue-50/60 hover:bg-blue-100/60';
@@ -306,7 +335,7 @@ export default function AdminDashboardPage() {
 
                 return (
                 <tr key={row.id} className={`border-b border-gray-100 transition-colors ${getRowColor(row.type)}`}>
-                  <td className="px-5 py-3 font-medium text-gray-700">{index + 1}</td>
+                  <td className="px-5 py-3 font-medium text-gray-700">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2.5">
                       <Avatar name={row.username} avatarUrl={row.avatarUrl} />
@@ -327,6 +356,30 @@ export default function AdminDashboardPage() {
             </tbody>
           </table>
         </div>
+
+        {/* ── PAGINATION ── */}
+        {totalPages > 1 && (
+          <div className="flex flex-col items-center gap-4 py-6 border-t border-gray-100">
+            <div className="flex justify-center items-center gap-2 flex-wrap">
+              {getPageNumbers(currentPage, totalPages).map((item, idx) =>
+                typeof item === 'number' ? (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentPage(Math.max(1, Math.min(item, totalPages)))}
+                    className={`w-9 h-9 flex items-center justify-center rounded-xl font-black text-sm transition-all transform active:scale-95 ${currentPage === item
+                      ? 'bg-[#7598C1] text-black shadow-lg scale-110'
+                      : 'border border-gray-200 text-gray-400 hover:bg-gray-50 hover:border-[#7598C1] hover:text-[#7598C1] bg-white'
+                      }`}
+                  >
+                    {item}
+                  </button>
+                ) : (
+                  <span key={idx} className="px-2 text-gray-400 font-black">{item}</span>
+                )
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
     </div>

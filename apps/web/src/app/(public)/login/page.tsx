@@ -100,7 +100,14 @@ export default function LoginPage() {
                 return;
             }
 
-            router.push("/home");
+            // Redirect back to the campaign page if the user came from a donate gate
+            const returnUrl = sessionStorage.getItem('returnAfterLogin');
+            if (returnUrl) {
+                sessionStorage.removeItem('returnAfterLogin');
+                router.push(returnUrl);
+            } else {
+                router.push("/home");
+            }
         } catch (err: any) {
             setError(err.message || "An error occurred. Please try again.");
         } finally {

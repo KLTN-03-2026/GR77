@@ -54,7 +54,14 @@ export default function GoogleLoginButton() {
                 accessToken: data.accessToken,
                 refreshToken: data.refreshToken,
             });
-            router.push('/home');
+            
+            const returnUrl = sessionStorage.getItem('returnAfterLogin');
+            if (returnUrl) {
+                sessionStorage.removeItem('returnAfterLogin');
+                router.push(returnUrl);
+            } else {
+                router.push('/home');
+            }
         } catch (err) {
             console.error('Google login error:', err);
             setError('Đã có lỗi xảy ra khi kết nối với máy chủ.');

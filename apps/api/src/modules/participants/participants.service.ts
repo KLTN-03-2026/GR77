@@ -33,6 +33,7 @@ export class ParticipantsService {
         locationText: true,
         coverImageUrl: true,
         fundingGoalAmount: true,
+        currentRaisedAmount: true,
         minimumDonationAmount: true,
         startAt: true,
         endAt: true,
@@ -121,13 +122,17 @@ export class ParticipantsService {
             return { left: true, alreadyLeft: true };
         }
 
-        // --- MOCK CHECK DONATION ---
-        // TODO: Hiện tại db chưa có bảng `Donation` / `Transaction`.
-        // Mình đang giả lập (mock) logic chưa donate. 
-        // Khi nào có bảng Donation, bạn thay bằng query: const hasDonated = await this.prisma.donation.findFirst(...)
-        const hasDonated = false; // Đổi thành true để test lỗi
-        if (hasDonated) {
-            throw new BadRequestException('Bạn không thể rời khỏi chiến dịch vì đã thực hiện quá trình quyên góp.');
+        // --- CHECK DONATION ---
+        const donation = await (this.prisma as any).donation.findFirst({
+            where: {
+                userId,
+                campaignId,
+                status: 'SUCCESS',
+            },
+        });
+
+        if (donation) {
+            throw new BadRequestException('Bạn không thể rời khỏi chiến dịch vì đã thực hiện quyên góp thành công.');
         }
 
         await (this.prisma as any).campaignParticipant.update({
@@ -193,9 +198,20 @@ export class ParticipantsService {
         });
 
         const joined = record?.status === 'JOINED';
+
+        // Check if user has donated
+        const donation = await (this.prisma as any).donation.findFirst({
+            where: {
+                userId,
+                campaignId,
+                status: 'SUCCESS',
+            },
+        });
+
         return {
             joined,
             joinedAt: joined ? record.joinedAt : null,
+            hasDonated: !!donation,
         };
     }
 }

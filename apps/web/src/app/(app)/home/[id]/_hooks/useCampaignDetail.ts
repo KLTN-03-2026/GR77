@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { executeBlockchainDonate } from "@/lib/blockchain/donate";
 
 export function useCampaignDetail(id: string, currentUser: any) {
     const router = useRouter();
@@ -47,7 +48,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
         fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/view-histories/${id}`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
-        }).catch(() => {});
+        }).catch(() => { });
     }, [campaign, id]);
 
     /* ── State ── */
@@ -78,13 +79,13 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 const data = await res.json();
                 setComments(data);
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     useEffect(() => {
         if (!id) return;
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("status") === "success") {
+        if (urlParams.get("status") === "PAID") {
             setDonated(true);
             setDonateOpen(true);
         }
@@ -98,7 +99,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 .then((data) => {
                     if (data.joined) setIsJoined(true);
                 })
-                .catch(() => {});
+                .catch(() => { });
 
             fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/favorites/${id}/status`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -107,7 +108,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 .then((data) => {
                     if (data.favorited) setIsLiked(true);
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
         fetchComments();
     }, [id]);
@@ -137,7 +138,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
             if (res.ok) {
                 setIsLiked(!isLiked);
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     const handleJoin = async () => {
@@ -211,40 +212,16 @@ export function useCampaignDetail(id: string, currentUser: any) {
         }
     };
 
-    const handleBlockchainDonate = async (amountVnd: number, forceDemo = false) => {
-        if (!forceDemo && typeof window.ethereum === 'undefined') {
+    const handleBlockchainDonate = async (amountVnd: number) => {
+        if (typeof window.ethereum === 'undefined') {
             setBlockchainError('Vui lòng cài đặt MetaMask!');
             return;
         }
-
         setBlockchainLoading(true);
         setBlockchainError(null);
         try {
-            let from = '0xDEMO_WALLET_ADDRESS';
-            let txHash = '0xDEMO_TX_HASH_' + Date.now();
-
-            if (!forceDemo) {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                from = accounts[0];
-                const ethAmount = (amountVnd / 70000000).toFixed(8);
-                const weiValue = '0x' + (BigInt(Math.floor(Number(ethAmount) * 1e18))).toString(16);
-
-                txHash = await window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [{ from, to: '0x0000000000000000000000000000000000000000', value: weiValue }],
-                });
-            }
-
             const token = localStorage.getItem("accessToken");
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/donations/blockchain`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({ campaignId: id, amount: amountVnd, txHash, walletAddress: from }),
-            });
-
+            await executeBlockchainDonate({ campaignId: id, amountVnd, token });
             setDonated(true);
             setTimeout(() => {
                 setDonateOpen(false);
@@ -252,7 +229,11 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 window.location.reload();
             }, 3000);
         } catch (err: any) {
-            setBlockchainError(err.message || 'Lỗi giao dịch Blockchain');
+            if (err?.code === 4001 || err?.code === 'ACTION_REJECTED') {
+                setBlockchainError('Giao dịch đã bị huỷ.');
+            } else {
+                setBlockchainError(err.message || 'Lỗi giao dịch Blockchain');
+            }
         } finally {
             setBlockchainLoading(false);
         }
@@ -276,7 +257,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 ? `${replyingTo.user.profile.firstName} ${replyingTo.user.profile.lastName ?? ""}`.trim()
                 : replyingTo.user?.username;
             const tag = `@${name}`;
-            
+
             // If user still has the tag at start, we replace it with @[Name] for backend
             if (commentText.startsWith(tag)) {
                 const messageOnly = commentText.slice(tag.length).trim();
@@ -326,7 +307,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) fetchComments();
-        } catch (err) {}
+        } catch (err) { }
     };
 
     const handleReportComment = async () => {
@@ -346,7 +327,7 @@ export function useCampaignDetail(id: string, currentUser: any) {
                 setReportModalOpen(false);
                 setReportReason("");
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     return {
@@ -355,10 +336,10 @@ export function useCampaignDetail(id: string, currentUser: any) {
         fetchError,
         isLiked,
         handleToggleLike,
-        
+
         isJoined,
         handleJoin,
-        
+
         donateOpen,
         setDonateOpen,
         donateAmount,

@@ -15,7 +15,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { Wallet, Settings, ShieldCheck, AlertTriangle, Coins, ArrowRightLeft, LayoutGrid, CheckCircle2, XCircle } from 'lucide-react';
 import { ethers } from 'ethers';
-import { KINDLINK_CAMPAIGN_ABI, KINDLINK_CAMPAIGN_ADDRESS, AMOY_NETWORK_CONFIG } from '@/constants/blockchain';
+import { KINDLINK_CAMPAIGN_ABI, AMOY_NETWORK_CONFIG } from '@/lib/constants/blockchain';
+
+const KINDLINK_CAMPAIGN_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "";
 
 declare global {
   interface Window {
@@ -194,8 +196,8 @@ export default function AdminSettingsPage() {
         <button
           onClick={() => setActiveTab("general")}
           className={`flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === "general"
-              ? "bg-[#24305E] text-white shadow-md font-medium"
-              : "bg-white text-gray-500 hover:bg-gray-50 hover:text-black font-normal shadow-sm"
+            ? "bg-[#24305E] text-white shadow-md font-medium"
+            : "bg-white text-gray-500 hover:bg-gray-50 hover:text-black font-normal shadow-sm"
             }`}
         >
           <GlobeAltIcon className="w-5 h-5" />
@@ -204,8 +206,8 @@ export default function AdminSettingsPage() {
         <button
           onClick={() => setActiveTab("blockchain")}
           className={`flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === "blockchain"
-              ? "bg-[#24305E] text-white shadow-md font-medium"
-              : "bg-white text-gray-500 hover:bg-gray-50 hover:text-black font-normal shadow-sm"
+            ? "bg-[#24305E] text-white shadow-md font-medium"
+            : "bg-white text-gray-500 hover:bg-gray-50 hover:text-black font-normal shadow-sm"
             }`}
         >
           <CpuChipIcon className="w-5 h-5" />
@@ -214,8 +216,8 @@ export default function AdminSettingsPage() {
         <button
           onClick={() => setActiveTab("payment")}
           className={`flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === "payment"
-              ? "bg-[#24305E] text-white shadow-md font-medium"
-              : "bg-white text-gray-500 hover:bg-gray-50 hover:text-black font-normal shadow-sm"
+            ? "bg-[#24305E] text-white shadow-md font-medium"
+            : "bg-white text-gray-500 hover:bg-gray-50 hover:text-black font-normal shadow-sm"
             }`}
         >
           <CreditCardIcon className="w-5 h-5" />
@@ -224,8 +226,8 @@ export default function AdminSettingsPage() {
         <button
           onClick={() => setActiveTab("notifications")}
           className={`flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === "notifications"
-              ? "bg-[#24305E] text-white shadow-md font-medium"
-              : "bg-white text-gray-500 hover:bg-gray-50 hover:text-black font-normal shadow-sm"
+            ? "bg-[#24305E] text-white shadow-md font-medium"
+            : "bg-white text-gray-500 hover:bg-gray-50 hover:text-black font-normal shadow-sm"
             }`}
         >
           <BellIcon className="w-5 h-5" />

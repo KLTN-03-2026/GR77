@@ -135,7 +135,12 @@ export function NotificationsView({ isAdmin }: { isAdmin?: boolean }) {
     const handleNotificationClick = (n: Notification) => {
         if (!n.isRead) markAsRead(n.id);
         if (n.link) {
-            router.push(normalizeLink(n.link));
+            let targetLink = normalizeLink(n.link);
+            // Auto-append #discussion for comment notifications if not present
+            if (n.type === 'COMMENT' && !targetLink.includes('#')) {
+                targetLink += '#discussion';
+            }
+            router.push(targetLink);
         }
     };
 
@@ -162,7 +167,7 @@ export function NotificationsView({ isAdmin }: { isAdmin?: boolean }) {
 
     return (
         <div className="max-w-4xl mx-auto w-full">
-            <div className="bg-white/60 backdrop-blur-xl border-[#607895]/40 border p-5 sm:p-8 rounded-xl">
+            <div className="bg-white/90 backdrop-blur-xl border-[#607895]/40 border p-5 sm:p-8 rounded-xl">
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between mb-2 sm:mb-4">
                     <h1 className={isAdmin
@@ -214,7 +219,7 @@ export function NotificationsView({ isAdmin }: { isAdmin?: boolean }) {
                         </p>
                     </div>
                 ) : (
-                    <div className="-mx-5 sm:mx-0 rounded-none sm:rounded-xl overflow-hidden bg-white/40 border-y sm:border sm:border-white/50 border-white/50">
+                    <div className="-mx-5 sm:mx-0 rounded-none sm:rounded-xl overflow-hidden bg-white/80 border-y sm:border sm:border-white/50 border-white/50">
                         {paginatedNotifications.map((n) => (
                             <div
                                 key={n.id}

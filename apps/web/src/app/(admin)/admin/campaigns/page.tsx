@@ -19,6 +19,24 @@ import {
 } from '@heroicons/react/24/outline';
 import { useState, useMemo, useEffect } from 'react';
 
+function getPageNumbers(current: number, total: number) {
+  const delta = 1;
+  const range: (number | string)[] = [];
+  const rangeWithDots: (number | string)[] = [];
+  let last: number | undefined;
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+      range.push(i);
+    }
+  }
+  for (const i of range) {
+    if (last !== undefined && typeof i === 'number' && i - last > 1) rangeWithDots.push('...');
+    rangeWithDots.push(i);
+    if (typeof i === 'number') last = i;
+  }
+  return rangeWithDots;
+}
+
 interface Campaign {
   id: string;
   title: string;
@@ -47,6 +65,8 @@ export default function AdminCampaignsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -130,6 +150,12 @@ export default function AdminCampaignsPage() {
     });
   }, [campaigns, searchTerm, selectedCategory, selectedStatus]);
 
+  const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
+  const paginatedCampaigns = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredCampaigns.slice(start, start + itemsPerPage);
+  }, [filteredCampaigns, currentPage]);
+
   const stats = useMemo(() => {
     const totalRaised = campaigns.reduce((acc, c) => acc + c.amountRaised, 0);
     return {
@@ -177,7 +203,7 @@ export default function AdminCampaignsPage() {
                 className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg w-64 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-600 font-medium placeholder:text-gray-400"
                 placeholder="Tìm kiếm..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               />
             </div>
 
@@ -185,7 +211,7 @@ export default function AdminCampaignsPage() {
               <select
                 className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none min-w-[150px]"
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
               >
                 <option value="All">Lĩnh vực: Tất cả</option>
                 {categories.map(cat => (
@@ -198,7 +224,7 @@ export default function AdminCampaignsPage() {
             </div>
 
             <div className="relative">
-              <select className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+              <select className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white cursor-pointer appearance-none" value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}>
                 <option value="All">Trạng thái: Tất cả</option>
                 <option value="PENDING">Chờ duyệt</option>
                 <option value="ACTIVE">Đang hoạt động</option>
@@ -214,6 +240,7 @@ export default function AdminCampaignsPage() {
           <table className="w-full text-sm text-left border-collapse">
             <thead>
               <tr className="bg-white border-b border-gray-300">
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Chiến dịch</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Lĩnh vực</th>
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Người tạo</th>
@@ -225,9 +252,12 @@ export default function AdminCampaignsPage() {
             </thead>
             <tbody className="divide-y divide-gray-300">
               {loading ? (
-                <tr><td colSpan={7} className="py-20 text-center text-gray-400 italic font-medium">Đang đồng bộ dữ liệu chiến dịch...</td></tr>
-              ) : filteredCampaigns.map((campaign) => (
+                <tr><td colSpan={8} className="py-20 text-center text-gray-400 italic font-medium">Đang đồng bộ dữ liệu chiến dịch...</td></tr>
+              ) : paginatedCampaigns.map((campaign, index) => (
                 <tr key={campaign.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors group">
+                  <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </td>
                   <td className="px-5 py-3 border-r border-gray-300"><span className="font-black text-gray-800 leading-snug">{campaign.title}</span></td>
                   <td className="px-4 py-3 border-r border-gray-300">
                     <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-black uppercase">
@@ -265,6 +295,30 @@ export default function AdminCampaignsPage() {
           </table>
         </div>
       </div>
+
+      {/* ── PAGINATION ── */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center gap-4 mt-8">
+          <div className="flex justify-center items-center gap-2 flex-wrap">
+            {getPageNumbers(currentPage, totalPages).map((item, idx) =>
+              typeof item === 'number' ? (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentPage(Math.max(1, Math.min(item, totalPages)))}
+                  className={`w-11 h-11 flex items-center justify-center rounded-xl font-black transition-all transform active:scale-95 ${currentPage === item
+                    ? 'bg-[#7598C1] text-black shadow-lg scale-110'
+                    : 'border border-gray-200 text-gray-400 hover:bg-white hover:border-[#7598C1] hover:text-[#7598C1] bg-white'
+                    }`}
+                >
+                  {item}
+                </button>
+              ) : (
+                <span key={idx} className="px-2 text-gray-400 font-black">{item}</span>
+              )
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Campaign Detail Overlay */}
       {isDetailOpen && selectedCampaign && (

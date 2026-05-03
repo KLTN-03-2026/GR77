@@ -15,8 +15,11 @@ import {
   ArrowUpCircleIcon,
   EnvelopeIcon,
   ShieldExclamationIcon as SuperAdminIcon,
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { UserGroupIcon } from '@heroicons/react/24/solid';
+import { AdminPermission, PermissionGroups } from '@/constants/permissions';
+import UserAvatar from '@/components/common/UserAvatar';
 
 // ── Types ──────────────────────────────────────────────────────────
 export interface UserData {
@@ -31,6 +34,7 @@ export interface UserData {
   avatarUrl?: string;
   createdAt?: string;
   isLocked?: boolean;
+  permissions?: string[];
 }
 
 type CallerRole = 'ADMIN' | 'SUPER_ADMIN';
@@ -93,29 +97,6 @@ function RoleBadge({ role }: { role: UserData['role'] }) {
   );
 }
 
-function Avatar({ role }: { role: string }) {
-  const isHighAdmin = role === 'Admin' || role === 'Super Admin' || role === 'ADMIN' || role === 'SUPER_ADMIN';
-  if (!isHighAdmin) {
-    return (
-      <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden shadow-inner border border-gray-100 shrink-0">
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" /></svg>
-      </div>
-    );
-  }
-  const gradientClass = role === 'Super Admin' || role === 'SUPER_ADMIN'
-    ? 'from-[#FF3D77] via-[#FF9500] to-[#FFD500]'
-    : 'from-[#FF3D77] via-[#338AFF] to-[#7B2CFE]';
-  return (
-    <div className="relative shrink-0 group">
-      <div className={`absolute inset-[-2px] rounded-full bg-gradient-to-tr ${gradientClass} opacity-70 blur-[1px] animate-spin group-hover:opacity-100 transition-all duration-700 pointer-events-none`} style={{ animationDuration: '6s' }}></div>
-      <div className="relative w-9 h-9 rounded-full bg-white p-[1px] shadow-sm">
-        <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
-          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Role permission helpers ─────────────────────────────────────────
 const ROLE_LEVEL: Record<string, number> = {
@@ -136,7 +117,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 10;
 
   // Create modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -176,7 +157,7 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/users`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users?roleGroup=MEMBERS`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}` },
       });
       if (!res.ok) throw new Error('Failed to fetch users');
@@ -281,6 +262,25 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleUpdatePermissions = async (userId: string, permissions: string[]) => {
+    setIsSubmitting(true);
+    try {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/${userId}/permissions`, {
+        method: 'POST',
+        body: JSON.stringify({ permissions }),
+      });
+      if (!res.ok) throw new Error('Failed to update permissions');
+
+      // Update local state
+      setSelectedUser((prev: any) => ({ ...prev, permissions }));
+      setUsers((prev) => prev.map(u => u.id === userId ? { ...u, permissions } : u));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // ── Filter / Pagination ─────────────────────────────────────────
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -365,8 +365,6 @@ export default function AdminUsersPage() {
                 <option value="All">Vai trò: Tất cả</option>
                 <option value="Donor">Nhà tài trợ</option>
                 <option value="Organizer">Người tổ chức</option>
-                {isSuperAdmin && <option value="Admin">Admin</option>}
-                {isSuperAdmin && <option value="Super Admin">Super Admin</option>}
               </select>
               <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
@@ -398,6 +396,7 @@ export default function AdminUsersPage() {
             <table className="w-full text-sm text-left border-collapse">
               <thead>
                 <tr className="bg-white border-b border-gray-300">
+                  <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
                   <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Danh tính</th>
                   <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Vai trò</th>
                   <th className="px-4 py-3 font-bold text-black border-r border-gray-300">KYC</th>
@@ -408,20 +407,24 @@ export default function AdminUsersPage() {
               <tbody className="divide-y divide-gray-300">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu…</td>
+                    <td colSpan={6} className="px-5 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu…</td>
                   </tr>
                 ) : (
-                  paginatedUsers.map((user) => (
+                  paginatedUsers.map((user, index) => (
                     <tr key={user.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors">
+                      <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
                       <td className="px-5 py-3 border-r border-gray-300">
                         <div className="flex items-center gap-3">
-                          <Avatar role={user.role} />
+                          <UserAvatar role={user.rawRole} src={user.avatarUrl} />
                           <div>
                             <p className="font-bold text-gray-800 leading-tight">{user.name}</p>
                             <p className="text-[12px] text-gray-500 mt-0.5">{user.email}</p>
                           </div>
                         </div>
                       </td>
+
                       <td className="px-4 py-3 border-r border-gray-300">
                         <RoleBadge role={user.role} />
                       </td>
@@ -475,9 +478,6 @@ export default function AdminUsersPage() {
       {/* ── PAGINATION ── */}
       {totalPages > 1 && (
         <div className="flex flex-col items-center gap-4 mt-8">
-          <p className="text-sm text-gray-500 font-bold uppercase tracking-widest opacity-60">
-            Hiển thị {filteredUsers.length} thành viên
-          </p>
           <div className="flex justify-center items-center gap-2 flex-wrap">
             {getPageNumbers(currentPage, totalPages).map((item, idx) =>
               typeof item === 'number' ? (
@@ -516,13 +516,14 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 mb-6 flex items-center gap-4">
-              <Avatar role={confirmModal.user?.role || ''} />
+              <UserAvatar role={confirmModal.user?.rawRole} src={confirmModal.user?.avatarUrl} />
               <div>
                 <p className="font-black text-gray-900">{confirmModal.user?.name}</p>
                 <p className="text-sm font-bold text-gray-500">{confirmModal.user?.email}</p>
                 <RoleBadge role={confirmModal.user?.role as any} />
               </div>
             </div>
+
 
             {confirmModal.action === 'lock' ? (
               <div className="space-y-3">
@@ -581,9 +582,10 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 mb-6 flex items-center gap-4">
-              <Avatar role={upgradeModal.user.role} />
+              <UserAvatar role={upgradeModal.user.rawRole} src={upgradeModal.user.avatarUrl} />
               <div>
                 <p className="font-black text-gray-900">{upgradeModal.user.name}</p>
+
                 <p className="text-sm font-bold text-gray-500">{upgradeModal.user.email}</p>
                 <p className="text-xs font-black text-purple-500 mt-1">
                   {upgradeModal.user.role} → <span className="text-purple-700">Admin</span>
@@ -678,24 +680,38 @@ export default function AdminUsersPage() {
 
       {/* ── DETAIL SLIDE-OVER ── */}
       {isDetailOpen && selectedUser && (
-        <div className="fixed inset-0 z-[110] flex justify-end bg-black/30 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl h-screen shadow-2xl overflow-y-auto flex flex-col">
+        <div
+          className="fixed inset-0 z-[110] flex justify-end bg-black/30 backdrop-blur-sm"
+          onClick={() => setIsDetailOpen(false)}
+        >
+          <div
+            className="bg-white w-full max-w-2xl h-screen shadow-2xl overflow-y-auto flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-8 bg-[#7598C1] text-black flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <Avatar role={selectedUser.role} />
+                <UserAvatar role={selectedUser.rawRole} src={selectedUser.avatarUrl} size="lg" />
                 <div>
                   <h2 className="text-2xl font-black tracking-tight">{selectedUser.username}</h2>
                   <p className="font-bold opacity-70 text-sm">{selectedUser.email}</p>
                   <p className="text-xs font-black opacity-80 uppercase mt-0.5">{selectedUser.role}</p>
                 </div>
               </div>
+
               <button onClick={() => setIsDetailOpen(false)} className="p-2 hover:bg-white/20 rounded-lg">
                 <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="flex border-b px-8 gap-6 bg-gray-50/50">
-              {[{ id: 'overview', label: 'Tổng quan' }, { id: 'campaigns', label: 'Chiến dịch' }, { id: 'donations', label: 'Quyên góp' }, { id: 'activity', label: 'Hoạt động' }, { id: 'reports', label: 'Báo cáo' }].map((tab) => (
+            <div className="flex border-b px-8 gap-6 bg-gray-50/50 overflow-x-auto no-scrollbar">
+              {[
+                { id: 'overview', label: 'Tổng quan' },
+                { id: 'campaigns', label: 'Chiến dịch' },
+                { id: 'donations', label: 'Quyên góp' },
+                { id: 'activity', label: 'Hoạt động' },
+                ...(isSuperAdmin && (selectedUser.role === 'Admin' || selectedUser.role === 'ADMIN') ? [{ id: 'permissions', label: 'Phân quyền' }] : []),
+                { id: 'reports', label: 'Báo cáo' }
+              ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -745,6 +761,60 @@ export default function AdminUsersPage() {
                       </p>
                     </div>
                   ))}
+                </div>
+              )}
+              {activeTab === 'permissions' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-4">
+                    <ShieldExclamationIcon className="w-6 h-6 text-amber-600 shrink-0" />
+                    <div>
+                      <p className="text-sm font-black text-amber-900 uppercase tracking-tight">Lưu ý quan trọng</p>
+                      <p className="text-sm text-amber-800 leading-relaxed mt-1">
+                        Thay đổi quyền hạn sẽ có hiệu lực ngay lập tức. Hãy cẩn thận khi cấp các quyền liên quan đến <b>Tài chính</b> và <b>Hệ thống</b>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    {PermissionGroups.map((group) => (
+                      <div key={group.name} className="space-y-3">
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">{group.name}</h3>
+                        <div className="grid grid-cols-1 gap-2">
+                          {group.permissions.map((perm) => {
+                            const isChecked = selectedUser.permissions?.includes(perm.key);
+                            return (
+                              <label
+                                key={perm.key}
+                                className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${isChecked
+                                  ? 'bg-blue-50 border-blue-200 shadow-sm'
+                                  : 'bg-white border-gray-100 hover:border-gray-200'
+                                  }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isChecked ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-300'}`}>
+                                    {isChecked && <CheckCircleIcon className="w-4 h-4" />}
+                                  </div>
+                                  <span className={`text-sm font-bold ${isChecked ? 'text-blue-900' : 'text-gray-600'}`}>{perm.label}</span>
+                                </div>
+                                <input
+                                  type="checkbox"
+                                  className="hidden"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const current = selectedUser.permissions || [];
+                                    const next = e.target.checked
+                                      ? [...current, perm.key]
+                                      : current.filter((k: string) => k !== perm.key);
+                                    handleUpdatePermissions(selectedUser.id, next);
+                                  }}
+                                />
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

@@ -18,20 +18,18 @@ const ROLE_LEVEL: Record<Role, number> = {
 export class UsersService {
     constructor(private prisma: PrismaService) { }
 
-    async findAll(callerId: string, callerRole: Role) {
-        const callerLevel = ROLE_LEVEL[callerRole];
-
-        let where: Prisma.UserWhereInput = {};
+    async findAll(callerId: string, callerRole: Role, roleGroup?: 'ADMINS' | 'MEMBERS') {
+        let where: Prisma.UserWhereInput = { id: { not: callerId } };
 
         if (callerRole === Role.ADMIN) {
             // Admin only sees USER and ORGANIZER
-            where = {
-                role: { in: [Role.USER, Role.ORGANIZER] },
-                id: { not: callerId }
-            };
+            where.role = { in: [Role.USER, Role.ORGANIZER] };
         } else if (callerRole === Role.SUPER_ADMIN) {
-            // Super admin sees everyone except themselves
-            where = { id: { not: callerId } };
+            if (roleGroup === 'ADMINS') {
+                where.role = { in: [Role.ADMIN, Role.SUPER_ADMIN] };
+            } else if (roleGroup === 'MEMBERS') {
+                where.role = { in: [Role.USER, Role.ORGANIZER] };
+            }
         }
 
         return this.prisma.user.findMany({
@@ -41,6 +39,7 @@ export class UsersService {
                 email: true,
                 username: true,
                 role: true,
+                permissions: true,
                 isVerified: true,
                 createdAt: true,
                 profile: true,
@@ -51,7 +50,7 @@ export class UsersService {
                         lockedAt: true
                     }
                 }
-            },
+            } as any,
         });
     }
 
@@ -230,5 +229,23 @@ export class UsersService {
         });
 
         return { message: 'Profile updated successfully.', user: updatedUser };
+    }
+
+    async updatePermissions(id: string, permissions: string[], callerId: string, callerRole: Role) {
+        const target = await this.findOne(id);
+
+        // Chỉ Super Admin mới có quyền phân quyền
+        if (callerRole !== Role.SUPER_ADMIN) {
+            throw new ForbiddenException('Only Super Admin can manage permissions.');
+        }
+
+        return this.prisma.user.update({
+            where: { id },
+            data: {
+                permissions: {
+                    set: permissions
+                }
+            }
+        });
     }
 }

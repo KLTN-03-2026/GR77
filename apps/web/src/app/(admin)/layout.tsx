@@ -19,6 +19,7 @@ import {
   UserGroupIcon,
   TagIcon,
   ExclamationCircleIcon,
+  ShieldExclamationIcon,
 } from '@heroicons/react/24/outline';
 
 
@@ -26,7 +27,7 @@ import {
 export type AdminRole = 'ADMIN' | 'SUPER_ADMIN';
 
 /** Decode JWT payload (client-side only, no signature verify) */
-function decodeJwt(token: string): { role?: string; sub?: string; exp?: number } | null {
+function decodeJwt(token: string): { role?: string; sub?: string; exp?: number; permissions?: string[] } | null {
   try {
     const base64 = token.split('.')[1];
     if (!base64) return null;
@@ -37,41 +38,43 @@ function decodeJwt(token: string): { role?: string; sub?: string; exp?: number }
 }
 
 // ── Menu definitions ────────────────────────────────────────────────
-function useAdminMenu(role: AdminRole): MenuItem[] {
+import { AdminPermission } from '@/constants/permissions';
+
+function useAdminMenu(role: AdminRole, permissions: string[] = []): MenuItem[] {
   const { translate } = useAdminLanguage();
 
-  const commonMenuItems: MenuItem[] = [
-    { name: translate('menu.dashboard'), href: '/admin/dashboard', icon: ChartBarIcon },
-    { name: translate('menu.users'), href: '/admin/users', icon: UsersIcon },
-    { name: translate('menu.reports'), href: '/admin/report', icon: ExclamationCircleIcon },
-    { name: translate('menu.campaigns'), href: '/admin/campaigns', icon: FlagIcon },
-    { name: translate('menu.categories'), href: '/admin/categories', icon: TagIcon },
-    { name: translate('menu.transactions'), href: '/admin/transactions', icon: ArrowsRightLeftIcon },
+  const isSuper = role === 'SUPER_ADMIN';
+  const has = (p: AdminPermission) => isSuper || permissions.includes(p);
 
-    { name: translate('menu.withdrawals'), href: '/admin/withdrawals', icon: ArrowDownTrayIcon },
-    { name: translate('menu.revenue'), href: '/admin/revenue', icon: CurrencyDollarIcon },
-    { name: translate('menu.moderation'), href: '/admin/moderation', icon: ShieldCheckIcon },
-    { name: translate('menu.kyc'), href: '/admin/kyc', icon: FingerPrintIcon },
-    { name: translate('menu.settings'), href: '/admin/settings', icon: Cog6ToothIcon },
+  const menuItems: (MenuItem & { permission?: AdminPermission })[] = [
+    { name: translate('menu.dashboard'), href: '/admin/dashboard', icon: ChartBarIcon },
+    { name: translate('menu.users'), href: '/admin/users', icon: UsersIcon, permission: AdminPermission.USERS_VIEW },
+    { name: translate('menu.admins'), href: '/admin/admins', icon: ShieldExclamationIcon, permission: AdminPermission.ADMINS_MANAGE },
+    { name: translate('menu.reports'), href: '/admin/report', icon: ExclamationCircleIcon, permission: AdminPermission.REPORTS_MANAGE },
+    { name: translate('menu.campaigns'), href: '/admin/campaigns', icon: FlagIcon, permission: AdminPermission.CAMPAIGNS_VIEW },
+    { name: translate('menu.categories'), href: '/admin/categories', icon: TagIcon, permission: AdminPermission.CATEGORIES_MANAGE },
+    { name: translate('menu.transactions'), href: '/admin/transactions', icon: ArrowsRightLeftIcon, permission: AdminPermission.TRANSACTIONS_VIEW },
+
+    { name: translate('menu.withdrawals'), href: '/admin/withdrawals', icon: ArrowDownTrayIcon, permission: AdminPermission.WITHDRAWALS_APPROVE },
+    { name: translate('menu.revenue'), href: '/admin/revenue', icon: CurrencyDollarIcon, permission: AdminPermission.REVENUE_VIEW },
+    { name: translate('menu.moderation'), href: '/admin/moderation', icon: ShieldCheckIcon, permission: AdminPermission.COMMENTS_MANAGE },
+    { name: translate('menu.kyc'), href: '/admin/kyc', icon: FingerPrintIcon, permission: AdminPermission.EKYC_APPROVE },
+    { name: translate('menu.settings'), href: '/admin/settings', icon: Cog6ToothIcon, permission: AdminPermission.SETTINGS_MANAGE },
   ];
 
-  const superAdminExtraItems: MenuItem[] = [];
-
-  if (role === 'SUPER_ADMIN') {
-    return [...commonMenuItems, ...superAdminExtraItems];
-  }
-  return commonMenuItems;
+  return menuItems.filter(item => !item.permission || has(item.permission));
 }
 
 // ── AdminGuard ─────────────────────────────────────────────────────
 interface GuardResult {
   authorized: boolean | null;
   role: AdminRole | null;
+  permissions: string[];
 }
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [state, setState] = useState<GuardResult>({ authorized: null, role: null });
+  const [state, setState] = useState<GuardResult>({ authorized: null, role: null, permissions: [] });
 
   useEffect(() => {
     const token = localStorage.getItem('adminAccessToken');
@@ -99,7 +102,11 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setState({ authorized: true, role: role as AdminRole });
+    setState({
+      authorized: true,
+      role: role as AdminRole,
+      permissions: decoded?.permissions || []
+    });
   }, [router]);
 
   if (state.authorized === null) {
@@ -118,19 +125,26 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
 // ── Inner Layout ───────────────────────────────────────────────────
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole>('ADMIN');
+  const [permissions, setPermissions] = useState<string[]>([]);
   const pathname = usePathname();
   const { translate } = useAdminLanguage();
 
   useEffect(() => {
+    // Tự động mở sidebar nếu là màn hình lớn
+    if (window.innerWidth >= 1024) {
+      setSidebarOpen(true);
+    }
+
     const token = localStorage.getItem('adminAccessToken');
     if (!token) return;
     const decoded = decodeJwt(token);
     if (decoded?.role === 'SUPER_ADMIN') setAdminRole('SUPER_ADMIN');
+    if (decoded?.permissions) setPermissions(decoded.permissions);
   }, []);
 
-  const menuItems = useAdminMenu(adminRole);
+  const menuItems = useAdminMenu(adminRole, permissions);
   const currentMenu = menuItems.find((item) => pathname.startsWith(item.href)) || { name: translate('admin.portal') };
 
   const roleLabel = adminRole === 'SUPER_ADMIN' ? 'SUPER ADMIN' : 'ADMIN';

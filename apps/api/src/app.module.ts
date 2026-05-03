@@ -18,6 +18,8 @@ import { CommentsModule } from './modules/comments/comments.module';
 import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
 import { EkycModule } from './modules/ekyc/ekyc.module';
 import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.module';
+import { ReportModule } from './modules/report/report.module';
+import { BlockchainModule } from './modules/blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.
     WithdrawalsModule,
     EkycModule,
     AdminDashboardModule,
+    ReportModule,
+    BlockchainModule,   // Global — BlockchainService injectable everywhere
   ],
   controllers: [AppController],
   providers: [AppService],

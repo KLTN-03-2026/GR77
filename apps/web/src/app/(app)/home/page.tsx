@@ -17,15 +17,18 @@ import {
 import { useGlobalAuth } from '@/contexts/AuthContext';
 import { API_BASE_URL } from '@/lib/constants/endpoints';
 
+const TEAL = '#0891B2';
+
 const HERO_IMAGES = [
-  '/images/banner-top.jpg',
-  '/images/background-login.jpg',
-  '/images/hero-home.png'
+  '/images/background/banner-top.svg',
+  '/images/background/background-login.svg',
+  '/images/background/banner-top3.svg',
 ];
 
 export default function CampaignsPage() {
   const { user } = useGlobalAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const [favoriteCampaigns, setFavoriteCampaigns] = useState<any[]>([]);
 
   useEffect(() => {
@@ -43,13 +46,11 @@ export default function CampaignsPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       const token = localStorage.getItem('accessToken');
-      if (!token) return;
+      const apiUrl = API_BASE_URL;
+      const headers: any = token ? { 'Authorization': `Bearer ${token}` } : {};
 
       setIsLoading(true);
       try {
-        const headers = { 'Authorization': `Bearer ${token}` };
-        const apiUrl = API_BASE_URL;
-
         const mapCampaign = (c: any) => ({
           id: c.id,
           title: c.title,
@@ -64,19 +65,24 @@ export default function CampaignsPage() {
           return items.map((item: any) => mapCampaign(item.campaign || item));
         };
 
-        const [favRes, actRes, joinRes, myRes, trendRes] = await Promise.all([
-          fetch(`${apiUrl}/favorites?limit=4`, { headers }),
-          fetch(`${apiUrl}/view-histories?limit=4`, { headers }),
-          fetch(`${apiUrl}/participants/me?limit=4`, { headers }),
-          fetch(`${apiUrl}/campaigns/me/list?limit=4`, { headers }),
-          fetch(`${apiUrl}/campaigns?limit=4&sortBy=trending`, { headers }),
-        ]);
-
-        if (favRes.ok) setFavoriteCampaigns(mapList(await favRes.json()));
-        if (actRes.ok) setActivityHistory(mapList(await actRes.json()));
-        if (joinRes.ok) setJoinedCampaigns(mapList(await joinRes.json()));
-        if (myRes.ok) setMyCampaigns(mapList(await myRes.json()));
+        // Fetch Trending (Public)
+        const trendRes = await fetch(`${apiUrl}/campaigns?limit=4&sortBy=trending`, { headers });
         if (trendRes.ok) setTrendingCampaigns(mapList(await trendRes.json()));
+
+        // Fetch user-specific sections only if token exists
+        if (token) {
+          const [favRes, actRes, joinRes, myRes] = await Promise.all([
+            fetch(`${apiUrl}/favorites?limit=4`, { headers }),
+            fetch(`${apiUrl}/view-histories?limit=4`, { headers }),
+            fetch(`${apiUrl}/participants/me?limit=4`, { headers }),
+            fetch(`${apiUrl}/campaigns/me/list?limit=4`, { headers }),
+          ]);
+
+          if (favRes.ok) setFavoriteCampaigns(mapList(await favRes.json()));
+          if (actRes.ok) setActivityHistory(mapList(await actRes.json()));
+          if (joinRes.ok) setJoinedCampaigns(mapList(await joinRes.json()));
+          if (myRes.ok) setMyCampaigns(mapList(await myRes.json()));
+        }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
       } finally {
@@ -87,28 +93,42 @@ export default function CampaignsPage() {
     fetchDashboardData();
   }, []);
 
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+  };
+
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-slate-50">
+      <div className="w-full h-[60vh] flex items-center justify-center">
         <div className="relative">
-          <div className="animate-ping absolute inset-0 rounded-full h-12 w-12 bg-indigo-400 opacity-20"></div>
-          <div className="relative rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+          <div className="animate-ping absolute inset-0 rounded-full h-12 w-12 opacity-20" style={{ backgroundColor: TEAL }}></div>
+          <div className="relative rounded-full h-12 w-12 border-4 border-t-transparent animate-spin" style={{ borderColor: `${TEAL}40`, borderTopColor: 'transparent', borderRightColor: TEAL }}></div>
         </div>
       </div>
     );
   }
 
   const activeSections = [
-    { title: 'Trending Missions', data: trendingCampaigns, color: 'indigo', icon: ArrowTrendingUpIcon, link: '/campaigns' },
-    { title: 'Saved for Later', data: favoriteCampaigns, color: 'pink', icon: HeartIcon, link: '/favorites' },
-    { title: 'Your Communities', data: joinedCampaigns, color: 'emerald', icon: UserGroupIcon, link: '/joined' },
-    { title: 'Managed by You', data: myCampaigns, color: 'purple', icon: BriefcaseIcon, link: '/creator/campaigns' },
-  ].filter(section => section.data.length > 0);
+    { title: 'Trending Campaigns', data: trendingCampaigns, icon: ArrowTrendingUpIcon, link: '/campaigns' },
+    { title: 'Managed by You', data: myCampaigns, icon: BriefcaseIcon, link: '/creator/campaigns' },
+    { title: 'Your Communities', data: joinedCampaigns, icon: UserGroupIcon, link: '/joined' },
+    { title: 'Saved for Later', data: favoriteCampaigns, icon: HeartIcon, link: '/favorites' },
+    { title: 'Recently Viewed', data: activityHistory, icon: ClockIcon, link: '/activity' },
+  ];
 
-  const hasContent = activeSections.length > 0;
+  const filteredSections = activeSections
+    .map((section) => ({
+      ...section,
+      data: section.data.filter((c: any) =>
+        c.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    }))
+    .filter((section) => section.data.length > 0);
+
+  const hasContent = filteredSections.length > 0;
 
   return (
-    <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 ${hasContent ? 'space-y-16' : 'h-[calc(100vh-120px)] flex flex-col justify-between'} bg-slate-50/50`}>
+    <div className={`w-full ${hasContent ? 'space-y-12' : 'min-h-[60vh] flex flex-col justify-between'}`}>
 
       {/* 1. Hero / Welcome Section */}
       <section className="relative group flex-shrink-0">
@@ -130,12 +150,10 @@ export default function CampaignsPage() {
         <div className="relative z-10 px-6 pt-10 pb-6 sm:px-12 sm:pt-16 sm:pb-8 flex flex-col md:flex-row gap-8 items-center justify-between min-h-[220px] sm:min-h-[280px]">
           <div className="flex-1 space-y-2 text-center md:text-left">
             <h1 className="text-2xl sm:text-3xl font-semibold text-white leading-tight tracking-tight drop-shadow-md">
-              Hello, <span className="italic text-indigo-200">
-                {user?.profile?.firstName || user?.username || 'Challenger'}
-              </span> !
+              Every Act of <span className="italic text-indigo-200">Kindness</span> Counts
             </h1>
             <p className="text-slate-300 text-sm font-medium max-w-lg leading-relaxed mx-auto md:mx-0">
-              Welcome back to Kindlink. Let's continue making magic together.
+              Connect with missions that matter and help create a better world for everyone.
             </p>
           </div>
 
@@ -154,111 +172,123 @@ export default function CampaignsPage() {
         </div>
       </section>
 
-      {/* 2. Search / Discover Shortcut */}
-      <div className="flex justify-center -mt-6 relative z-20 px-4 flex-shrink-0">
-        <div className="w-full max-w-2xl bg-slate-50 p-1.5 rounded-full shadow-[0_30px_60px_-20px_rgba(0,0,0,0.15)] border border-slate-200 flex items-center gap-2 hover:-translate-y-1 transition-all duration-300">
-          <div className="flex-1 flex items-center gap-3 pl-6">
-            <MagnifyingGlassIcon className="w-4 h-4 text-slate-400" />
+      <form onSubmit={handleSearch} className="flex justify-center relative z-20 flex-shrink-0 mt-6">
+        <div className="w-full max-w-2xl bg-white p-1.5 rounded-full border border-gray-200 flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-3 pl-5">
+            <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm chiến dịch..."
-              className="w-full bg-transparent outline-none text-slate-800 placeholder:text-slate-400 font-medium py-2 text-xs"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search campaigns..."
+              className="w-full bg-transparent outline-none text-gray-800 placeholder:text-gray-400 font-bold py-2 text-sm"
             />
           </div>
-          <button className="px-6 py-2 bg-blue-600 text-white text-xs font-semibold rounded-full hover:bg-blue-700 transition-all active:scale-95">
-            Tìm ngay
+          <button
+            type="submit"
+            className="px-6 py-2 text-white text-xs font-black rounded-full hover:opacity-90 transition-all active:scale-95"
+            style={{ backgroundColor: TEAL }}
+          >
+            Search
           </button>
         </div>
-      </div>
+      </form>
 
       {/* 3. Content Sections */}
       {hasContent ? (
-        activeSections.map((section, idx) => (
-          <section key={idx} className="space-y-8">
-            <div className="flex items-end justify-between px-2">
-              <div className="space-y-1">
-                <div className={`flex items-center gap-2`}>
-                  <section.icon className={`w-5 h-5 text-blue-500`} />
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-800">{section.title}</h2>
+        filteredSections.map((section, idx) => (
+          <section key={idx} className="space-y-6">
+            <div className="flex items-end justify-between">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <section.icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: TEAL }} />
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">{section.title}</h2>
                 </div>
-                <div className="h-0.5 w-12 bg-blue-100 rounded-full overflow-hidden">
-                  <div className={`h-full w-2/3 bg-blue-400 rounded-full`}></div>
+                <div className="h-1 w-14 rounded-full overflow-hidden" style={{ backgroundColor: `${TEAL}20` }}>
+                  <div className="h-full w-2/3 rounded-full" style={{ backgroundColor: TEAL }}></div>
                 </div>
               </div>
-              <Link href={section.link} className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors group">
-                Xem tất cả
+              <Link href={section.link} className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-cyan-600 transition-colors group">
+                View all
                 <ArrowRightIcon className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {section.data.map((c: any) => (
-                <Link key={c.id} href={`/home/${c.id}`} className="group/card block h-full hover:-translate-y-1.5 transition-transform duration-500">
-                  <div className="relative h-full flex flex-col bg-white rounded-2xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 overflow-hidden hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)]">
-                    <div className="relative aspect-[16/11] overflow-hidden bg-slate-50">
-                      <img
-                        src={c.image}
-                        alt={c.title}
-                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-700"
-                      />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {section.data.slice(0, 4).map((c: any, i: number) => {
+                const progress = c.targetAmount ? Math.min(100, (c.amountRaised / c.targetAmount) * 100) : 0;
+                return (
+                  <Link
+                    key={c.id}
+                    href={`/home/${c.id}`}
+                    className={`group/card block h-full transition-transform duration-300 hover:scale-[1.02]
+                      ${i >= 1 ? 'hidden sm:block' : ''}
+                      ${i >= 2 ? 'sm:hidden lg:block' : ''}`}
+                  >
+                    <div className="relative h-full flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 overflow-hidden hover:border-cyan-200">
+                      <div className="relative aspect-[16/11] overflow-hidden bg-gray-50">
+                        <img
+                          src={c.image}
+                          alt={c.title}
+                          className="w-full h-full object-cover transition-transform duration-500"
+                        />
+                      </div>
 
-                    <div className="p-5 flex flex-col flex-1 space-y-4">
-                      <h3 className="text-lg font-medium text-slate-800 leading-snug line-clamp-2 min-h-[3rem] group-hover/card:text-blue-600 transition-colors">
-                        {c.title}
-                      </h3>
+                      <div className="p-4 flex flex-col flex-1 space-y-3">
+                        <h3 className="text-base font-bold text-gray-900 leading-snug line-clamp-2 min-h-[2.75rem] group-hover/card:text-cyan-600 transition-colors">
+                          {c.title}
+                        </h3>
 
-                      <div className="space-y-3">
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-end">
-                            <span className="text-[9px] font-medium uppercase tracking-wider text-slate-400">Tiến độ</span>
-                            <span className="text-sm font-semibold text-slate-700">
-                              ${c.amountRaised.toLocaleString()}
-                            </span>
+                        <div className="space-y-2.5 mt-auto">
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-end">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Raised</span>
+                              <span className="text-[11px] font-bold" style={{ color: TEAL }}>
+                                {c.amountRaised.toLocaleString()} VND
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-1000"
+                                style={{
+                                  width: `${progress}%`,
+                                  background: `linear-gradient(90deg, #47c9e5, ${TEAL})`
+                                }}
+                              ></div>
+                            </div>
                           </div>
-                          <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-blue-500 rounded-full transition-all duration-1000"
-                              style={{ width: `${Math.min(100, c.targetAmount ? (c.amountRaised / c.targetAmount) * 100 : 0)}%` }}
-                            ></div>
-                          </div>
-                        </div>
 
-                        <div className="flex items-center justify-between pt-1">
-                          <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
-                            <CalendarIcon className="w-3.5 h-3.5" />
-                            {c.startDate ? new Date(c.startDate).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' }) : 'Sớm nhất'}
-                          </div>
-                          <div className="text-[10px] font-semibold text-blue-500 italic pb-0.5 border-b border-blue-100">
-                            Chi tiết
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400">
+                            <CalendarIcon className="w-3.5 h-3.5" style={{ color: TEAL }} />
+                            {c.startDate ? new Date(c.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Coming soon'}
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))
       ) : (
         /* 4. Empty State Message */
         <section className="relative transition-all flex-1 flex flex-col items-center justify-center mt-8 pb-12">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] h-[300px] bg-blue-50/40 blur-[100px] rounded-full -z-10"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] h-[300px] blur-[100px] rounded-full -z-10" style={{ backgroundColor: `${TEAL}10` }}></div>
           <div className="max-w-2xl px-6 text-center space-y-6">
             <div className="flex justify-center mb-6">
               <div className="text-6xl animate-bounce hover:scale-125 transition-transform duration-300 cursor-default drop-shadow-sm">
                 😉
               </div>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-medium text-slate-700 leading-tight">
-              Chưa có chiến dịch nào đang diễn ra, <br />
-              <span className="italic text-blue-500/80">hãy quay lại sau nhé!</span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-700 leading-tight">
+              No campaigns available right now, <br />
+              <span className="italic" style={{ color: TEAL }}>check back soon!</span>
             </h2>
             <div className="flex items-center justify-center gap-3">
-              <div className="h-px w-8 bg-slate-100"></div>
-              <span className="text-[10px] font-medium italic text-slate-400">Kindlink Community</span>
-              <div className="h-px w-8 bg-slate-100"></div>
+              <div className="h-px w-8 bg-gray-200"></div>
+              <span className="text-[10px] font-bold italic text-gray-400">Kindlink Community</span>
+              <div className="h-px w-8 bg-gray-200"></div>
             </div>
           </div>
         </section>

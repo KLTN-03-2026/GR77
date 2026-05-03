@@ -40,6 +40,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
 
     const fetchNotifications = async () => {
         try {
+            if (typeof window === 'undefined') return;
             const token = isAdmin ? localStorage.getItem('adminAccessToken') : localStorage.getItem('accessToken');
             if (!token) return;
 
@@ -48,7 +49,12 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
             });
             if (res.ok) {
                 const data = await res.json();
-                setNotifications(data);
+                if (Array.isArray(data)) {
+                    setNotifications(data);
+                } else {
+                    console.error('Expected array of notifications, got:', data);
+                    setNotifications([]);
+                }
             }
         } catch (err) {
             console.error('Failed to fetch notifications', err);
@@ -114,7 +120,12 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
     const handleNotificationClick = (n: Notification) => {
         if (!n.isRead) markAsRead(n.id);
         if (n.link) {
-            router.push(normalizeLink(n.link));
+            let targetLink = normalizeLink(n.link);
+            // Auto-append #discussion for comment notifications if not present
+            if (n.type === 'COMMENT' && !targetLink.includes('#')) {
+                targetLink += '#discussion';
+            }
+            router.push(targetLink);
             setIsOpen(false);
         }
     };
@@ -135,12 +146,12 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                     }
                     setIsOpen(!isOpen);
                 }}
-                className={`relative p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 transform active:scale-90 aspect-square flex items-center justify-center ${isAdmin
+                className={`relative p-2 sm:p-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 transform active:scale-90 aspect-square flex items-center justify-center ${isAdmin
                     ? 'bg-[#89A7CA] text-white hover:bg-[#7598c1] shadow-lg shadow-blue-900/10'
-                    : 'bg-[#E0F0FA] text-[#2ba6e1] hover:bg-[#d4ebfc]'
+                    : 'bg-[#0891B2]/10 text-[#0891B2] hover:bg-[#0891B2]/15'
                     }`}
             >
-                <BellIcon className="h-4 w-4 sm:h-6 sm:w-6" strokeWidth={2} />
+                <BellIcon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
                 {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4 sm:h-[22px] min-w-[16px] sm:min-w-[22px] items-center justify-center rounded-full border-2 sm:border-[3px] border-white bg-red-500 px-0.5 sm:px-1 text-[8px] sm:text-[10px] font-black text-white leading-none animate-pulse">
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -179,8 +190,8 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                             <button
                                 onClick={() => setFilter('all')}
                                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${filter === 'all'
-                                        ? 'bg-[#E0F0FA] text-[#2ba6e1]'
-                                        : 'text-gray-500 hover:bg-gray-100'
+                                    ? 'bg-[#0891B2]/10 text-[#0891B2]'
+                                    : 'text-gray-500 hover:bg-gray-100'
                                     }`}
                             >
                                 All
@@ -188,8 +199,8 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                             <button
                                 onClick={() => setFilter('unread')}
                                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${filter === 'unread'
-                                        ? 'bg-[#E0F0FA] text-[#2ba6e1]'
-                                        : 'text-gray-500 hover:bg-gray-100'
+                                    ? 'bg-[#0891B2]/10 text-[#0891B2]'
+                                    : 'text-gray-500 hover:bg-gray-100'
                                     }`}
                             >
                                 Unread
@@ -205,7 +216,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                             </span>
                             <button
                                 onClick={() => { setIsOpen(false); router.push(isAdmin ? '/admin/notifications' : '/notifications'); }}
-                                className="text-xs font-semibold text-[#2ba6e1] hover:underline transition-colors"
+                                className="text-xs font-semibold text-[#0891B2] hover:underline transition-colors"
                             >
                                 See all
                             </button>
@@ -221,14 +232,14 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                                         key={n.id}
                                         onClick={() => handleNotificationClick(n)}
                                         className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${n.isRead
-                                                ? 'hover:bg-gray-50'
-                                                : 'bg-[#E0F0FA]/30 hover:bg-[#E0F0FA]/50'
+                                            ? 'hover:bg-gray-50'
+                                            : 'bg-[#0891B2]/5 hover:bg-[#0891B2]/8'
                                             }`}
                                     >
                                         {/* Avatar / Icon */}
                                         <div className={`shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center ${n.type.includes('CAMPAIGN')
-                                                ? 'bg-orange-50 text-orange-500'
-                                                : 'bg-blue-50 text-blue-500'
+                                            ? 'bg-orange-50 text-orange-500'
+                                            : 'bg-blue-50 text-blue-500'
                                             }`}>
                                             {n.type.includes('CAMPAIGN') ? <ArchiveBoxArrowDownIcon className="w-4 h-4 stroke-[2]" /> : <BellIcon className="w-4 h-4 stroke-[2]" />}
                                         </div>
@@ -240,7 +251,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                                                 {' '}
                                                 <span className="font-normal">{n.message}</span>
                                             </p>
-                                            <p className={`text-[10px] mt-0.5 font-semibold ${n.isRead ? 'text-gray-400' : 'text-[#2ba6e1]'}`}>
+                                            <p className={`text-[10px] mt-0.5 font-semibold ${n.isRead ? 'text-gray-400' : 'text-[#0891B2]'}`}>
                                                 {formatRelativeTime(n.createdAt)}
                                             </p>
                                         </div>
@@ -248,7 +259,7 @@ export default function NotificationBell({ isAdmin }: { isAdmin?: boolean }) {
                                         {/* Unread dot */}
                                         {!n.isRead && (
                                             <div className="shrink-0 mt-4">
-                                                <div className="w-3 h-3 rounded-full bg-[#2ba6e1]" />
+                                                <div className="w-3 h-3 rounded-full bg-[#0891B2]" />
                                             </div>
                                         )}
                                     </div>

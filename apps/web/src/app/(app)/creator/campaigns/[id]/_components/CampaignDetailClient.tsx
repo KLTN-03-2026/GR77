@@ -19,6 +19,12 @@ import {
     ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
+import { useRouter } from 'next/navigation';
+import { useGlobalAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/lib/constants/endpoints';
+import { CampaignDiscussion } from '@/components/campaign/CampaignDiscussion';
+import { CampaignModals } from '@/app/(app)/home/[id]/_components/CampaignModals';
+import { CreatorTransactionHistory } from '../../components/CreatorTransactionHistory';
 
 export default function CampaignDetailClient({ id }: { id: string }) {
     const [campaign, setCampaign] = useState<any>(null);
@@ -29,11 +35,40 @@ export default function CampaignDetailClient({ id }: { id: string }) {
     const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
     const [withdrawalAmount, setWithdrawalAmount] = useState('');
     const [withdrawalReason, setWithdrawalReason] = useState('');
-    const [withdrawalMethod, setWithdrawalMethod] = useState<'WALLET' | 'BANK'>('WALLET');
+    const [withdrawalMethod, setWithdrawalMethod] = useState<'WALLET' | 'BANK'>('BANK');
     const [bankName, setBankName] = useState('');
     const [accountNumber, setAccountNumber] = useState('');
     const [accountOwner, setAccountOwner] = useState('');
     const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
+
+    const { user: currentUser } = useGlobalAuth();
+    const router = useRouter();
+
+    // Post Update State
+    const [updateTitle, setUpdateTitle] = useState('');
+    const [updateContent, setUpdateContent] = useState('');
+    const [isPostingUpdate, setIsPostingUpdate] = useState(false);
+
+
+
+    // Comment states
+    const [comments, setComments] = useState<any[]>([]);
+    const [newComment, setNewComment] = useState("");
+    const [replyingTo, setReplyingTo] = useState<any>(null);
+    const [isCommenting, setIsCommenting] = useState(false);
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+    const [reportReason, setReportReason] = useState("");
+
+    const fetchComments = async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/comments/campaign/${id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setComments(data);
+            }
+        } catch (err) { }
+    };
 
     useEffect(() => {
         const fetchCampaign = async () => {
@@ -55,51 +90,167 @@ export default function CampaignDetailClient({ id }: { id: string }) {
 
         if (id) {
             fetchCampaign();
+            fetchComments();
         }
     }, [id]);
 
-    const handleWithdrawalSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!withdrawalAmount || !withdrawalReason) {
-            alert('Vui lòng nhập đầy đủ thông tin');
+    const handleSubmitComment = async () => {
+        if (!newComment.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("Vui lòng đăng nhập để bình luận");
+            router.push("/login");
             return;
         }
 
-        setIsSubmittingWithdrawal(true);
+        setIsCommenting(true);
         try {
-            const token = localStorage.getItem('accessToken');
-            const data = {
-                amount: Number(withdrawalAmount),
-                reason: withdrawalReason,
-                method: withdrawalMethod,
-                ...(withdrawalMethod === 'BANK' ? { bankName, accountNumber, accountOwner } : {})
-            };
+            const res = await fetch(`${API_BASE_URL}/comments`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    campaignId: id,
+                    content: newComment,
+                    parentId: replyingTo?.id || null,
+                }),
+            });
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/withdrawals/campaign/${id}`, {
+            if (res.ok) {
+                setNewComment("");
+                setReplyingTo(null);
+                fetchComments();
+            } else {
+                const data = await res.json();
+                alert(data.message || "Không thể gửi bình luận");
+            }
+        } catch (err) {
+            alert("Lỗi kết nối");
+        } finally {
+            setIsCommenting(false);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+        const token = localStorage.getItem("accessToken");
+        try {
+            const res = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) fetchComments();
+        } catch (err) { }
+    };
+
+    const handleReportComment = async () => {
+        if (!reportReason.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        try {
+            const res = await fetch(`${API_BASE_URL}/comments/${reportingCommentId}/report`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ reason: reportReason }),
+            });
+            if (res.ok) {
+                alert("Đã gửi báo cáo bình luận.");
+                setReportModalOpen(false);
+                setReportReason("");
+            }
+        } catch (err) { }
+    };
+
+    const getAvatar = (user: any) => {
+        return user?.profile?.avatarUrl || null;
+    };
+
+    const handleWithdrawalSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setIsSubmittingWithdrawal(true);
+            const token = localStorage.getItem('accessToken');
+            const res = await fetch(`${API_BASE_URL}/withdrawals/campaign/${id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify({
+                    amount: Number(withdrawalAmount),
+                    reason: withdrawalReason || 'Yêu cầu rút tiền',
+                    method: withdrawalMethod,
+                    ...(withdrawalMethod === 'BANK' ? { bankName, accountNumber, accountOwner } : {})
+                }),
             });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.message || 'Gửi yêu cầu thất bại');
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Lỗi gửi yêu cầu rút tiền');
             }
 
-            alert('Gửi yêu cầu rút tiền thành công! Vui lòng chờ phê duyệt.');
+            alert('Yêu cầu rút tiền đã được gửi thành công. Vui lòng chờ phê duyệt.');
             setWithdrawalModalOpen(false);
             setWithdrawalAmount('');
-            setWithdrawalReason('');
-            setBankName('');
-            setAccountNumber('');
-            setAccountOwner('');
-        } catch (err: any) {
-            alert(`Lỗi: ${err.message}`);
+
+            // Reload campaign
+            const reloadRes = await fetch(`${API_BASE_URL}/campaigns/${id}`);
+            if (reloadRes.ok) {
+                const data = await reloadRes.json();
+                setCampaign(data);
+            }
+        } catch (error: any) {
+            console.error('Lỗi rút tiền:', error);
+            alert(error.message || 'Có lỗi xảy ra khi tạo yêu cầu rút tiền');
         } finally {
             setIsSubmittingWithdrawal(false);
+        }
+    };
+
+    const handlePostUpdate = async () => {
+        if (!updateTitle.trim() || !updateContent.trim()) {
+            alert('Vui lòng nhập đầy đủ tiêu đề và nội dung cập nhật.');
+            return;
+        }
+        setIsPostingUpdate(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+            const res = await fetch(`${API_BASE_URL}/campaigns/${id}/news`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    title: updateTitle,
+                    content: updateContent,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Lỗi đăng cập nhật');
+            }
+
+            alert('Bản tin mới đã được đăng và thông báo đến người ủng hộ!');
+            setUpdateTitle('');
+            setUpdateContent('');
+
+            // Reload campaign data to show new update
+            const reloadRes = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (reloadRes.ok) {
+                const data = await reloadRes.json();
+                setCampaign(data);
+            }
+        } catch (err: any) {
+            console.error('Post update error:', err);
+            alert(err.message || 'Có lỗi xảy ra khi đăng cập nhật.');
+        } finally {
+            setIsPostingUpdate(false);
         }
     };
 
@@ -258,56 +409,27 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         </div>
                     </div>
 
-                    {/* Updates Section */}
-                    <div className="bg-white rounded-2xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-                        <div className="flex items-center gap-3 mb-10">
-                            <div className="p-3 bg-blue-50 rounded-xl">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-blue-500">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900 leading-none mb-1.5">Post an Update</h2>
-                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                                    Notify your supporters
-                                </p>
-                            </div>
-                        </div>
 
-                        {/* Input Area */}
-                        <div>
-                            <div className="flex gap-4">
-                                {creatorAvatar ? (
-                                    <img
-                                        src={creatorAvatar}
-                                        alt="Your Avatar"
-                                        className="h-12 w-12 rounded-full object-cover ring-4 ring-white shadow-md border border-gray-100 bg-white"
-                                    />
-                                ) : (
-                                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center ring-4 ring-white shadow-md border border-gray-100">
-                                        <UserIcon className="w-6 h-6 text-cyan-300" />
-                                    </div>
-                                )}
-                                <div className="flex-1 space-y-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Update Title (e.g., Purchased 100 warm coats)"
-                                        className="w-full bg-gray-50 border-gray-100 rounded-xl py-3 px-5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold shadow-sm"
-                                    />
-                                    <textarea
-                                        placeholder="Write your detailed update here. This will be visible to all supporters in the Updates channel..."
-                                        rows={4}
-                                        className="w-full bg-gray-50 border-gray-100 rounded-xl py-4 px-6 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-y shadow-sm"
-                                    ></textarea>
-                                    <div className="flex justify-end pt-2">
-                                        <button className="bg-cyan-50 border-2 border-cyan-500 text-cyan-700 text-sm font-bold px-8 py-3 rounded-full hover:bg-cyan-100 transition-all shadow-sm active:scale-95">
-                                            Publish Update
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Discussion Section */}
+                    <CampaignDiscussion
+                        comments={comments}
+                        campaign={campaign}
+                        currentUser={currentUser}
+                        newComment={newComment}
+                        setNewComment={setNewComment}
+                        replyingTo={replyingTo}
+                        setReplyingTo={setReplyingTo}
+                        isCommenting={isCommenting}
+                        handleSubmitComment={handleSubmitComment}
+                        handleDeleteComment={handleDeleteComment}
+                        setReportingCommentId={setReportingCommentId}
+                        setReportModalOpen={setReportModalOpen}
+                        getAvatar={getAvatar}
+                    />
+
+                    {/* Transaction History Section */}
+                    <CreatorTransactionHistory campaignId={id} />
+
                 </div>
 
                 {/* Right Column: Status, Funding, Wallet Button, Creator */}
@@ -359,7 +481,7 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         {/* Public Link Button */}
                         <div className="space-y-3 mb-8">
                             <Link
-                                href={`/home/${campaign.id}`}
+                                href={`/home/${campaign.id}?from=creator/campaigns`}
                                 className="w-full bg-gray-50 border-2 border-cyan-500 text-cyan-700 hover:bg-cyan-100 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
                             >
                                 <ShareIcon className="h-5 w-5" />
@@ -401,6 +523,80 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Updates Section - Moved to Sidebar */}
+                    <div className="bg-white rounded-xl p-6 sm:p-8 mt-8 shadow-[0_20px_50px_rgba(8,112,184,0.07)] border border-blue-50/50">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="p-2.5 bg-blue-50 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 text-blue-500">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900 leading-none mb-1">Post News</h2>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    Notify your supporters
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 mb-8">
+                            <div className="flex gap-3">
+                                {creatorAvatar ? (
+                                    <img src={creatorAvatar} alt="Your Avatar" className="h-10 w-10 rounded-full object-cover shadow-sm bg-white" />
+                                ) : (
+                                    <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+                                        <UserIcon className="w-5 h-5 text-blue-300" />
+                                    </div>
+                                )}
+                                <input
+                                    type="text"
+                                    value={updateTitle}
+                                    onChange={(e) => setUpdateTitle(e.target.value)}
+                                    placeholder="News Title..."
+                                    className="flex-1 bg-gray-50 border border-gray-100 rounded-xl py-2.5 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-bold"
+                                />
+                            </div>
+                            <textarea
+                                value={updateContent}
+                                onChange={(e) => setUpdateContent(e.target.value)}
+                                placeholder="Write your news here..."
+                                rows={3}
+                                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 px-4 text-xs focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder-gray-400 font-medium resize-none mb-3"
+                            ></textarea>
+                            <button
+                                onClick={handlePostUpdate}
+                                disabled={isPostingUpdate || !updateTitle.trim() || !updateContent.trim()}
+                                className="w-full bg-blue-500 border-2 border-blue-500 text-white text-[11px] font-black py-3.5 rounded-full hover:bg-blue-600 transition-all shadow-lg shadow-blue-100 active:scale-95 uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isPostingUpdate ? (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    'Publish News'
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Render News History List */}
+                        <div className="space-y-4 pt-6 border-t border-gray-100">
+                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">News History</h3>
+                            {campaign?.news?.length > 0 ? (
+                                <div className="space-y-4">
+                                    {campaign.news.map((item: any) => (
+                                        <div key={item.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                            <p className="text-[10px] uppercase font-bold text-blue-500 tracking-widest mb-1.5">
+                                                {new Date(item.createdAt).toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            </p>
+                                            <h4 className="text-sm font-bold text-gray-900 mb-2">{item.title}</h4>
+                                            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{item.content}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-gray-400 italic text-center py-4">Chưa có bản tin nào được đăng.</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Withdrawal Modal */}
@@ -413,9 +609,9 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                         ></div>
 
                         {/* Modal Content */}
-                        <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative z-10 animate-in fade-in zoom-in duration-300 border border-gray-100">
+                        <div className="bg-white rounded-3xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl relative z-10 animate-in fade-in zoom-in duration-300 border border-gray-100 flex flex-col">
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-green-500 to-green-600 p-8 text-white">
+                            <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white flex-shrink-0">
                                 <h3 className="text-xl font-bold flex items-center gap-3 uppercase tracking-wider">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.55-.22-2.203-.702-1.172-.879-1.172-2.303 0-3.182 1.172-.879 3.07-.879 4.242 0 .493.37.79.88.879 1.414" />
@@ -428,28 +624,19 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                             </div>
 
                             {/* Form */}
-                            <form onSubmit={handleWithdrawalSubmit} className="p-8 space-y-6">
+                            <form onSubmit={handleWithdrawalSubmit} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
                                 {/* Tab Picker */}
-                                <div className="flex p-1 bg-gray-100 rounded-2xl">
-                                    <button
-                                        type="button"
-                                        onClick={() => setWithdrawalMethod('WALLET')}
-                                        className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${withdrawalMethod === 'WALLET' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                    >
-                                        Blockchain Wallet
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setWithdrawalMethod('BANK')}
-                                        className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${withdrawalMethod === 'BANK' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                    >
-                                        Ngân hàng (Bank)
-                                    </button>
+                                <div className="bg-green-50 p-4 rounded-2xl border border-green-100 flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-xl">🏦</div>
+                                    <div>
+                                        <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-0.5">Phương thức rút tiền</p>
+                                        <p className="text-base font-black text-green-900">Chuyển khoản Ngân hàng (VND)</p>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2.5">
-                                        Withdrawal Amount (VND)
+                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                        Số tiền muốn rút (VND)
                                     </label>
                                     <div className="relative">
                                         <input
@@ -461,127 +648,153 @@ export default function CampaignDetailClient({ id }: { id: string }) {
                                                 setWithdrawalAmount(value);
                                             }}
                                             placeholder="Enter amount..."
-                                            className={`w-full bg-white border rounded-2xl py-2.5 px-6 text-sm font-medium outline-none transition-all placeholder-gray-400 ${Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)
-                                                ? 'text-red-500 border-red-500 focus:ring-1 focus:ring-red-500'
-                                                : 'text-gray-900 border-gray-300 focus:border-black focus:ring-1 focus:ring-black'
+                                            className={`w-full bg-white border-2 rounded-2xl py-3.5 px-6 text-lg font-black outline-none transition-all placeholder-gray-300 ${Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))
+                                                ? 'text-red-600 border-red-500 focus:ring-2 focus:ring-red-100'
+                                                : 'text-black border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'
                                                 }`}
                                             required
                                         />
                                         <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-300">VND</span>
                                     </div>
-                                    <div className="mt-2.5 flex justify-between items-center px-1">
-                                        <span className="text-[10px] font-medium text-gray-900 uppercase tracking-widest">
-                                            Available Balance:
-                                        </span>
-                                        <span className="text-xs font-black text-gray-900">
-                                            {Number(campaign.currentRaisedAmount || 0).toLocaleString()} VND
-                                        </span>
+                                    <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center px-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Số dư quỹ hiện tại
+                                            </span>
+                                            <span className="text-lg font-black text-green-600">
+                                                {Number(campaign.currentBalance || 0).toLocaleString()} VND
+                                            </span>
+                                        </div>
+                                        <div className="text-right flex flex-col items-end">
+                                            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+                                                Tương đương POL
+                                            </span>
+                                            <span className="text-sm font-black text-blue-600 flex items-center gap-1">
+                                                <span className="text-base">💎</span>
+                                                {(Number(campaign.currentBalance || 0) / 1000).toFixed(2)} POL
+                                            </span>
+                                        </div>
                                     </div>
-                                    {Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0) && (
-                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest animate-pulse">
-                                            ⚠️ Amount exceeds available balance
+                                    {Number(withdrawalAmount) > Number(campaign.currentBalance || 0) && (
+                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest animate-pulse px-1">
+                                            ⚠️ Số tiền rút vượt quá số dư khả dụng trong quỹ
                                         </p>
                                     )}
                                 </div>
 
-                                {withdrawalMethod === 'WALLET' ? (
-                                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-center">
-                                        {campaign.creatorUser?.wallet?.walletAddress ? (
-                                            <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest text-left">Receiving Polygon Wallet</p>
-                                                <p className="text-xs font-mono text-blue-900 break-all">{campaign.creatorUser.wallet.walletAddress}</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-3 py-2">
-                                                <p className="text-xs font-bold text-blue-900">⚠️ You haven't connected a wallet!</p>
-                                                <p className="text-[10px] text-blue-600 uppercase font-black leading-relaxed">Please go to the Wallet page to connect MetaMask.</p>
-                                                <Link href="/wallet" className="inline-block text-[10px] font-black text-white bg-blue-500 px-6 py-2.5 rounded-xl uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-blue-100">Connect Now</Link>
-                                            </div>
-                                        )}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Tên ngân hàng</label>
+                                        <input
+                                            type="text"
+                                            value={bankName}
+                                            onChange={(e) => setBankName(e.target.value)}
+                                            placeholder="Ví dụ: Vietcombank"
+                                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400"
+                                            required
+                                        />
                                     </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Bank Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={bankName}
-                                                    onChange={(e) => setBankName(e.target.value)}
-                                                    placeholder="Ex: Vietcombank"
-                                                    className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all"
-                                                    required={withdrawalMethod === 'BANK'}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Account Number</label>
-                                                <input
-                                                    type="text"
-                                                    value={accountNumber}
-                                                    onChange={(e) => setAccountNumber(e.target.value)}
-                                                    placeholder="Enter Acc No."
-                                                    className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all"
-                                                    required={withdrawalMethod === 'BANK'}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2">Account Owner</label>
-                                            <input
-                                                type="text"
-                                                value={accountOwner}
-                                                onChange={(e) => setAccountOwner(e.target.value)}
-                                                placeholder="Ex: NGUYEN VAN A"
-                                                className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-4 text-xs font-medium focus:border-black outline-none transition-all uppercase"
-                                                required={withdrawalMethod === 'BANK'}
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Số tài khoản</label>
+                                        <input
+                                            type="text"
+                                            value={accountNumber}
+                                            onChange={(e) => setAccountNumber(e.target.value)}
+                                            placeholder="Số tài khoản..."
+                                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400"
+                                            required
+                                        />
                                     </div>
-                                )}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Tên chủ tài khoản</label>
+                                    <input
+                                        type="text"
+                                        value={accountOwner}
+                                        onChange={(e) => setAccountOwner(e.target.value)}
+                                        placeholder="VD: NGUYEN VAN A"
+                                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400 uppercase"
+                                        required
+                                    />
+                                </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-medium text-gray-900 uppercase tracking-widest mb-2.5">
-                                        Withdrawal Reason
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2.5">
+                                        Lý do rút tiền
                                     </label>
                                     <textarea
                                         value={withdrawalReason}
                                         onChange={(e) => setWithdrawalReason(e.target.value)}
-                                        placeholder="Please clarify the purpose of using this amount..."
+                                        placeholder="Mô tả mục đích giải ngân..."
                                         rows={3}
-                                        className="w-full bg-white border border-gray-300 rounded-2xl py-4 px-6 text-sm font-medium focus:border-black focus:ring-1 focus:ring-black outline-none transition-all placeholder-gray-400 resize-none text-gray-900"
+                                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold text-black focus:bg-white focus:border-green-500 outline-none transition-all placeholder-gray-400 resize-none"
                                         required
                                     ></textarea>
                                 </div>
 
-                                <div className="flex gap-4 pt-2">
+                                <div className="flex gap-4 pt-4">
                                     <button
                                         type="button"
                                         onClick={() => setWithdrawalModalOpen(false)}
                                         disabled={isSubmittingWithdrawal}
-                                        className="flex-1 px-4 py-4 bg-gray-50 hover:bg-gray-100 text-gray-900 text-[11px] font-black rounded-2xl transition-all uppercase tracking-widest active:scale-95 disabled:opacity-50"
+                                        className="flex-1 px-4 py-4 bg-gray-100 hover:bg-gray-200 text-gray-900 text-[11px] font-black rounded-2xl transition-all uppercase tracking-widest active:scale-95 disabled:opacity-50"
                                     >
-                                        Cancel
+                                        Hủy bỏ
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={isSubmittingWithdrawal || (withdrawalMethod === 'WALLET' && !campaign.creatorUser?.wallet?.walletAddress) || Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)}
-                                        className={`flex-1 px-4 py-4 text-white text-[11px] font-black rounded-2xl shadow-lg transition-all uppercase tracking-widest active:scale-95 flex items-center justify-center gap-2 ${isSubmittingWithdrawal || (withdrawalMethod === 'WALLET' && !campaign.creatorUser?.wallet?.walletAddress) || Number(withdrawalAmount) > (campaign.currentRaisedAmount || 0)
-                                            ? 'bg-gray-300 shadow-none cursor-not-allowed'
-                                            : 'bg-green-500 hover:bg-black shadow-green-100'
+                                        disabled={isSubmittingWithdrawal || Number(withdrawalAmount) <= 0 || Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))}
+                                        className={`flex-1 px-4 py-4 text-white text-[11px] font-black rounded-2xl shadow-lg transition-all uppercase tracking-widest active:scale-95 flex items-center justify-center gap-2 ${isSubmittingWithdrawal || Number(withdrawalAmount) <= 0 || Number(withdrawalAmount) > (Number(campaign.currentBalance || campaign.currentRaisedAmount || 0))
+                                            ? 'bg-gray-300 shadow-none cursor-not-allowed opacity-50'
+                                            : 'bg-green-600 hover:bg-black shadow-green-100'
                                             }`}
                                     >
                                         {isSubmittingWithdrawal ? (
                                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                         ) : (
-                                            'Submit Request'
+                                            'Gửi yêu cầu rút tiền'
                                         )}
                                     </button>
                                 </div>
                             </form>
                         </div>
                     </div>
-                )}
-            </div>
+                )
+                }
+            </div >
+
+            {/* Reuse Modals for Report etc. */}
+            < CampaignModals
+                donateOpen={false}
+                setDonateOpen={() => { }}
+                donateAmount=""
+                setDonateAmount={() => { }}
+                isDonating={false}
+                donated={false}
+                setDonated={() => { }}
+                donationMethod="PAYOS"
+                setDonationMethod={() => { }}
+                blockchainLoading={false}
+                blockchainError={null}
+                setBlockchainError={() => { }}
+                handleDonate={() => { }}
+                handleBlockchainDonate={() => { }}
+                QUICK_AMOUNTS={[]}
+                message=""
+                setMessage={() => { }}
+
+                reportModalOpen={reportModalOpen}
+                setReportModalOpen={setReportModalOpen}
+                reportReason={reportReason}
+                setReportReason={setReportReason}
+                handleReportComment={handleReportComment}
+
+                campaignReportModalOpen={false}
+                setCampaignReportModalOpen={() => { }}
+                campaignReportReason=""
+                setCampaignReportReason={() => { }}
+                handleReportCampaign={async () => { }}
+            />
         </div >
     );
 }

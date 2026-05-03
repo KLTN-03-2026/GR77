@@ -7,6 +7,7 @@ interface CampaignGoalProgressProps {
     totalRaised: number;
     participantsCount?: number;
     isJoined: boolean;
+    hasDonated?: boolean;
     isLiked: boolean;
     isCreator?: boolean;
     campaignId: string;
@@ -14,6 +15,7 @@ interface CampaignGoalProgressProps {
     handleJoin: () => void;
     handleLeave?: () => void;
     handleToggleLike: (id: string, isFavorited: boolean) => void;
+    onReport: () => void;
     formatCurrency: (amount: number | string) => string;
 }
 
@@ -23,6 +25,7 @@ export function CampaignGoalProgress({
     totalRaised,
     participantsCount,
     isJoined,
+    hasDonated,
     isLiked,
     isCreator,
     campaignId,
@@ -36,16 +39,45 @@ export function CampaignGoalProgress({
         <section className="w-full h-full flex flex-col">
             <div className="flex flex-col items-center flex-1 w-full">
 
-                {/* 1. Pie Chart Area - Centered in top half */}
                 <div className="flex-1 flex flex-col justify-center w-full items-center py-4">
                     <div className="relative w-40 h-40 sm:w-56 sm:h-56 lg:w-72 lg:h-72 shrink-0">
-                        <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                            <path className="text-gray-100" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.2" />
-                            <path className="text-black" strokeDasharray={`${raisedPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                        <svg viewBox="0 0 40 40" className="w-full h-full -rotate-90">
+                            <defs>
+                                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stopColor="#47c9e5" />
+                                    <stop offset="100%" stopColor="#2b9ec5" />
+                                </linearGradient>
+                            </defs>
+                            {/* Track */}
+                            <path
+                                className="text-gray-100/80"
+                                strokeDasharray="100, 100"
+                                d="M20 4.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.8"
+                            />
+                            {/* Progress Arc */}
+                            <path
+                                stroke="url(#progressGradient)"
+                                style={{
+                                    transition: 'stroke-dasharray 1s ease-out'
+                                }}
+                                strokeDasharray={`${raisedPercent}, 100`}
+                                d="M20 4.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none"
+                                strokeWidth="2.8"
+                                strokeLinecap="round"
+                            />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-2xl sm:text-4xl lg:text-5xl font-black text-gray-900">{raisedPercent}%</span>
-                            <span className="text-[8px] sm:text-[10px] lg:text-[12px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Raised</span>
+                            <div className="flex flex-col items-center mb-[-4px]">
+                                <span className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 leading-none tracking-tighter">
+                                    {raisedPercent > 0 && raisedPercent < 1 ? "<1" : Math.round(raisedPercent)}
+                                    <span className="text-lg sm:text-2xl lg:text-3xl ml-0.5 text-cyan-500">%</span>
+                                </span>
+                            </div>
+                            <span className="text-[9px] sm:text-[11px] lg:text-[13px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Raised</span>
                         </div>
                     </div>
                 </div>
@@ -83,18 +115,18 @@ export function CampaignGoalProgress({
                                 </button>
                             ) : (
                                 <button
-                                    onClick={isJoined ? handleLeave : handleJoin}
+                                    onClick={isJoined ? (hasDonated ? () => alert("Bạn không thể rời chiến dịch vì đã thực hiện quyên góp thành công.") : handleLeave) : handleJoin}
                                     className={`flex-1 py-2.5 sm:py-3 border-2 font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg ${isJoined
-                                        ? "bg-white border-red-500 text-red-500 hover:bg-red-50 shadow-red-100/50"
+                                        ? (hasDonated ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed opacity-70" : "bg-white border-red-500 text-red-500 hover:bg-red-50 shadow-red-100/50")
                                         : "bg-white border-pink-500 text-pink-500 hover:bg-pink-50 shadow-pink-100/50"
                                         }`}
                                 >
-                                    {isJoined ? "Leave" : "Join Free"}
+                                    {isJoined ? (hasDonated ? "Donated Member" : "Leave") : "Join Free"}
                                 </button>
                             )}
                             <button
                                 onClick={() => setDonateOpen(true)}
-                                className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full shadow-lg shadow-yellow-100/50 transition-all active:scale-95"
+                                className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full transition-all active:scale-95"
                             >
                                 Donate
                             </button>

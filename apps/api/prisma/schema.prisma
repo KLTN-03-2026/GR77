@@ -11,13 +11,14 @@ model User {
   email              String                @unique
   username           String
   password           String?
-  provider           AuthProvider          @default(LOCAL)
-  googleId           String?               @unique
   role               Role                  @default(USER)
   createdAt          DateTime              @default(now()) @map("created_at")
   updatedAt          DateTime              @updatedAt @map("updated_at")
   isVerified         Boolean               @default(false) @map("is_verified")
+  googleId           String?               @unique
+  provider           AuthProvider          @default(LOCAL)
   isKycVerified      Boolean               @default(false) @map("is_kyc_verified")
+  permissions        String[]              @default([])
   participations     CampaignParticipant[]
   viewHistories      CampaignViewHistory[]
   createdCampaigns   Campaign[]            @relation("CampaignCreator")
@@ -30,10 +31,10 @@ model User {
   reportsSubmitted   Report[]              @relation("ReportSubmitter")
   reportsReceived    Report[]              @relation("ReportTarget")
   actionLogs         UserActionLog[]
+  ekyc               UserEkyc?
   profile            UserProfile?
   security           UserSecurity?
   wallet             UserWallet?
-  ekyc               UserEkyc?
   walletTransactions WalletTransaction[]
 
   @@map("users")
@@ -135,6 +136,8 @@ model Campaign {
   createdAt                DateTime              @default(now()) @map("created_at")
   updatedAt                DateTime              @updatedAt @map("updated_at")
   currentRaisedAmount      Decimal               @default(0) @map("current_raised_amount") @db.Decimal(18, 2)
+  currentBalance           Decimal               @default(0) @map("current_balance") @db.Decimal(18, 2)
+
   donationCount            Int                   @default(0) @map("donation_count")
   categoryId               String?               @map("category_id")
   fundLedgers              CampaignFundLedger[]
@@ -149,6 +152,7 @@ model Campaign {
   favorites                Favorite[]
   reports                  Report[]
   withdrawalRequests       WithdrawalRequest[]
+  news                     CampaignNews[]
 
   @@index([status])
   @@index([creatorUserId])
@@ -157,20 +161,28 @@ model Campaign {
 }
 
 model WithdrawalRequest {
-  id            String           @id @default(uuid())
-  campaignId    String           @map("campaign_id")
-  amount        Decimal          @db.Decimal(18, 2)
-  reason        String?          @db.VarChar(500)
-  method        WithdrawalMethod @default(WALLET)
-  bankName      String?          @map("bank_name")
-  accountNumber String?          @map("account_number")
-  accountOwner  String?          @map("account_owner")
-  walletAddress String?          @map("wallet_address")
-  status        WithdrawalStatus @default(PENDING)
-  txHash        String?          @map("tx_hash") @db.VarChar(100)
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-  campaign      Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  id                  String           @id @default(uuid())
+  campaignId          String           @map("campaign_id")
+  amount              Decimal          @db.Decimal(18, 2)
+  reason              String?          @db.VarChar(500)
+  method              WithdrawalMethod @default(WALLET)
+  bankName            String?          @map("bank_name")
+  accountNumber       String?          @map("account_number")
+  accountOwner        String?          @map("account_owner")
+  walletAddress       String?          @map("wallet_address")
+  status              WithdrawalStatus @default(PENDING)
+  txHash              String?          @map("tx_hash") @db.VarChar(150)
+  // Transparency fields - filled by admin upon disbursement
+  polAmount           Decimal?         @map("pol_amount") @db.Decimal(28, 10) // POL withdrawn from smart contract
+  exchangeRate        Decimal?         @map("exchange_rate") @db.Decimal(18, 4) // VND per 1 POL at time of disbursement
+  onchainTxHash       String?          @map("onchain_tx_hash") @db.VarChar(150) // SC withdrawal tx hash
+  bankTransferProof   String?          @map("bank_transfer_proof") @db.VarChar(1000) // URL of bank transfer screenshot
+  adminNote           String?          @map("admin_note") @db.VarChar(500)
+  approvedAt          DateTime?        @map("approved_at")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  campaign            Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ledgerEntries       CampaignFundLedger[]
 
   @@index([campaignId])
   @@index([status])
@@ -187,6 +199,19 @@ model CampaignImage {
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@map("campaign_images")
+}
+
+model CampaignNews {
+  id         String   @id @default(uuid())
+  campaignId String   @map("campaign_id")
+  title      String   @db.VarChar(255)
+  content    String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@map("campaign_news")
 }
 
 model CampaignCategory {
@@ -244,6 +269,7 @@ model Donation {
   paymentMethod       PaymentMethod        @map("payment_method")
   status              DonationStatus       @default(PENDING)
   donatedAt           DateTime?            @map("donated_at")
+  txHash              String?              @map("tx_hash") @db.VarChar(200)
   createdAt           DateTime             @default(now()) @map("created_at")
   updatedAt           DateTime             @updatedAt @map("updated_at")
   ledgerEntries       CampaignFundLedger[]
@@ -289,18 +315,22 @@ model PaymentTransaction {
 }
 
 model CampaignFundLedger {
-  id         String          @id @default(uuid())
-  campaignId String          @map("campaign_id")
-  donationId String?         @map("donation_id")
-  type       LedgerEntryType
-  amount     Decimal         @db.Decimal(18, 2)
-  note       String?         @db.VarChar(500)
-  createdAt  DateTime        @default(now()) @map("created_at")
-  campaign   Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  donation   Donation?       @relation(fields: [donationId], references: [id])
+  id                  String              @id @default(uuid())
+  campaignId          String              @map("campaign_id")
+  donationId          String?             @map("donation_id")
+  withdrawalRequestId String?             @map("withdrawal_request_id")
+  type                LedgerEntryType
+  amount              Decimal             @db.Decimal(18, 2)
+  note                String?             @db.VarChar(500)
+  txHash              String?             @map("tx_hash") @db.VarChar(150)
+  createdAt           DateTime            @default(now()) @map("created_at")
+  campaign            Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  donation            Donation?           @relation(fields: [donationId], references: [id])
+  withdrawalRequest   WithdrawalRequest?  @relation(fields: [withdrawalRequestId], references: [id])
 
   @@index([campaignId])
   @@index([donationId])
+  @@index([withdrawalRequestId])
   @@index([campaignId, type])
   @@map("campaign_fund_ledger")
 }
@@ -390,6 +420,26 @@ model UserActionLog {
   @@map("user_action_logs")
 }
 
+model UserEkyc {
+  id              String     @id @default(uuid())
+  userId          String     @unique @map("user_id")
+  status          EkycStatus @default(PENDING)
+  idNumber        String?    @map("id_number") @db.VarChar(20)
+  fullName        String?    @map("full_name") @db.VarChar(255)
+  dob             String?    @map("dob") @db.VarChar(20)
+  gender          String?    @db.VarChar(10)
+  address         String?    @db.VarChar(500)
+  frontImageUrl   String?    @map("front_image_url") @db.VarChar(500)
+  backImageUrl    String?    @map("back_image_url") @db.VarChar(500)
+  selfieImageUrl  String?    @map("selfie_image_url") @db.VarChar(500)
+  rejectionReason String?    @map("rejection_reason") @db.VarChar(500)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_ekyc")
+}
+
 enum WithdrawalMethod {
   WALLET
   BANK
@@ -399,6 +449,7 @@ enum WithdrawalStatus {
   PENDING
   APPROVED
   REJECTED
+  DISBURSED // Admin has confirmed bank transfer + on-chain withdrawal done
 }
 
 enum WalletTransactionType {
@@ -448,6 +499,7 @@ enum DonationStatus {
 
 enum LedgerEntryType {
   DONATION_IN
+  WITHDRAWAL_OUT
   REFUND_OUT
   ADJUSTMENT_IN
   ADJUSTMENT_OUT
@@ -475,6 +527,7 @@ enum ReportStatus {
   RESOLVED
   DISMISSED
 }
+
 enum AuthProvider {
   LOCAL
   GOOGLE
@@ -484,24 +537,4 @@ enum EkycStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-model UserEkyc {
-  id              String     @id @default(uuid())
-  userId          String     @unique @map("user_id")
-  status          EkycStatus @default(PENDING)
-  idNumber        String?    @map("id_number") @db.VarChar(20)
-  fullName        String?    @map("full_name") @db.VarChar(255)
-  dob             String?    @map("dob") @db.VarChar(20)
-  gender          String?    @db.VarChar(10)
-  address         String?    @db.VarChar(500)
-  frontImageUrl   String?    @map("front_image_url") @db.VarChar(500)
-  backImageUrl    String?    @map("back_image_url") @db.VarChar(500)
-  selfieImageUrl  String?    @map("selfie_image_url") @db.VarChar(500)
-  rejectionReason String?    @map("rejection_reason") @db.VarChar(500)
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_ekyc")
 }

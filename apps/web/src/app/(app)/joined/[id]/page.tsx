@@ -1,8 +1,9 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { LogOut } from "lucide-react";
 import { useGlobalAuth } from "@/contexts/AuthContext";
+import { API_BASE_URL } from "@/lib/constants/endpoints";
 
 // Shared Components
 import { CampaignDiscussion } from "@/components/campaign/CampaignDiscussion";
@@ -42,10 +43,12 @@ export default function JoinedCampaignDetailPage({
         fetchError,
         isLiked,
         isJoined,
+        hasDonated,
         showLeaveModal, setShowLeaveModal,
         isLeaving,
         handleToggleLike,
-        handleLeave
+        handleLeave,
+        handleJoin
     } = useJoinedCampaign(id);
 
     // 2. Donation Hooks
@@ -58,8 +61,10 @@ export default function JoinedCampaignDetailPage({
         blockchainLoading,
         blockchainError, setBlockchainError,
         handleDonate,
-        handleBlockchainDonate
-    } = useDonation(id, campaign?.minimumDonationAmount);
+        handleBlockchainDonate,
+        message, setMessage,
+        showJoinInvitation, setShowJoinInvitation
+    } = useDonation(id, campaign?.minimumDonationAmount, isJoined);
 
     // 3. Comments & Reporting Hooks
     const {
@@ -75,6 +80,36 @@ export default function JoinedCampaignDetailPage({
         setReportingCommentId,
         getAvatar
     } = useCampaignComments(id);
+
+    const [campaignReportModalOpen, setCampaignReportModalOpen] = useState(false);
+    const [campaignReportReason, setCampaignReportReason] = useState("");
+
+    const handleReportCampaign = async () => {
+        if (!campaignReportReason.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("Vui lòng đăng nhập để báo cáo chiến dịch");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/campaigns/${id}/report`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ reason: campaignReportReason }),
+            });
+            if (res.ok) {
+                alert("Đã gửi báo cáo chiến dịch.");
+                setCampaignReportModalOpen(false);
+                setCampaignReportReason("");
+            }
+        } catch (err) {
+            alert("Lỗi kết nối");
+        }
+    };
 
 
     /* ── Render Derived Variables ── */
@@ -125,6 +160,7 @@ export default function JoinedCampaignDetailPage({
                                     currentUser={currentUser}
                                     isLiked={isLiked}
                                     handleToggleLike={handleToggleLike}
+                                    onReport={() => setCampaignReportModalOpen(true)}
                                 />
                             </div>
 
@@ -136,13 +172,15 @@ export default function JoinedCampaignDetailPage({
                                     totalRaised={totalRaised}
                                     participantsCount={campaign?.participantsCount}
                                     isJoined={isJoined}
+                                    hasDonated={hasDonated}
                                     isLiked={isLiked}
                                     isCreator={currentUser?.id === campaign?.creatorUserId}
                                     campaignId={campaign?.id}
                                     setDonateOpen={setDonateOpen}
-                                    handleJoin={() => { }} // Cannot join again from this page
+                                    handleJoin={handleJoin}
                                     handleLeave={() => setShowLeaveModal(true)}
                                     handleToggleLike={handleToggleLike}
+                                    onReport={() => setCampaignReportModalOpen(true)}
                                     formatCurrency={formatCurrency}
                                 />
                             </div>
@@ -150,7 +188,9 @@ export default function JoinedCampaignDetailPage({
                     </div>
 
                     {/* Container 2: Multi-Tab Area */}
-                    <CampaignTabs />
+                    {isJoined && (
+                        <CampaignTabs campaign={campaign} currentUser={currentUser} />
+                    )}
 
                     {/* Container 3: Community Discussion */}
                     <div className="px-4 sm:px-8 pb-12 max-w-7xl mx-auto mt-4">
@@ -189,16 +229,29 @@ export default function JoinedCampaignDetailPage({
                 handleDonate={handleDonate}
                 handleBlockchainDonate={handleBlockchainDonate}
                 QUICK_AMOUNTS={QUICK_AMOUNTS}
+                message={message}
+                setMessage={setMessage}
 
                 reportModalOpen={reportModalOpen}
                 setReportModalOpen={setReportModalOpen}
                 reportReason={reportReason}
                 setReportReason={setReportReason}
                 handleReportComment={handleReportComment}
+
+                campaignReportModalOpen={campaignReportModalOpen}
+                setCampaignReportModalOpen={setCampaignReportModalOpen}
+                campaignReportReason={campaignReportReason}
+                setCampaignReportReason={setCampaignReportReason}
+                handleReportCampaign={handleReportCampaign}
+                showJoinInvitation={showJoinInvitation}
+                setShowJoinInvitation={setShowJoinInvitation}
+                handleJoin={handleJoin}
+                isJoining={false} // handleJoin in hook doesn't expose isJoining yet, but we use it
+                isJoined={isJoined}
             />
 
             {/* --- LEAVE MODAL --- */}
-            <LeaveCampaignModal 
+            <LeaveCampaignModal
                 showLeaveModal={showLeaveModal}
                 setShowLeaveModal={setShowLeaveModal}
                 handleLeave={handleLeave}

@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { OcrService } from './services/ocr.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { VerifyEkycDto } from './dto/verify-ekyc.dto';
+import { AdminPermission } from '../../constants/permissions';
 import { EkycStatus } from '@prisma/client';
 
 @Injectable()
@@ -81,6 +82,14 @@ export class EkycService {
                 selfieImageUrl: dto.selfieImageUrl,
             },
         });
+
+        // Notify Admins
+        await this.notificationsService.notifyAdmins({
+            title: 'New eKYC Submission',
+            message: 'A new identity verification request has been submitted.',
+            type: 'EKYC_SUBMITTED',
+            link: `/admin/ekyc?userId=${userId}`
+        }, AdminPermission.EKYC_APPROVE);
 
         return {
             message: 'Yêu cầu xác minh đã được gửi thành công. Đang chờ hệ thống phê duyệt.',

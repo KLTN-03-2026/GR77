@@ -4,11 +4,16 @@ import { CampaignsService } from './campaigns.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
+import { ReportCampaignDto } from './dto/report-campaign.dto';
+import { CreateCampaignNewsDto } from './dto/create-campaign-news.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { MinRole } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../auth/permissions.decorator';
+import { AdminPermission } from '../../constants/permissions';
 
 @Controller('campaigns')
 export class CampaignsController {
@@ -19,8 +24,9 @@ export class CampaignsController {
    * 
    * Admin-only list of all campaigns
    */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.CAMPAIGNS_VIEW)
   @Get('admin/all')
   findAllAdmin(@Query() query: GetCampaignsQueryDto) {
     return this.campaignsService.findAllAdmin(query);
@@ -29,8 +35,9 @@ export class CampaignsController {
   /**
    * POST /campaigns/:id/approve
    */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.CAMPAIGNS_APPROVE)
   @Post(':id/approve')
   approve(@Param('id') id: string, @Request() req: any) {
     const adminId = req.user.userId || req.user.sub;
@@ -40,8 +47,9 @@ export class CampaignsController {
   /**
    * POST /campaigns/:id/reject
    */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.CAMPAIGNS_APPROVE)
   @Post(':id/reject')
   reject(@Param('id') id: string, @Request() req: any, @Body('note') note: string) {
     const adminId = req.user.userId || req.user.sub;
@@ -62,6 +70,16 @@ export class CampaignsController {
   }
 
   /**
+   * GET /campaigns/me/stats
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/stats')
+  getMyStats(@Request() req: any) {
+    const userId = req.user.userId || req.user.sub;
+    return this.campaignsService.getMyStats(userId);
+  }
+
+  /**
    * GET /campaigns/me/list
    */
   @UseGuards(AuthGuard('jwt'))
@@ -77,6 +95,15 @@ export class CampaignsController {
   @Get(':id')
   detail(@Param('id') id: string) {
     return this.campaignsService.detail(id);
+  }
+
+  /**
+   * GET /campaigns/:id/transparency
+   * Returns public ledger entries (donations and withdrawals)
+   */
+  @Get(':id/transparency')
+  getTransparency(@Param('id') id: string) {
+    return this.campaignsService.getTransparency(id);
   }
 
   /**
@@ -101,5 +128,30 @@ export class CampaignsController {
   ) {
     const userId = req.user.userId || req.user.sub;
     return this.campaignsService.update(userId, id, updateCampaignDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/report')
+  report(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: ReportCampaignDto,
+  ) {
+    const userId = req.user.userId || req.user.sub;
+    return this.campaignsService.report(userId, id, dto);
+  }
+
+  /**
+   * POST /campaigns/:id/news
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/news')
+  postNews(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: CreateCampaignNewsDto,
+  ) {
+    const userId = req.user.userId || req.user.sub;
+    return this.campaignsService.postNews(userId, id, dto);
   }
 }

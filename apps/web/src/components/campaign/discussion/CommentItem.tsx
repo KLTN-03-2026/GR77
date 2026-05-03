@@ -35,6 +35,7 @@ export interface CommentData {
     content: string;
     createdAt: string;
     user: CommentUser;
+    deletedAt?: string;
     replies?: CommentData[];
 }
 
@@ -75,31 +76,35 @@ export function CommentItem({
 
     return (
         <div className={`flex gap-2 group ${depth > 0 ? "mt-2" : ""}`}>
-            {getAvatar(comment.user) && !getAvatar(comment.user).includes('dicebear') ? (
+            {getAvatar(comment.user) && !getAvatar(comment.user).includes('dicebear') && !comment.deletedAt ? (
                 <img
                     src={getAvatar(comment.user)}
                     className={`${avatarSize} shrink-0 rounded-full object-cover mt-0.5 bg-white`}
                     alt={displayName}
                 />
             ) : (
-                <div className={`${avatarSize} shrink-0 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mt-0.5`}>
-                    <UserIcon className="w-1/2 h-1/2 text-cyan-300" />
+                <div className={`${avatarSize} shrink-0 rounded-full bg-gray-100 flex items-center justify-center mt-0.5 border border-gray-200`}>
+                    <UserIcon className="w-1/2 h-1/2 text-gray-300" />
                 </div>
             )}
             <div className="flex-1 min-w-0">
                 {/* Bubble - Facebook style row with Actions */}
                 <div className="flex items-center gap-2 group/bubble max-w-full">
-                    <div className="bg-[#f0f2f5] px-3 py-2 rounded-[18px] inline-block max-w-[calc(100%-32px)]">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="font-bold text-gray-900 text-[13px]">{displayName}</span>
-                            {isCreator && (
-                                <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0 rounded-[4px] font-black uppercase tracking-tight">
-                                    Creator
-                                </span>
-                            )}
-                        </div>
+                    <div className={`bg-[#f0f2f5] px-3 py-2 rounded-[18px] inline-block max-w-[calc(100%-32px)] ${comment.deletedAt ? "opacity-60 italic" : ""}`}>
+                        {!comment.deletedAt && (
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="font-bold text-gray-900 text-[13px]">{displayName}</span>
+                                {isCreator && (
+                                    <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0 rounded-[4px] font-black uppercase tracking-tight">
+                                        Creator
+                                    </span>
+                                )}
+                            </div>
+                        )}
                         <p className={`text-gray-800 ${bubbleText} leading-snug whitespace-pre-wrap break-words`}>
-                            {(() => {
+                            {comment.deletedAt ? (
+                                "Bình luận này đã bị xóa"
+                            ) : (() => {
                                 // Match @[Name] or @Name and make it bold
                                 const tagRegex = /^(@\[[^\]]+\]|@[^\s]+)/;
                                 const match = comment.content.match(tagRegex);
@@ -121,17 +126,19 @@ export function CommentItem({
                     </div>
 
                     {/* Quick Reactions/Actions - In-flow for stable layout */}
-                    <div className="flex gap-1 opacity-50 sm:opacity-0 group-hover/bubble:opacity-100 transition-opacity shrink-0">
-                        {isOwn ? (
-                            <button onClick={() => onDelete(comment.id)} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                        ) : (
-                            <button onClick={() => onReport(comment.id)} className="p-1 text-gray-400 hover:text-yellow-600 transition-colors">
-                                <AlertCircle className="w-3.5 h-3.5" />
-                            </button>
-                        )}
-                    </div>
+                    {!comment.deletedAt && (
+                        <div className="flex gap-1 opacity-50 sm:opacity-0 group-hover/bubble:opacity-100 transition-opacity shrink-0">
+                            {isOwn ? (
+                                <button onClick={() => onDelete(comment.id)} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                            ) : (
+                                <button onClick={() => onReport(comment.id)} className="p-1 text-gray-400 hover:text-yellow-600 transition-colors">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Sub-bar: Time & Reply button */}
@@ -139,15 +146,17 @@ export function CommentItem({
                     <span className="text-[11px] font-medium text-gray-500 uppercase whitespace-nowrap">
                         {getRelativeTime(comment.createdAt).replace(" TRƯỚC", "")}
                     </span>
-                    <button
-                        onClick={() => {
-                            setShowReplies(true);
-                            onReply(comment);
-                        }}
-                        className="text-[11px] font-bold text-gray-600 hover:underline tracking-tight transition-colors whitespace-nowrap"
-                    >
-                        Trả lời
-                    </button>
+                    {!comment.deletedAt && (
+                        <button
+                            onClick={() => {
+                                setShowReplies(true);
+                                onReply(comment);
+                            }}
+                            className="text-[11px] font-bold text-gray-600 hover:underline tracking-tight transition-colors whitespace-nowrap"
+                        >
+                            Trả lời
+                        </button>
+                    )}
                 </div>
 
                 {/* Nested replies Toggle (When Collapsed) */}

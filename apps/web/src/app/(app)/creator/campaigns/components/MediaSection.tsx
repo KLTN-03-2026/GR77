@@ -10,6 +10,7 @@ interface MediaSectionProps {
     galleryInputRef: RefObject<HTMLInputElement | null>;
     removeGalleryImage: (index: number) => void;
     handleGalleryChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    fieldErrors?: Record<string, string>;
 }
 
 export function MediaSection({
@@ -20,14 +21,15 @@ export function MediaSection({
     galleryPreviews,
     galleryInputRef,
     removeGalleryImage,
-    handleGalleryChange
+    handleGalleryChange,
+    fieldErrors = {}
 }: MediaSectionProps) {
     return (
         <>
             {/* Cover Image */}
             <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
                 <label className="sm:w-1/4 text-[13px] font-bold text-gray-900 flex items-center gap-2 pt-2">
-                    Cover Image
+                    Cover Image <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="sm:w-3/4">
                     <div className="flex flex-col gap-4">
@@ -65,6 +67,9 @@ export function MediaSection({
                             accept="image/*"
                             className="hidden"
                         />
+                        <p className={`text-red-500 text-xs font-semibold mt-1 ml-1 min-h-[16px] transition-opacity ${fieldErrors.coverImage ? 'opacity-100' : 'opacity-0'}`}>
+                            {fieldErrors.coverImage || ' '}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -108,6 +113,9 @@ export function MediaSection({
                         multiple
                         className="hidden"
                     />
+                    <p className={`text-red-500 text-xs font-semibold mt-2 ml-1 min-h-[16px] transition-opacity ${fieldErrors.gallery ? 'opacity-100' : 'opacity-0'}`}>
+                        {fieldErrors.gallery || ' '}
+                    </p>
                 </div>
             </div>
         </>

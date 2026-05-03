@@ -1,17 +1,21 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 interface CategoryOption {
     id: string;
     name: string;
 }
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 10;
 
 export function useCampaigns() {
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get('q') || '';
+
     const [currentPage, setCurrentPage] = useState(1);
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState(initialSearch);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [startDateFilter, setStartDateFilter] = useState('');
     const [endDateFilter, setEndDateFilter] = useState('');

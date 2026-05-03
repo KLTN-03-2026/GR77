@@ -16,14 +16,97 @@ export function useEditCampaign(id: string) {
     const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
     const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
     const galleryInputRef = useRef<HTMLInputElement>(null);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+    const validateField = (name: string, value: string, form?: HTMLFormElement) => {
+        let err = '';
+        let formData: FormData | undefined;
+        if (form) formData = new FormData(form);
+
+        if (name === 'description') {
+            if (!value.trim()) err = 'Vui lòng nhập mô tả chiến dịch';
+            else if (value.trim().length < 50) err = 'Mô tả chiến dịch phải có ít nhất 50 ký tự';
+        } else if (name === 'title') {
+            if (!value.trim()) err = 'Vui lòng nhập tên chiến dịch';
+        } else if (name === 'locationText') {
+            if (!value.trim()) err = 'Vui lòng nhập địa điểm';
+        } else if (name === 'fundingGoalAmount') {
+            const amount = Number(value);
+            if (!value || amount < 1000000) err = 'Mục tiêu chiến dịch phải từ 1.000.000 VND trở lên';
+
+            if (formData) {
+                const minDonationStr = formData.get('minimumDonationAmount');
+                if (minDonationStr) {
+                    const minDonation = Number(minDonationStr);
+                    if (minDonation > amount) {
+                        setFieldErrors(prev => ({ ...prev, minimumDonationAmount: 'Số tiền nhỏ nhất không được lớn hơn mục tiêu' }));
+                    } else {
+                        setFieldErrors(prev => (prev.minimumDonationAmount === 'Số tiền nhỏ nhất không được lớn hơn mục tiêu' ? { ...prev, minimumDonationAmount: '' } : prev));
+                    }
+                }
+            }
+        } else if (name === 'minimumDonationAmount') {
+            const amount = Number(value);
+            let goal = 0;
+            if (formData) goal = Number(formData.get('fundingGoalAmount'));
+
+            if (!value || amount <= 0) err = 'Vui lòng nhập số tiền ủng hộ tối thiểu';
+            else if (goal && amount > goal) err = 'Số tiền nhỏ nhất không được lớn hơn mục tiêu';
+        } else if (name === 'startAt') {
+            const startVal = new Date(value);
+            if (!value) err = 'Vui lòng chọn ngày bắt đầu';
+
+            if (formData) {
+                const endValStr = formData.get('endAt') as string;
+                if (endValStr) {
+                    const endVal = new Date(endValStr);
+                    const oneDayMs = 24 * 60 * 60 * 1000;
+                    if (endVal.getTime() - startVal.getTime() < oneDayMs) {
+                        setFieldErrors(prev => ({ ...prev, endAt: 'Ngày kết thúc phải sau ngày bắt đầu ít nhất 1 ngày' }));
+                    } else {
+                        setFieldErrors(prev => (prev.endAt === 'Ngày kết thúc phải sau ngày bắt đầu ít nhất 1 ngày' ? { ...prev, endAt: '' } : prev));
+                    }
+                }
+            }
+        } else if (name === 'endAt') {
+            const endVal = new Date(value);
+            if (!value) err = 'Vui lòng chọn ngày kết thúc';
+            else {
+                let startVal = new Date();
+                if (formData) {
+                    const startValStr = formData.get('startAt') as string;
+                    if (startValStr) startVal = new Date(startValStr);
+                }
+                const oneDayMs = 24 * 60 * 60 * 1000;
+                if (endVal.getTime() - startVal.getTime() < oneDayMs) err = 'Ngày kết thúc phải sau ngày bắt đầu ít nhất 1 ngày';
+            }
+        } else if (name === 'categoryId') {
+            if (!value) err = 'Vui lòng chọn danh mục';
+        }
+
+        return err;
+    };
+
+    const handleFormChange = (e: React.FormEvent<HTMLFormElement>) => {
+        const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+        const name = target.name;
+        if (!name) return;
+        const value = target.value;
+        const form = e.currentTarget;
+
+        const err = validateField(name, value, form);
+        setFieldErrors(prev => ({ ...prev, [name]: err }));
+    };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
+                setFieldErrors(prev => ({ ...prev, coverImage: 'Image size must be less than 5MB' }));
                 setError('Image size must be less than 5MB');
                 return;
             }
+            setFieldErrors(prev => ({ ...prev, coverImage: '' }));
             setImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -36,6 +119,7 @@ export function useEditCampaign(id: string) {
     const removeImage = () => {
         setImageFile(null);
         setImagePreview('');
+        setFieldErrors(prev => ({ ...prev, coverImage: 'Vui lòng chọn ảnh đại diện' }));
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -44,9 +128,11 @@ export function useEditCampaign(id: string) {
     const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length + galleryPreviews.length > 5) {
+            setFieldErrors(prev => ({ ...prev, gallery: 'Maximum 5 gallery images allowed' }));
             setError('Maximum 5 gallery images allowed');
             return;
         }
+        setFieldErrors(prev => ({ ...prev, gallery: '' }));
         const newFiles = [...galleryFiles];
         const newPreviews = [...galleryPreviews];
         files.forEach(file => {
@@ -188,12 +274,6 @@ export function useEditCampaign(id: string) {
             return;
         }
 
-        if (galleryFiles.length === 0 && galleryPreviews.length === 0) {
-            setError('Vui lòng chọn ít nhất 1 ảnh');
-            setIsSaving(false);
-            return;
-        }
-
 
         const startAtStr = formData.get('startAt') as string;
         const endAtStr = formData.get('endAt') as string;
@@ -274,14 +354,20 @@ export function useEditCampaign(id: string) {
             }
         }
 
-        const title = formData.get('title') 
-            ? formData.get('title') as string 
+        const title = formData.get('title')
+            ? formData.get('title') as string
             : campaign?.title;
 
         const description = formData.get('description') as string;
 
         if (!title || !description) {
             setError('Title and Description are required');
+            setIsSaving(false);
+            return;
+        }
+
+        if (description.trim().length < 50) {
+            setError('Mô tả chiến dịch phải có ít nhất 50 ký tự');
             setIsSaving(false);
             return;
         }
@@ -356,6 +442,8 @@ export function useEditCampaign(id: string) {
         removeGalleryImage,
         handleGalleryChange,
         handleSubmit,
+        handleFormChange,
+        fieldErrors,
         router
     };
 }

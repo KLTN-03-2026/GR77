@@ -4,6 +4,8 @@ import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGlobalAuth } from "@/contexts/AuthContext";
 import { API_BASE_URL } from "@/lib/constants/endpoints";
+import { KINDLINK_CAMPAIGN_ABI, POL_PER_VND } from "@/lib/constants/blockchain";
+import { executeBlockchainDonate } from "@/lib/blockchain/donate";
 
 // Shared Components
 import { CampaignDiscussion } from "@/components/campaign/CampaignDiscussion";
@@ -15,6 +17,8 @@ import { CampaignOverviewBox } from "./_components/CampaignOverviewBox";
 import { CampaignGalleryBox } from "./_components/CampaignGalleryBox";
 import { CampaignSidebar } from "./_components/CampaignSidebar";
 import { CampaignModals } from "./_components/CampaignModals";
+import { CampaignTabs } from "../../joined/[id]/_components/CampaignTabs";
+import { LeaveCampaignModal } from "../../joined/[id]/_components/LeaveCampaignModal";
 
 // Hooks & Utils
 import { useCampaignDetail } from "./_hooks/useCampaignDetail";
@@ -43,29 +47,30 @@ export default function CampaignDetailPage({
     const [fetchError, setFetchError] = useState("");
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-    useEffect(() => {
-        const fetchCampaign = async () => {
-            setIsLoading(true);
-            setFetchError("");
-            try {
-                const token = localStorage.getItem('accessToken');
-                const headers: HeadersInit = {};
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-
-                const res = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
-                    headers,
-                });
-                if (!res.ok) throw new Error("Campaign not found");
-                const data = await res.json();
-                setCampaign(data);
-            } catch (err: any) {
-                setFetchError(err.message || "Something went wrong");
-            } finally {
-                setIsLoading(false);
+    const fetchCampaign = async () => {
+        setIsLoading(true);
+        setFetchError("");
+        try {
+            const token = localStorage.getItem('accessToken');
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
-        };
+
+            const res = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
+                headers,
+            });
+            if (!res.ok) throw new Error("Campaign not found");
+            const data = await res.json();
+            setCampaign(data);
+        } catch (err: any) {
+            setFetchError(err.message || "Something went wrong");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchCampaign();
     }, [id]);
 
@@ -91,7 +96,11 @@ export default function CampaignDetailPage({
     const [blockchainError, setBlockchainError] = useState<string | null>(null);
 
     const [isJoined, setIsJoined] = useState(false);
+    const [hasDonatedUser, setHasDonatedUser] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
+    const [donationMessage, setDonationMessage] = useState("");
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
 
     const [comments, setComments] = useState<any[]>([]);
     const [newComment, setNewComment] = useState("");
@@ -100,6 +109,9 @@ export default function CampaignDetailPage({
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
     const [reportReason, setReportReason] = useState("");
+
+    const [campaignReportModalOpen, setCampaignReportModalOpen] = useState(false);
+    const [campaignReportReason, setCampaignReportReason] = useState("");
 
     const fetchComments = async () => {
         try {
@@ -113,9 +125,32 @@ export default function CampaignDetailPage({
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("status") === "success") {
+        const status = urlParams.get("status");
+        const code = urlParams.get("code");
+
+        if (status === "PAID" || code === "00") {
             setDonated(true);
             setDonateOpen(true);
+
+            const orderCode = urlParams.get("orderCode");
+            // Clean up URL
+            window.history.replaceState({}, '', window.location.pathname);
+
+            if (orderCode) {
+                // console.log(`[PayOS Sync] Triggering status check for order: ${orderCode}`);
+                fetch(`${API_BASE_URL}/donations/check-status/${orderCode}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        // console.log("[PayOS Sync] Response from server:", data);
+                        fetchCampaign();
+                    })
+                    .catch(err => {
+                        // console.error("[PayOS Sync] Error during sync:", err);
+                        fetchCampaign();
+                    });
+            } else {
+                fetchCampaign();
+            }
         }
 
         const token = localStorage.getItem("accessToken");
@@ -126,6 +161,7 @@ export default function CampaignDetailPage({
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.joined) setIsJoined(true);
+                    if (data.hasDonated) setHasDonatedUser(true);
                 })
                 .catch(() => { });
 
@@ -202,6 +238,34 @@ export default function CampaignDetailPage({
         }
     };
 
+    const handleLeave = async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        setIsLeaving(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/participants/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (res.ok) {
+                setIsJoined(false);
+                alert("Bạn đã rời chiến dịch.");
+            } else {
+                const data = await res.json();
+                alert(data.message || "Không thể rời chiến dịch");
+            }
+        } catch (err) {
+            alert("Lỗi kết nối");
+        } finally {
+            setIsLeaving(false);
+            setShowLeaveModal(false);
+        }
+    };
+
     const handleDonate = async () => {
         const amount = Number(donateAmount);
         const minimumDonation = Number(campaign?.minimumDonationAmount ?? 0);
@@ -224,7 +288,11 @@ export default function CampaignDetailPage({
                     "Content-Type": "application/json",
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ campaignId: id, amount: amount }),
+                body: JSON.stringify({
+                    campaignId: id,
+                    amount: amount,
+                    message: donationMessage,
+                }),
             });
 
             if (!res.ok) {
@@ -241,40 +309,16 @@ export default function CampaignDetailPage({
         }
     };
 
-    const handleBlockchainDonate = async (amountVnd: number, forceDemo = false) => {
-        if (!forceDemo && typeof window.ethereum === 'undefined') {
+    const handleBlockchainDonate = async (amountVnd: number) => {
+        if (typeof window.ethereum === 'undefined') {
             setBlockchainError('Vui lòng cài đặt MetaMask!');
             return;
         }
-
         setBlockchainLoading(true);
         setBlockchainError(null);
         try {
-            let from = '0xDEMO_WALLET_ADDRESS';
-            let txHash = '0xDEMO_TX_HASH_' + Date.now();
-
-            if (!forceDemo) {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                from = accounts[0];
-                const ethAmount = (amountVnd / 70000000).toFixed(8);
-                const weiValue = '0x' + (BigInt(Math.floor(Number(ethAmount) * 1e18))).toString(16);
-
-                txHash = await window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [{ from, to: '0x0000000000000000000000000000000000000000', value: weiValue }],
-                });
-            }
-
             const token = localStorage.getItem("accessToken");
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/donations/blockchain`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({ campaignId: id, amount: amountVnd, txHash, walletAddress: from }),
-            });
-
+            await executeBlockchainDonate({ campaignId: id, amountVnd, message: donationMessage, token });
             setDonated(true);
             setTimeout(() => {
                 setDonateOpen(false);
@@ -282,7 +326,11 @@ export default function CampaignDetailPage({
                 window.location.reload();
             }, 3000);
         } catch (err: any) {
-            setBlockchainError(err.message || 'Lỗi giao dịch Blockchain');
+            if (err?.code === 4001 || err?.code === 'ACTION_REJECTED') {
+                setBlockchainError('Giao dịch đã bị huỷ.');
+            } else {
+                setBlockchainError(err.message || 'Lỗi giao dịch Blockchain');
+            }
         } finally {
             setBlockchainLoading(false);
         }
@@ -359,6 +407,39 @@ export default function CampaignDetailPage({
         } catch (err) { }
     };
 
+    const handleReportCampaign = async () => {
+        if (!campaignReportReason.trim()) return;
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("Vui lòng đăng nhập để báo cáo chiến dịch");
+            router.push("/login");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/campaigns/${id}/report`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    reason: campaignReportReason
+                }),
+            });
+            if (res.ok) {
+                alert("Đã gửi báo cáo chiến dịch.");
+                setCampaignReportModalOpen(false);
+                setCampaignReportReason("");
+            } else {
+                const data = await res.json();
+                alert(data.message || "Không thể gửi báo cáo");
+            }
+        } catch (err) {
+            alert("Lỗi kết nối");
+        }
+    };
+
     const getAvatar = (user: any) => {
         return user?.profile?.avatarUrl || null;
     };
@@ -366,7 +447,10 @@ export default function CampaignDetailPage({
     /* ── Render ── */
     const fundingGoal = Number(campaign?.fundingGoalAmount ?? 0);
     const totalRaised = Number(campaign?.currentRaisedAmount ?? 0);
-    const raisedPercent = fundingGoal > 0 ? Math.min(Math.round((totalRaised / fundingGoal) * 100), 100) : 0;
+    // Use pre-calculated progress from API if available, otherwise calculate it
+    const raisedPercent = campaign?.progress !== undefined
+        ? Math.min(campaign.progress, 100)
+        : (fundingGoal > 0 ? Math.min((totalRaised / fundingGoal) * 100, 100) : 0);
 
     const coverImage = campaign?.coverImageUrl || (campaign?.images?.length ? campaign.images[0].url : "");
     const galleryImages = campaign?.images?.length
@@ -413,6 +497,7 @@ export default function CampaignDetailPage({
                                     currentUser={currentUser}
                                     isLiked={isLiked}
                                     handleToggleLike={handleToggleLike}
+                                    onReport={() => setCampaignReportModalOpen(true)}
                                 />
                             </div>
 
@@ -424,17 +509,27 @@ export default function CampaignDetailPage({
                                     totalRaised={totalRaised}
                                     participantsCount={campaign?.participantsCount}
                                     isJoined={isJoined}
+                                    hasDonated={hasDonatedUser}
                                     isLiked={isLiked}
                                     isCreator={currentUser?.id === campaign?.creatorUserId}
                                     campaignId={campaign?.id}
                                     setDonateOpen={setDonateOpen}
                                     handleJoin={handleJoin}
+                                    handleLeave={() => setShowLeaveModal(true)}
                                     handleToggleLike={handleToggleLike}
+                                    onReport={() => setCampaignReportModalOpen(true)}
                                     formatCurrency={formatCurrency}
                                 />
                             </div>
                         </div>
                     </div>
+
+                    {(isJoined || currentUser?.id === campaign?.creatorUserId) && (
+                        <CampaignTabs
+                            campaign={campaign}
+                            currentUser={currentUser}
+                        />
+                    )}
 
                     {/* Container 2: Community Discussion */}
                     <div className="px-4 sm:px-8 pb-12 max-w-7xl mx-auto mt-8">
@@ -473,12 +568,27 @@ export default function CampaignDetailPage({
                 handleDonate={handleDonate}
                 handleBlockchainDonate={handleBlockchainDonate}
                 QUICK_AMOUNTS={QUICK_AMOUNTS}
+                message={donationMessage}
+                setMessage={setDonationMessage}
 
                 reportModalOpen={reportModalOpen}
                 setReportModalOpen={setReportModalOpen}
                 reportReason={reportReason}
                 setReportReason={setReportReason}
                 handleReportComment={handleReportComment}
+
+                campaignReportModalOpen={campaignReportModalOpen}
+                setCampaignReportModalOpen={setCampaignReportModalOpen}
+                campaignReportReason={campaignReportReason}
+                setCampaignReportReason={setCampaignReportReason}
+                handleReportCampaign={handleReportCampaign}
+            />
+
+            <LeaveCampaignModal
+                showLeaveModal={showLeaveModal}
+                setShowLeaveModal={setShowLeaveModal}
+                handleLeave={handleLeave}
+                isLeaving={isLeaving}
             />
         </div>
     );
