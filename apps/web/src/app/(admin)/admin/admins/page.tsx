@@ -140,7 +140,16 @@ export default function AdminsPage() {
                 headers: { Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}` },
             });
             if (!res.ok) throw new Error('Failed to fetch admins');
-            setUsers(await res.json());
+            const data = await res.json();
+
+            // Map security nesting to flat structure for easier UI consumption
+            const mapped = data.map((u: any) => ({
+                ...u,
+                isLocked: u.security?.isLocked || false,
+                lockReason: u.security?.lockReason || '',
+            }));
+
+            setUsers(mapped);
         } catch (err: any) {
             alert(err.message);
         } finally {
@@ -245,7 +254,7 @@ export default function AdminsPage() {
         return users.filter((user) => {
             const q = searchQuery.toLowerCase();
             const matchesSearch = !q || user.username.toLowerCase().includes(q) || user.email.toLowerCase().includes(q);
-            const matchesRole = roleFilter === 'All' || user.role === roleFilter;
+            const matchesRole = roleFilter === 'All' || user.rawRole === roleFilter;
             return matchesSearch && matchesRole;
         });
     }, [users, searchQuery, roleFilter]);
@@ -257,6 +266,18 @@ export default function AdminsPage() {
     }, [filteredAdmins, currentPage]);
 
     const isSuperAdmin = callerRole === 'SUPER_ADMIN';
+
+    // Dynamic role options based on actual data
+    const uniqueRoles = useMemo(() => {
+        return Array.from(new Set(users.map((u) => u.rawRole).filter(Boolean)));
+    }, [users]);
+
+    const roleLabelMap: Record<string, string> = {
+        ADMIN: 'Quản trị viên',
+        SUPER_ADMIN: 'Đặc cấp (Super)',
+        USER: 'Nhà tài trợ', // Just in case
+        ORGANIZER: 'Người tổ chức',
+    };
 
     return (
         <div className="space-y-8 pb-20">
@@ -276,14 +297,14 @@ export default function AdminsPage() {
             </div>
 
             {/* ── TABLE ── */}
-            <div className="bg-white border border-gray-300 rounded-[1.5rem] overflow-hidden shadow-sm">
-                <div className="flex flex-wrap items-center gap-4 p-5 bg-[#f8f9fa] border-b border-gray-300">
+            <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-sm">
+                <div className="flex flex-wrap items-center gap-3 p-3 bg-[#f8f9fa] border-b border-gray-300">
                     <div className="relative">
                         <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm admin..."
-                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl w-72 text-sm font-bold text-gray-800 outline-none focus:border-blue-400 transition-all bg-white placeholder:text-gray-400"
+                            className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg w-64 text-sm font-bold outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-700 placeholder:text-gray-400"
+                            placeholder="Tìm kiếm danh tính…"
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                         />
@@ -291,22 +312,25 @@ export default function AdminsPage() {
 
                     <div className="relative">
                         <select
-                            className="py-2 pl-3 pr-8 border border-gray-300 rounded-xl text-sm bg-white text-gray-700 outline-none hover:border-gray-400 cursor-pointer appearance-none min-w-[160px]"
+                            className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm font-bold bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none px-4"
                             value={roleFilter}
                             onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
                         >
-                            <option value="All">Tất cả vai trò</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Super Admin">Super Admin</option>
+                            <option value="All">Vai trò: Tất cả</option>
+                            {uniqueRoles.map((role) => (
+                                <option key={role} value={role}>
+                                    {roleLabelMap[role] || role}
+                                </option>
+                            ))}
                         </select>
-                        <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                        <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                     </div>
 
                     <button
                         onClick={() => { setIsModalOpen(true); setCreateSuccess(''); }}
-                        className="ml-auto bg-[#7598C1] hover:bg-[#5DA2D5] text-gray-900 px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all active:scale-95"
+                        className="ml-auto bg-[#7598C1] hover:bg-[#5DA2D5] text-black px-4 py-1.5 rounded-md text-sm font-medium shadow-sm flex items-center gap-1.5"
                     >
-                        <PlusIcon className="h-5 w-5 stroke-[3]" /> Thêm Admin
+                        <PlusIcon className="h-4 w-4 stroke-[2.5]" /> Thêm thành viên
                     </button>
                 </div>
 
@@ -314,40 +338,40 @@ export default function AdminsPage() {
                     <table className="w-full text-sm text-left border-collapse">
                         <thead>
                             <tr className="bg-white border-b border-gray-300">
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px] text-center w-16">ID</th>
-                                <th className="px-6 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px]">Danh tính</th>
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px]">Vai trò</th>
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px]">Trạng thái</th>
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px]">Phân quyền</th>
-                                <th className="px-4 py-4 font-black uppercase tracking-wider text-gray-600 text-[10px] text-center">Thao tác</th>
+                                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
+                                <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Danh tính</th>
+                                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Vai trò</th>
+                                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Trạng thái</th>
+                                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Hoạt động</th>
+                                <th className="px-4 py-3 font-bold text-black text-center">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-300">
                             {loading ? (
                                 <tr><td colSpan={6} className="px-6 py-20 text-center text-gray-400 italic">Đang đồng bộ dữ liệu...</td></tr>
                             ) : paginatedAdmins.length > 0 ? paginatedAdmins.map((admin, index) => (
-                                <tr key={admin.id} className="bg-[#fbfbfb] hover:bg-white transition-colors group">
-                                    <td className="px-4 py-4 text-center font-bold text-gray-700">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-4">
+                                <tr key={admin.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors">
+                                    <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                    <td className="px-5 py-3 border-r border-gray-300">
+                                        <div className="flex items-center gap-3">
                                             <UserAvatar role={admin.rawRole} src={admin.avatarUrl} />
                                             <div>
-                                                <p className="font-black text-gray-800 leading-tight text-base">{admin.username}</p>
-                                                <p className="text-[12px] text-gray-600 font-bold">{admin.email}</p>
+                                                <p className="font-bold text-gray-800 leading-tight">{admin.username}</p>
+                                                <p className="text-[12px] text-gray-500 mt-0.5">{admin.email}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-4"><RoleBadge role={admin.role} /></td>
-                                    <td className="px-4 py-4">
-                                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-tight border ${admin.isLocked ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-700 border-green-100'
+                                    <td className="px-4 py-3 border-r border-gray-300"><RoleBadge role={admin.role} /></td>
+                                    <td className="px-4 py-3 border-r border-gray-300 text-center">
+                                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight border ${admin.isLocked ? 'bg-red-50 text-red-600 border-red-100' : 'bg-[#7BC712] text-black border-none'
                                             }`}>
                                             {admin.isLocked ? 'Bị khóa' : 'Hoạt động'}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-4">
+                                    <td className="px-4 py-3 border-r border-gray-300">
                                         <div className="flex items-center gap-2">
                                             {admin.rawRole === 'SUPER_ADMIN' ? (
-                                                <span className="text-[11px] font-bold text-rose-500">Full Access</span>
+                                                <span className="text-[11px] font-bold text-rose-500">Quyền tối thượng</span>
                                             ) : (
                                                 <div className="flex -space-x-1">
                                                     {(admin.permissions || []).slice(0, 3).map((p, i) => (
@@ -436,7 +460,7 @@ export default function AdminsPage() {
                         ) : (
                             <form onSubmit={handleCreateAdmin} className="space-y-5">
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Email công việc</label>
+                                    <label className="text-[10px] font-black text-gray-700 uppercase tracking-widest mb-1.5 block">Email công việc</label>
                                     <div className="relative">
                                         <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                         <input
@@ -445,20 +469,20 @@ export default function AdminsPage() {
                                             placeholder="email@kindlink.com"
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 focus:ring-4 focus:ring-blue-50 focus:border-[#7598C1] outline-none transition-all placeholder:text-gray-500"
+                                            className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:ring-4 focus:ring-blue-50 focus:border-[#7598C1] outline-none transition-all placeholder:text-gray-400"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-800 uppercase tracking-widest mb-1.5 block">Mật khẩu khởi tạo</label>
+                                    <label className="text-[10px] font-black text-gray-700 uppercase tracking-widest mb-1.5 block">Mật khẩu khởi tạo</label>
                                     <div className="relative">
                                         <KeyIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
                                         <input
                                             type="text"
                                             value={formData.password}
                                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                            className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 focus:ring-4 focus:ring-blue-50 focus:border-[#7598C1] outline-none transition-all placeholder:text-gray-500"
+                                            className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:ring-4 focus:ring-blue-50 focus:border-[#7598C1] outline-none transition-all placeholder:text-gray-400"
                                         />
                                     </div>
                                     <p className="text-[10px] text-gray-400 mt-2 italic font-medium">* Để trống nếu muốn dùng mật khẩu hệ thống mặc định.</p>
@@ -533,7 +557,7 @@ export default function AdminsPage() {
                                         value={confirmModal.reason}
                                         onChange={(e) => setConfirmModal({ ...confirmModal, reason: e.target.value })}
                                         placeholder="VD: Vi phạm quy tắc an toàn, Tạm dừng công tác..."
-                                        className="w-full h-28 px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-red-100 focus:border-red-400 outline-none transition-all placeholder:text-gray-300"
+                                        className="w-full h-28 px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:ring-4 focus:ring-red-100 focus:border-red-400 outline-none transition-all placeholder:text-gray-300"
                                     />
                                 </div>
                             </div>

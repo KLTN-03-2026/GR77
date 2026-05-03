@@ -278,4 +278,76 @@ export class AdminDashboardService {
 
         return items.slice(0, 50);
     }
+
+    /**
+     * Revenue & Fee Analysis
+     */
+    async getRevenueStats() {
+        const [campaignCount, donationAgg, disbursments] = await Promise.all([
+            this.prisma.campaign.count(),
+            this.prisma.donation.aggregate({
+                _sum: { amount: true },
+                where: { status: 'SUCCESS' },
+            }),
+            this.prisma.withdrawalRequest.findMany({
+                where: { status: 'DISBURSED' },
+                select: {
+                    amount: true,
+                    polAmount: true,
+                    exchangeRate: true,
+                    createdAt: true
+                }
+            })
+        ]);
+
+        const totalGrossDonations = Number(donationAgg._sum.amount || 0);
+
+        // Calculate fees: amountVND - (polAmount * exchangeRate)
+        let totalFees = 0;
+        disbursments.forEach(d => {
+            const netVnd = Number(d.polAmount || 0) * Number(d.exchangeRate || 0);
+            totalFees += Math.max(0, Number(d.amount) - netVnd);
+        });
+
+        // Charts data
+        // 1. Daily revenue flow (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+        thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+        const dailyMap = new Map<string, number>();
+        for (let i = 0; i < 30; i++) {
+            const d = new Date(thirtyDaysAgo);
+            d.setDate(d.getDate() + i);
+            dailyMap.set(d.toISOString().split('T')[0], 0);
+        }
+
+        disbursments.forEach(d => {
+            const dateKey = d.createdAt.toISOString().split('T')[0];
+            if (dailyMap.has(dateKey)) {
+                const netVnd = Number(d.polAmount || 0) * Number(d.exchangeRate || 0);
+                const fee = Math.max(0, Number(d.amount) - netVnd);
+                dailyMap.set(dateKey, dailyMap.get(dateKey)! + fee);
+            }
+        });
+
+        const flowChart = Array.from(dailyMap.entries()).map(([date, value]) => ({
+            name: date.split('-').reverse().slice(0, 2).reverse().join('/'), // DD/MM
+            value
+        }));
+
+        return {
+            totalCampaigns: campaignCount,
+            totalGrossDonations,
+            totalFeesCollected: Math.round(totalFees),
+            platformNetProfit: Math.round(totalFees * 0.8), // Mock logic: 80% is net after operational costs
+            flowChart,
+            // Categories logic (mocked or derived from actual categories if possible)
+            categories: [
+                { name: 'Xử lý quyên góp', total: Math.round(totalFees * 0.7), net: Math.round(totalFees * 0.6) },
+                { name: 'Dự án đối ứng', total: Math.round(totalFees * 0.2), net: Math.round(totalFees * 0.15) },
+                { name: 'Khác', total: Math.round(totalFees * 0.1), net: Math.round(totalFees * 0.05) },
+            ]
+        };
+    }
 }

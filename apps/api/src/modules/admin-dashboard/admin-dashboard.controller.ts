@@ -9,7 +9,7 @@ import { Role } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @MinRole(Role.ADMIN)
 export class AdminDashboardController {
-    constructor(private readonly dashboardService: AdminDashboardService) {}
+    constructor(private readonly dashboardService: AdminDashboardService) { }
 
     @Get('stats')
     getStats() {
@@ -29,5 +29,10 @@ export class AdminDashboardController {
     @Get('activity-log')
     getActivityLog(@Query('filter') filter?: string) {
         return this.dashboardService.getActivityLog(filter);
+    }
+
+    @Get('revenue-stats')
+    getRevenueStats() {
+        return this.dashboardService.getRevenueStats();
     }
 }
