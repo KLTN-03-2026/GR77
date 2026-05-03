@@ -2,10 +2,12 @@ import {
     Injectable,
     NotFoundException,
     ForbiddenException,
+    ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { MailService } from '../mail/mail.service';
 
 const ROLE_LEVEL: Record<Role, number> = {
     [Role.USER]: 1,
@@ -16,7 +18,10 @@ const ROLE_LEVEL: Record<Role, number> = {
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private mailService: MailService
+    ) { }
 
     async findAll(callerId: string, callerRole: Role, roleGroup?: 'ADMINS' | 'MEMBERS') {
         let where: Prisma.UserWhereInput = { id: { not: callerId } };
@@ -71,15 +76,24 @@ export class UsersService {
         const { email, password, role } = data;
         const targetRole = role || Role.USER;
 
+        // Check if email already exists
+        const existingUser = await this.prisma.user.findUnique({
+            where: { email }
+        });
+        if (existingUser) {
+            throw new ConflictException('Email này đã được sử dụng trên hệ thống.');
+        }
+
         // Security check: cannot create role higher than own
         if (ROLE_LEVEL[callerRole] <= ROLE_LEVEL[targetRole] && callerRole !== Role.SUPER_ADMIN) {
             throw new ForbiddenException('Cannot create user with equal or higher role.');
         }
 
-        const hashed = await bcrypt.hash(password || 'Kindlink@123', 10);
+        const rawPassword = password || 'Kindlink@123';
+        const hashed = await bcrypt.hash(rawPassword, 10);
         const username = email.split('@')[0];
 
-        return this.prisma.user.create({
+        const user = await this.prisma.user.create({
             data: {
                 email,
                 username,
@@ -91,6 +105,16 @@ export class UsersService {
                 security: { create: {} }
             }
         });
+
+        // Send invitation email with account details
+        try {
+            await this.mailService.sendAccountInvitation(email, rawPassword, targetRole);
+        } catch (error) {
+            console.error('Failed to send invitation email:', error);
+            // We don't throw here to avoid failing user creation if email fails
+        }
+
+        return user;
     }
 
     async upgradeToAdmin(id: string, callerId: string, callerRole: Role) {
@@ -108,7 +132,7 @@ export class UsersService {
         const target = await this.findOne(id);
         this.assertCanManage(callerRole, callerId, target);
 
-        return this.prisma.userSecurity.update({
+        const result = await this.prisma.userSecurity.update({
             where: { userId: id },
             data: {
                 isLocked: true,
@@ -116,13 +140,22 @@ export class UsersService {
                 lockedAt: new Date(),
             },
         });
+
+        // Notify user via email
+        try {
+            await this.mailService.sendAccountLockEmail(target.email, reason);
+        } catch (error) {
+            console.error('Failed to send lock email notification:', error);
+        }
+
+        return result;
     }
 
     async unlock(id: string, callerId: string, callerRole: Role) {
         const target = await this.findOne(id);
         this.assertCanManage(callerRole, callerId, target);
 
-        return this.prisma.userSecurity.update({
+        const result = await this.prisma.userSecurity.update({
             where: { userId: id },
             data: {
                 isLocked: false,
@@ -130,6 +163,15 @@ export class UsersService {
                 lockedAt: null,
             },
         });
+
+        // Notify user via email
+        try {
+            await this.mailService.sendAccountUnlockEmail(target.email);
+        } catch (error) {
+            console.error('Failed to send unlock email notification:', error);
+        }
+
+        return result;
     }
 
     // ── Private helpers ──────────────────────────────────────────

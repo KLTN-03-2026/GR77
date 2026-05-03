@@ -159,8 +159,8 @@ export default function AdminTransactionsPage() {
     <div className="space-y-8 pb-20">
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <StatCard label="Tổng thu (Nạp)" value={formatVND(totalIn)} icon={<ArrowUpRightIcon className="text-green-900" />} />
-        <StatCard label="Tổng chi (Rút)" value={formatVND(totalOut)} icon={<ArrowDownRightIcon className="text-red-900" />} />
+        <StatCard label="Tổng thu (Nạp)" value={formatVND(totalIn)} icon={<ArrowUpRightIcon />} />
+        <StatCard label="Tổng chi (Rút)" value={formatVND(totalOut)} icon={<ArrowDownRightIcon />} />
         <StatCard label="Số dư hiện tại" value={formatVND(totalIn - totalOut)} icon={<BanknotesIcon />} />
       </div>
 
@@ -173,7 +173,7 @@ export default function AdminTransactionsPage() {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#2ba6e1]" strokeWidth={2.5} />
               <input
                 type="text"
-                className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg w-72 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-600 placeholder:text-gray-400 font-medium"
+                className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg w-72 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-600 placeholder:text-gray-400"
                 placeholder="Tìm chiến dịch, người thực hiện…"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
@@ -182,7 +182,7 @@ export default function AdminTransactionsPage() {
 
             <div className="relative">
               <select
-                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none font-bold"
+                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none px-4"
                 value={typeFilter}
                 onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
               >
@@ -203,12 +203,12 @@ export default function AdminTransactionsPage() {
           <table className="w-full text-sm text-left border-collapse">
             <thead>
               <tr className="bg-white border-b border-gray-300">
-                <th className="px-5 py-4 font-bold text-black border-r border-gray-300 text-center w-16 uppercase text-[10px] tracking-widest">STT</th>
-                <th className="px-5 py-4 font-bold text-black border-r border-gray-300 uppercase text-[10px] tracking-widest">Thành phần</th>
-                <th className="px-5 py-4 font-bold text-black border-r border-gray-300 uppercase text-[10px] tracking-widest">Loại</th>
-                <th className="px-5 py-4 font-bold text-black border-r border-gray-300 uppercase text-[10px] tracking-widest text-right">Giá trị</th>
-                <th className="px-5 py-4 font-bold text-black border-r border-gray-300 uppercase text-[10px] tracking-widest text-center">Trạng thái</th>
-                <th className="px-5 py-4 font-bold text-black uppercase text-[10px] tracking-widest">Thời gian</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center w-16">STT</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Thành phần</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center">Loại</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-right">Giá trị</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center">Trạng thái</th>
+                <th className="px-5 py-3 font-bold text-black">Thời gian</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-300">
@@ -217,37 +217,32 @@ export default function AdminTransactionsPage() {
               ) : paginatedData.length > 0 ? (
                 paginatedData.map((tx, idx) => (
                   <tr key={tx.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4 border-r border-gray-300 text-center font-bold text-gray-400">
+                    <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">
                       {(currentPage - 1) * itemsPerPage + idx + 1}
                     </td>
-                    <td className="px-5 py-4 border-r border-gray-300">
+                    <td className="px-5 py-3 border-r border-gray-300">
                       <div className="flex flex-col">
-                        <p className="font-black text-gray-900 leading-tight line-clamp-1">{tx.title}</p>
-                        <p className="text-[11px] font-bold text-gray-500 mt-0.5">{tx.actor} • {tx.email || 'N/A'}</p>
+                        <p className="font-bold text-gray-900 leading-tight line-clamp-1 italic">"{tx.title}"</p>
+                        <p className="text-[12px] text-gray-500 mt-1 font-medium">{tx.actor} • {tx.email || 'N/A'}</p>
                       </div>
                     </td>
-                    <td className="px-5 py-4 border-r border-gray-300">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-black uppercase tracking-tight ${tx.type === 'IN' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
+                    <td className="px-5 py-3 border-r border-gray-300 text-center">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-black uppercase tracking-tight ${tx.type === 'IN' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
                         }`}>
-                        {tx.type === 'IN' ? (
-                          <><ArrowUpRightIcon className="w-3 h-3 stroke-[3]" /> NẠP</>
-                        ) : (
-                          <><ArrowDownRightIcon className="w-3 h-3 stroke-[3]" /> RÚT</>
-                        )}
+                        {tx.type === 'IN' ? 'Dòng tiền Nạp' : 'Dòng tiền Rút'}
                       </span>
                       <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase leading-none">{tx.method}</p>
                       {tx.txHash && (
-                        <div className="mt-1.5 flex items-center gap-1">
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">On-chain:</span>
-                          <code className="text-[9px] font-mono text-[#0891B2] bg-cyan-50/50 px-1 py-0.5 rounded border border-cyan-100/50" title={tx.txHash}>
-                            {tx.txHash.length > 20 ? `${tx.txHash.substring(0, 6)}...${tx.txHash.substring(tx.txHash.length - 4)}` : tx.txHash}
+                        <div className="mt-1.5 flex items-center justify-center gap-1">
+                          <code className="text-[9px] font-mono text-[#2ba6e1] bg-blue-50 px-1 py-0.5 rounded border border-blue-100" title={tx.txHash}>
+                            {tx.txHash.substring(0, 6)}...{tx.txHash.substring(tx.txHash.length - 4)}
                           </code>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(`https://amoy.polygonscan.com/tx/${tx.txHash}`, '_blank');
                             }}
-                            className="hover:text-[#0891B2] text-gray-400 transition-colors"
+                            className="hover:text-blue-600 text-gray-400 transition-colors"
                             title="View on PolygonScan"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
@@ -255,21 +250,21 @@ export default function AdminTransactionsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-5 py-4 border-r border-gray-300 text-right">
+                    <td className="px-5 py-3 border-r border-gray-300 text-right">
                       <p className={`text-base font-black ${tx.type === 'IN' ? 'text-green-600' : 'text-red-500'}`}>
                         {tx.type === 'IN' ? '+' : '-'}{formatVND(tx.amount)}
                       </p>
-                      <p className="text-[10px] font-bold text-gray-400">VNĐ</p>
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-mono mt-0.5">VNĐ</p>
                     </td>
-                    <td className="px-5 py-4 border-r border-gray-300 text-center">
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter ${tx.status === 'SUCCESS' || tx.status === 'DISBURSED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'
+                    <td className="px-5 py-3 border-r border-gray-300 text-center">
+                      <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight ${tx.status === 'SUCCESS' || tx.status === 'DISBURSED' ? 'bg-[#7BC712] text-black border-none' : 'bg-gray-100 text-gray-500 border border-gray-200'
                         }`}>
                         {tx.status}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      <p className="text-xs font-bold text-gray-600">{new Date(tx.createdAt).toLocaleDateString('vi-VN')}</p>
-                      <p className="text-[10px] font-medium text-gray-400 mt-0.5">{new Date(tx.createdAt).toLocaleTimeString('vi-VN')}</p>
+                    <td className="px-5 py-3">
+                      <p className="font-bold text-gray-800">{new Date(tx.createdAt).toLocaleDateString('vi-VN')}</p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">{new Date(tx.createdAt).toLocaleTimeString('vi-VN')}</p>
                     </td>
                   </tr>
                 ))

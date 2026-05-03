@@ -53,10 +53,16 @@ export default function LoginPage() {
             if (!res.ok) {
                 const data = await res.json();
                 let errorMsg = "Invalid email or password.";
-                if (data.message && AUTH_ERRORS_MAP[data.message]) {
-                    errorMsg = AUTH_ERRORS_MAP[data.message];
+                const backendMsg = data.message || "";
+
+                // Handle piped error messages (e.g., AUTH_104|Reason)
+                const [code, ...extra] = backendMsg.split('|');
+                const reason = extra.join('|');
+
+                if (AUTH_ERRORS_MAP[code]) {
+                    errorMsg = AUTH_ERRORS_MAP[code];
                 } else {
-                    errorMsg = data.message || errorMsg;
+                    errorMsg = backendMsg || errorMsg;
                 }
                 throw new Error(errorMsg);
             }

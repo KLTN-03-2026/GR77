@@ -122,7 +122,7 @@ export default function AdminUsersPage() {
   // Create modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ email: '', role: 'USER' });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [createSuccess, setCreateSuccess] = useState('');
 
   // Detail panel
@@ -161,7 +161,16 @@ export default function AdminUsersPage() {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}` },
       });
       if (!res.ok) throw new Error('Failed to fetch users');
-      setUsers(await res.json());
+      const data = await res.json();
+
+      // Map security nesting to flat structure for easier UI consumption
+      const mapped = data.map((u: any) => ({
+        ...u,
+        isLocked: u.security?.isLocked || false,
+        lockReason: u.security?.lockReason || '',
+      }));
+
+      setUsers(mapped);
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -187,12 +196,16 @@ export default function AdminUsersPage() {
     try {
       const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')}/users`, {
         method: 'POST',
-        body: JSON.stringify({ email: formData.email, role: formData.role }),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password || undefined,
+          role: 'USER'
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to create user');
       setCreateSuccess(`Account created. A verification email has been sent to ${formData.email}.`);
-      setFormData({ email: '', role: 'USER' });
+      setFormData({ email: '', password: '' });
       fetchUsers();
     } catch (err: any) {
       alert(err.message);
@@ -290,7 +303,7 @@ export default function AdminUsersPage() {
         user.name.toLowerCase().includes(q) ||
         user.email.toLowerCase().includes(q) ||
         user.role.toLowerCase().includes(q);
-      const matchesRole = roleFilter === 'All' || user.role === roleFilter;
+      const matchesRole = true;
       const matchesStatus =
         statusFilter === 'All' ||
         (statusFilter === 'Locked' ? user.isLocked : !user.isLocked);
@@ -305,6 +318,20 @@ export default function AdminUsersPage() {
   }, [filteredUsers, currentPage]);
 
   const isSuperAdmin = callerRole === 'SUPER_ADMIN';
+
+  // Dynamic role options based on actual data
+  const uniqueRoles = useMemo(() => {
+    const roles = Array.from(new Set(users.map((u) => u.rawRole).filter(Boolean)));
+    // For Users page, strictly exclude ADMIN roles
+    return roles.filter(r => r !== 'ADMIN' && r !== 'SUPER_ADMIN');
+  }, [users]);
+
+  const roleLabelMap: Record<string, string> = {
+    USER: 'Nhà tài trợ',
+    ORGANIZER: 'Người tổ chức',
+    ADMIN: 'Quản trị viên',
+    SUPER_ADMIN: 'Super Admin',
+  };
 
   // Role options available in "Add Member" form
   const createRoleOptions = isSuperAdmin
@@ -349,29 +376,17 @@ export default function AdminUsersPage() {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#2ba6e1]" strokeWidth={2.5} />
               <input
                 type="text"
-                className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg w-64 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-600 placeholder:text-gray-400"
+                className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg w-64 text-sm font-bold outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-700 placeholder:text-gray-400"
                 placeholder="Tìm kiếm danh tính…"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               />
             </div>
 
-            <div className="relative">
-              <select
-                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
-                value={roleFilter}
-                onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
-              >
-                <option value="All">Vai trò: Tất cả</option>
-                <option value="Donor">Nhà tài trợ</option>
-                <option value="Organizer">Người tổ chức</option>
-              </select>
-              <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
 
             <div className="relative">
               <select
-                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
+                className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm font-bold bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
               >
@@ -538,7 +553,7 @@ export default function AdminUsersPage() {
                     value={confirmModal.reason}
                     onChange={(e) => setConfirmModal({ ...confirmModal, reason: e.target.value })}
                     placeholder="Mô tả vi phạm hoặc lý do…"
-                    className="w-full h-28 px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-red-100 focus:border-red-400 outline-none transition-all placeholder:text-gray-300"
+                    className="w-full h-28 px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:ring-4 focus:ring-red-100 focus:border-red-400 outline-none transition-all placeholder:text-gray-300"
                   />
                 </div>
               </div>
@@ -642,29 +657,26 @@ export default function AdminUsersPage() {
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase">Địa chỉ Email</label>
+                  <label className="text-xs font-bold text-gray-700 uppercase">Địa chỉ Email</label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg mt-1 outline-none focus:border-blue-400"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg mt-1 outline-none focus:border-blue-400 text-gray-700 font-bold"
+                    placeholder="example@mail.com"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase">Cấp độ quyền</label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg mt-1 bg-white outline-none focus:border-blue-400"
-                  >
-                    {createRoleOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  {!isSuperAdmin && (
-                    <p className="text-[11px] text-gray-400 mt-1">Chỉ Super Admin mới có thể tạo cấu hình Administrator.</p>
-                  )}
+                  <label className="text-xs font-bold text-gray-700 uppercase">Mật khẩu (Tùy chọn)</label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg mt-1 outline-none focus:border-blue-400 text-gray-700 font-bold"
+                    placeholder="Mặc định: Kindlink@123"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1 italic">Hệ thống sẽ gửi email thông báo tài khoản & mật khẩu cho người dùng.</p>
                 </div>
                 <div className="flex gap-4 pt-4">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2 text-gray-400 font-bold uppercase text-xs">Hủy bỏ</button>

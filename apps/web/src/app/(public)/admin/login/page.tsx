@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { GlobeAltIcon } from "@heroicons/react/24/outline";
 import { AdminLanguageProvider, useAdminLanguage } from "@/contexts/AdminLanguageContext";
 import { useGlobalAuth } from "@/contexts/AuthContext";
+import { AUTH_ERRORS_MAP } from "@/lib/validation/auth";
 
 function LanguageToggle() {
     const { language, setLanguage } = useAdminLanguage();
@@ -67,7 +68,17 @@ function AdminLoginForm() {
                 let errorMsg = translate("login.err_general");
                 try {
                     const data = await res.json();
-                    errorMsg = data.message || errorMsg;
+                    const backendMsg = data.message || "";
+
+                    // Handle piped error messages (e.g., AUTH_104|Reason)
+                    const [code, ...extra] = backendMsg.split('|');
+                    const reason = extra.join('|');
+
+                    if (AUTH_ERRORS_MAP[code]) {
+                        errorMsg = AUTH_ERRORS_MAP[code];
+                    } else {
+                        errorMsg = backendMsg || errorMsg;
+                    }
                 } catch (e) { }
                 throw new Error(errorMsg);
             }
