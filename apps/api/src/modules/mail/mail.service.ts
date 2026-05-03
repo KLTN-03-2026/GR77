@@ -162,4 +162,72 @@ export class MailService {
     `;
     return this.sendMail(email, subject, html);
   }
+
+  async sendAccountInvitation(email: string, password: string, role: string): Promise<boolean> {
+    const roleMap: Record<string, string> = {
+      ADMIN: 'Quản trị viên',
+      SUPER_ADMIN: 'Super Admin',
+      USER: 'Thành viên',
+    };
+
+    const subject = 'Lời mời gia nhập hệ thống Kindlink';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #7598C1; border-radius: 10px;">
+        <h2 style="color: #7598C1; text-align: center;">Chào mừng bạn đến với Kindlink!</h2>
+        <p>Quản trị viên đã tạo cho bạn một tài khoản trên hệ thống với vai trò: <strong>${roleMap[role] || role}</strong>.</p>
+        <p>Dưới đây là thông tin đăng nhập của bạn:</p>
+        <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #7598C1; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+          <p style="margin: 5px 0;"><strong>Mật khẩu:</strong> ${password}</p>
+        </div>
+        <p style="color: #d32f2f; font-weight: bold;">Lưu ý: Vui lòng đổi mật khẩu ngay sau khi đăng nhập lần đầu để đảm bảo an toàn.</p>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="${this.configService.get('WEB_URL') || 'http://localhost:3000'}/login" 
+             style="background-color: #7598C1; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Đăng nhập ngay</a>
+        </div>
+        <hr style="border: none; border-top: 1px solid #7598C1; margin: 30px 0;">
+        <p style="font-size: 11px; color: #888; text-align: center;">Đây là email tự động từ hệ thống Kindlink. Vui lòng không trả lời email này.</p>
+      </div>
+    `;
+    return this.sendMail(email, subject, html);
+  }
+
+  async sendAccountLockEmail(email: string, reason: string): Promise<boolean> {
+    const subject = 'Thông báo: Tài khoản Kindlink của bạn đã bị khóa';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #d32f2f; border-radius: 10px;">
+        <h2 style="color: #d32f2f; text-align: center;">Tài khoản đã bị khóa</h2>
+        <p>Chào bạn,</p>
+        <p>Chúng tôi rất tiếc phải thông báo rằng tài khoản Kindlink của bạn đã bị tạm khóa bởi quản trị trị viên do vi phạm quy định hoặc lý do bảo mật.</p>
+        <div style="background-color: #fce8e6; padding: 15px; border-left: 5px solid #d32f2f; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 0; font-weight: bold; color: #d32f2f;">Lý do khóa:</p>
+          <p style="margin: 5px 0; color: #333;">${reason}</p>
+        </div>
+        <p>Nếu bạn cho rằng đây là một sự nhầm lẫn, vui lòng liên hệ với bộ phận hỗ trợ của chúng tôi tại <a href="mailto:support@kindlink.org">support@kindlink.org</a> để được giải đáp.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 11px; color: #888; text-align: center;">Trân trọng,<br/>Kindlink Security Team</p>
+      </div>
+    `;
+    return this.sendMail(email, subject, html);
+  }
+
+  async sendAccountUnlockEmail(email: string): Promise<boolean> {
+    const subject = 'Thông báo: Khôi phục quyền truy cập tài khoản Kindlink';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #4CAF50; border-radius: 10px;">
+        <h2 style="color: #4CAF50; text-align: center;">Tài khoản đã được mở khóa</h2>
+        <p>Chào bạn,</p>
+        <p>Chúc mừng! Tài khoản Kindlink của bạn đã được quản trị viên khôi phục quyền truy cập.</p>
+        <p>Giờ đây bạn có thể đăng nhập vào hệ thống và tiếp tục các hoạt động thiện nguyện của mình.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${this.configService.get('WEB_URL') || 'http://localhost:3000'}/login" 
+             style="background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Đăng nhập ngay</a>
+        </div>
+        <p>Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi tại <a href="mailto:support@kindlink.org">support@kindlink.org</a>.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 11px; color: #888; text-align: center;">Trân trọng,<br/>Kindlink Team</p>
+      </div>
+    `;
+    return this.sendMail(email, subject, html);
+  }
 }

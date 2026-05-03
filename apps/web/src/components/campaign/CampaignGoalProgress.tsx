@@ -11,6 +11,9 @@ interface CampaignGoalProgressProps {
     isLiked: boolean;
     isCreator?: boolean;
     campaignId: string;
+    status: string;
+    endAt: string | null;
+    autoCloseWhenGoalReached: boolean;
     setDonateOpen: (open: boolean) => void;
     handleJoin: () => void;
     handleLeave?: () => void;
@@ -29,12 +32,21 @@ export function CampaignGoalProgress({
     isLiked,
     isCreator,
     campaignId,
+    status,
+    endAt,
+    autoCloseWhenGoalReached,
     setDonateOpen,
     handleJoin,
     handleLeave,
     handleToggleLike,
     formatCurrency
 }: CampaignGoalProgressProps) {
+    const isGoalReached = totalRaised >= fundingGoal;
+    const isExpired = endAt ? new Date() > new Date(endAt) : false;
+    const isFormallyClosed = status !== 'ACTIVE';
+
+    const isClosed = isFormallyClosed || isExpired || (isGoalReached && autoCloseWhenGoalReached);
+
     return (
         <section className="w-full h-full flex flex-col">
             <div className="flex flex-col items-center flex-1 w-full">
@@ -124,12 +136,21 @@ export function CampaignGoalProgress({
                                     {isJoined ? (hasDonated ? "Donated Member" : "Leave") : "Join Free"}
                                 </button>
                             )}
-                            <button
-                                onClick={() => setDonateOpen(true)}
-                                className="flex-1 py-2.5 sm:py-3 border-2 border-[#FACC15] bg-[#FACC15]/10 hover:bg-[#FACC15] hover:text-white text-[#FACC15] font-black text-sm sm:text-base rounded-full transition-all active:scale-95"
-                            >
-                                Donate Now
-                            </button>
+                            {isClosed ? (
+                                <button
+                                    disabled
+                                    className="flex-1 py-2.5 sm:py-3 bg-gray-100 border-2 border-gray-200 text-gray-400 font-black text-sm sm:text-base rounded-full cursor-not-allowed uppercase tracking-wider"
+                                >
+                                    CLOSED
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setDonateOpen(true)}
+                                    className="flex-1 py-2.5 sm:py-3 bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-[#FFF9E0] font-black text-sm sm:text-base rounded-full transition-all active:scale-95 shadow-lg shadow-yellow-100/50"
+                                >
+                                    Donate Now
+                                </button>
+                            )}
                         </div>
                     </div>
                 ) : (

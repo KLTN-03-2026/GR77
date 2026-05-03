@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Modal from '@/components/ui/Modal';
-import { MagnifyingGlassIcon, CheckCircleIcon, ExclamationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, CheckCircleIcon, ExclamationCircleIcon, XMarkIcon, IdentificationIcon, ClockIcon, ShieldCheckIcon, ShieldExclamationIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 // ── PAGINATION HELPER (Sync with User UI logic) ──
 function getPageNumbers(current: number, total: number) {
@@ -50,24 +50,40 @@ const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
 
 // ── UI COMPONENTS ───────────────────────────────────────────────────────
 
+function StatCard({ label, value, icon, color = 'bg-[#7598C1]' }: { label: string; value: string; icon: React.ReactNode; color?: string }) {
+  return (
+    <div className={`${color} rounded-3xl px-6 py-4 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group`}>
+      <div className="bg-white/15 p-3 rounded-2xl group-hover:bg-white/20 transition-colors text-black flex items-center justify-center">
+        <div className="w-9 h-9">{icon}</div>
+      </div>
+      <div className="text-black">
+        <p className="text-lg font-bold tracking-wide uppercase">{label}</p>
+        <h2 className="text-4xl font-black mt-1 tabular-nums">{value}</h2>
+      </div>
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   const isApproved = status === 'APPROVED';
   const isRejected = status === 'REJECTED';
-  let bgColor = 'bg-yellow-100 text-yellow-800'; // pending yellow
-  let dotColor = 'bg-yellow-500';
 
   if (isApproved) {
-    bgColor = 'bg-green-100 text-green-800';
-    dotColor = 'bg-green-500';
+    return (
+      <span className="px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight bg-[#7BC712] text-black border-none">
+        Phê duyệt
+      </span>
+    );
   } else if (isRejected) {
-    bgColor = 'bg-red-100 text-red-800';
-    dotColor = 'bg-red-500';
+    return (
+      <span className="px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight bg-red-50 text-red-600 border border-red-100">
+        Từ chối
+      </span>
+    );
   }
-
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${bgColor}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-      {status}
+    <span className="px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight bg-yellow-50 text-yellow-700 border border-yellow-100">
+      Chờ duyệt
     </span>
   );
 }
@@ -181,10 +197,10 @@ export default function AdminKycPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-20">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold animate-[slideIn_0.3s_ease] ${toast.type === 'success'
+        <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold animate-[slideIn_0.3s_ease] ${toast.type === 'success'
           ? 'bg-green-50 text-green-700 border border-green-200'
           : 'bg-red-50 text-red-700 border border-red-200'
           }`}>
@@ -200,73 +216,83 @@ export default function AdminKycPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+      {/* ── STATS ── */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <StatCard label="Tổng hồ sơ" value={kycData.length.toLocaleString()} icon={<IdentificationIcon />} />
+        <StatCard label="Chờ duyệt" value={kycData.filter(h => h.status === 'PENDING').length.toLocaleString()} icon={<ClockIcon />} />
+        <StatCard label="Đã duyệt" value={kycData.filter(h => h.status === 'APPROVED').length.toLocaleString()} icon={<ShieldCheckIcon />} />
+        <StatCard label="Đã từ chối" value={kycData.filter(h => h.status === 'REJECTED').length.toLocaleString()} icon={<ShieldExclamationIcon />} />
+      </div>
 
+      <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-sm">
         {/* Toolbar: Search & Filter */}
-        <div className="px-5 py-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center bg-gray-50/50">
-          <div className="relative w-full md:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-4 w-4 text-[#2ba6e1]" strokeWidth={2.5} />
-            </div>
+        <div className="flex flex-wrap items-center gap-3 p-3 bg-[#f8f9fa] border-b border-gray-300">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
             <input
               type="text"
-              placeholder="Search by name or CCCD..."
+              placeholder="Tìm tên, số CCCD…"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-9 pr-4 py-2 rounded-xl text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#7598C1] transition-all bg-white"
+              className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-xl w-72 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-gray-600 placeholder:text-gray-400"
             />
           </div>
 
-          <div className="flex items-center gap-2 bg-white rounded-xl p-1 border border-gray-200 w-full md:w-auto overflow-x-auto">
-            {['All', 'Pending', 'Approved', 'Rejected'].map(status => (
-              <button
-                key={status}
-                onClick={() => { setFilterStatus(status); setCurrentPage(1); }}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === status
-                  ? 'bg-[#7598C1] text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-              >
-                {status}
-              </button>
-            ))}
+          <div className="relative">
+            <select
+              className="py-1.5 pl-3 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 outline-none hover:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none px-4"
+              value={filterStatus}
+              onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+            >
+              <option value="All">Trạng thái: Tất cả</option>
+              <option value="Pending">Đang chờ duyệt</option>
+              <option value="Approved">Đã được duyệt</option>
+              <option value="Rejected">Đã bị từ chối</option>
+            </select>
+            <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto flex-1">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 bg-white">
-                <th className="text-center px-4 py-3.5 font-semibold text-gray-700 w-16">ID</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-700">User Name</th>
-                <th className="text-left px-4 py-3.5 font-semibold text-gray-700">CCCD Number</th>
-                <th className="text-left px-4 py-3.5 font-semibold text-gray-700">Status</th>
-                <th className="text-left px-4 py-3.5 font-semibold text-gray-700">Submitted</th>
-                <th className="text-center px-5 py-3.5 font-semibold text-gray-700 w-[120px]">Action</th>
+              <tr className="bg-white border-b border-gray-300">
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 uppercase text-[11px] tracking-widest">Danh tính</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 uppercase text-[11px] tracking-widest">Số CCCD</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center uppercase text-[11px] tracking-widest">Trạng thái</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 uppercase text-[11px] tracking-widest">Thời gian gửi</th>
+                <th className="px-5 py-3 font-bold text-black text-center uppercase text-[11px] tracking-widest">Thao tác</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-300">
               {paginatedData.length > 0 ? (
                 paginatedData.map((row, index) => (
-                  <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/80 transition-colors group">
-                    <td className="px-4 py-4 text-center font-bold text-gray-500">
+                  <tr key={row.id} className="border-b border-gray-300 bg-[#fbfbfb] hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-gray-800">{row.fullName}</p>
+                    <td className="px-5 py-3 border-r border-gray-300">
+                      <div className="flex flex-col">
+                        <p className="font-bold text-gray-800 leading-tight">{row.fullName}</p>
+                        <p className="text-[12px] text-gray-500 mt-0.5">{row.user.email}</p>
+                      </div>
                     </td>
-                    <td className="px-4 py-4 font-mono text-gray-600">{row.idNumber}</td>
-                    <td className="px-4 py-4">
+                    <td className="px-5 py-3 border-r border-gray-300 font-mono text-gray-600 font-bold tracking-tighter">{row.idNumber}</td>
+                    <td className="px-5 py-3 border-r border-gray-300 text-center">
                       <StatusBadge status={row.status} />
                     </td>
-                    <td className="px-4 py-4 text-gray-500">{new Date(row.createdAt).toLocaleString()}</td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="px-5 py-3 border-r border-gray-300">
+                      <p className="font-bold text-gray-800">{new Date(row.createdAt).toLocaleDateString('vi-VN')}</p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">{new Date(row.createdAt).toLocaleTimeString('vi-VN')}</p>
+                    </td>
+                    <td className="px-5 py-3 text-center">
                       <button
                         onClick={() => setSelectedKyc(row)}
-                        className="px-4 py-1.5 rounded-lg text-sm font-semibold text-[#7598C1] bg-[#7598C1]/10 hover:bg-[#7598C1]/20 transition-colors inline-block"
+                        className="px-4 py-1.5 rounded-lg text-[11px] font-black uppercase text-white bg-gray-900 hover:bg-black transition-all shadow-sm active:scale-95"
                       >
-                        ...
+                        Chi tiết
                       </button>
                     </td>
                   </tr>
