@@ -30,15 +30,17 @@ function formatVND(amount: number) {
 }
 
 // ── Sub-components ──────────────────────────────────────────────────
-function StatCard({ label, value, icon, color = 'bg-[#7598C1]' }: { label: string; value: string; icon: React.ReactNode; color?: string }) {
+function StatCard({ label, value, icon, color = 'bg-[#7598C1]', compact = false }: { label: string; value: string; icon: React.ReactNode; color?: string; compact?: boolean }) {
   return (
-    <div className={`${color} rounded-3xl px-6 py-5 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group`}>
-      <div className="bg-white/15 p-3 rounded-2xl group-hover:bg-white/20 transition-colors text-black flex items-center justify-center">
-        <div className="w-10 h-10">{icon}</div>
+    <div className={`flex items-center ${compact ? 'gap-3 px-4 py-5 rounded-xl' : 'gap-6 px-6 py-4.5 rounded-2xl'} ${color} min-w-0 shadow-xl border border-transparent w-full hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group`}>
+      <div className={`text-gray-900 bg-white/15 flex-shrink-0 flex items-center justify-center ${compact ? 'p-1.5 rounded-xl' : 'p-2.5 rounded-2xl'}`}>
+        <div className={compact ? 'w-6 h-6' : 'w-10 h-10'}>{icon}</div>
       </div>
-      <div className="text-black">
-        <p className="text-lg font-bold tracking-wide uppercase">{label}</p>
-        <h2 className="text-4xl font-black mt-1 tabular-nums">{value}</h2>
+      <div className="min-w-0 flex-1">
+        <div className={compact ? 'h-8 flex items-center' : ''}>
+          <p className={`${compact ? 'text-[10px] sm:text-xs line-clamp-2 whitespace-pre-line' : 'text-md sm:text-base truncate'} font-bold text-gray-800 uppercase tracking-wide opacity-100`} title={label}>{label}</p>
+        </div>
+        <p className={`${compact ? 'text-base lg:text-lg' : 'text-2xl lg:text-3xl'} font-black text-gray-900 leading-tight truncate mt-0.5 tabular-nums`} title={value}>{value}</p>
       </div>
     </div>
   );
@@ -81,30 +83,18 @@ export default function AdminRevenuePage() {
       {/* Top Section: Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <StatCard label="Tổng số lượng chiến dịch" value={data.totalCampaigns.toLocaleString()} icon={<PresentationChartLineIcon />} />
-        <StatCard label="Tổng doanh thu quỹ" value={formatVND(data.totalGrossDonations)} icon={<CurrencyDollarIcon />} />
+        <StatCard label="Tổng doanh thu quỹ" value={data.totalGrossDonations.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })} icon={<BanknotesIcon />} />
       </div>
 
       {/* Secondary Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Phí xử lý đã thu:', value: formatVND(data.totalFeesCollected), icon: BanknotesIcon },
-          { label: 'Doanh thu thực (Ước tính):', value: formatVND(data.platformNetProfit), icon: ArrowTrendingUpIcon },
-          { label: 'Phí sự kiện (Tạm tính):', value: '0 VNĐ', icon: TicketIcon },
-          { label: 'Tỷ lệ phí bình quân:', value: '2.8 %', icon: PercentBadgeIcon, showCheck: true },
+          { label: 'Phí xử lý đã thu', value: data.totalFeesCollected.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }), icon: <BanknotesIcon /> },
+          { label: 'Doanh thu thực\n(Ước tính)', value: data.totalFeesCollected.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }), icon: <ArrowTrendingUpIcon /> },
+          { label: 'Phí sự kiện (Tạm tính)', value: '0 ₫', icon: <TicketIcon /> },
+          { label: 'Tỷ lệ phí bình quân', value: '2.8 %', icon: <PercentBadgeIcon /> },
         ].map((stat, i) => (
-          <div key={i} className="bg-[#7598C1] rounded-2xl p-5 text-black shadow-lg">
-            <p className="text-[11px] font-black uppercase opacity-60 leading-tight mb-2 h-8">{stat.label}</p>
-            <div className="flex items-center justify-between">
-              <span className="text-xl font-black tabular-nums">{stat.value}</span>
-              {stat.showCheck && (
-                <div className="bg-white rounded-md p-0.5 ml-2">
-                  <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-            </div>
-          </div>
+          <StatCard key={i} label={stat.label} value={stat.value} icon={stat.icon} compact />
         ))}
       </div>
 

@@ -12,7 +12,7 @@ import {
   ArrowPathIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { CurrencyDollarIcon } from '@heroicons/react/24/solid';
+import { CurrencyDollarIcon, DocumentDuplicateIcon, DocumentTextIcon } from '@heroicons/react/24/solid';
 import { API_BASE_URL } from '@/lib/constants/endpoints';
 import { POL_PER_VND } from '@/lib/constants/blockchain';
 
@@ -79,13 +79,13 @@ function getPageNumbers(current: number, total: number) {
 // ── Sub-components ──────────────────────────────────────────────────
 function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="bg-[#7598C1] rounded-3xl px-6 py-4 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
-      <div className="bg-white/15 p-3 rounded-2xl group-hover:bg-white/20 transition-colors text-black flex items-center justify-center">
-        <div className="w-9 h-9">{icon}</div>
+    <div className="flex items-center gap-6 bg-[#7598C1] rounded-2xl px-6 py-4.5 min-w-0 shadow-xl border border-[#7598C1] w-full hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+      <div className="text-gray-900 bg-white/15 p-2.5 rounded-2xl flex-shrink-0 flex items-center justify-center">
+        <div className="w-10 h-10">{icon}</div>
       </div>
-      <div className="text-black">
-        <p className="text-lg font-bold tracking-wide uppercase">{label}</p>
-        <h2 className="text-4xl font-black mt-1 tabular-nums">{value}</h2>
+      <div className="min-w-0 flex-1">
+        <p className="text-md sm:text-base font-bold text-gray-800 uppercase tracking-wide opacity-100 truncate" title={label}>{label}</p>
+        <p className="text-2xl lg:text-3xl font-black text-gray-900 leading-tight truncate mt-1 tabular-nums" title={value}>{value}</p>
       </div>
     </div>
   );
@@ -236,7 +236,7 @@ export default function AdminWithdrawalsPage() {
 
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <StatCard label="Tổng yêu cầu" value={requests.length.toLocaleString()} icon={<BanknotesIcon />} />
+        <StatCard label="Tổng yêu cầu" value={requests.length.toLocaleString()} icon={<DocumentTextIcon />} />
         <StatCard label="Chờ duyệt" value={requests.filter(r => r.status === 'PENDING').length.toLocaleString()} icon={<ClockIcon />} />
         <StatCard label="Đã hoàn tất" value={requests.filter(r => r.status === 'DISBURSED').length.toLocaleString()} icon={<CheckCircleIcon />} />
       </div>

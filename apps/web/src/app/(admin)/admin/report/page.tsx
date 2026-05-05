@@ -45,7 +45,7 @@ export interface ReportData {
 // ── Sub-components ──────────────────────────────────────────────────
 function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="bg-[#7598C1] rounded-3xl px-6 py-4 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+    <div className="bg-[#7598C1] rounded-2xl px-6 py-4 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
       <div className="bg-white/15 p-3 rounded-2xl group-hover:bg-white/20 transition-colors text-black flex items-center justify-center">
         <div className="w-9 h-9">{icon}</div>
       </div>
@@ -268,7 +268,7 @@ export default function AdminReportsPage() {
 
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <StatCard label="Tổng báo cáo" value={reports.length.toString()} icon={<ExclamationCircleIconSolid />} />
+        <StatCard label="Tổng báo cáo" value={reports.length.toString()} icon={<ExclamationTriangleIcon />} />
         <StatCard label="Báo cáo đã duyệt" value={reports.filter(r => r.status === 'RESOLVED').length.toString()} icon={<ShieldCheckIcon />} />
       </div>
 
@@ -380,7 +380,7 @@ export default function AdminReportsPage() {
                           <button title="Xem chi tiết báo cáo" onClick={() => handleViewReportDetails(report)} className="text-blue-500 hover:text-blue-700 transition-colors">
                             <EyeIcon className="w-5 h-5" />
                           </button>
-                           {report.status === 'PENDING' && (
+                          {report.status === 'PENDING' && (
                             <>
                               <button title="Duyệt báo cáo" onClick={() => handleUpdateStatus(report.id, 'RESOLVED')} className="text-green-500 hover:text-green-700 transition-colors">
                                 <CheckBadgeIcon className="w-5 h-5" />

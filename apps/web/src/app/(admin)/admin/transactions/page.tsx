@@ -56,13 +56,13 @@ function getPageNumbers(current: number, total: number) {
 // ── Sub-components ──────────────────────────────────────────────────
 function StatCard({ label, value, icon, color = 'bg-[#7598C1]' }: { label: string; value: string; icon: React.ReactNode; color?: string }) {
   return (
-    <div className={`${color} rounded-3xl px-6 py-4 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group`}>
-      <div className="bg-white/15 p-3 rounded-2xl group-hover:bg-white/20 transition-colors text-black flex items-center justify-center">
-        <div className="w-9 h-9">{icon}</div>
+    <div className={`flex items-center gap-6 ${color} rounded-2xl px-6 py-4.5 min-w-0 shadow-xl border border-transparent w-full hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group`}>
+      <div className="text-gray-900 bg-white/15 p-2.5 rounded-2xl flex-shrink-0 flex items-center justify-center">
+        <div className="w-10 h-10">{icon}</div>
       </div>
-      <div className="text-black">
-        <p className="text-lg font-bold tracking-wide uppercase">{label}</p>
-        <h2 className="text-4xl font-black mt-1 tabular-nums">{value}</h2>
+      <div className="min-w-0 flex-1">
+        <p className="text-md sm:text-base font-bold text-gray-800 uppercase tracking-wide opacity-100 truncate" title={label}>{label}</p>
+        <p className="text-2xl lg:text-2xl font-black text-gray-900 leading-tight truncate mt-1 tabular-nums" title={value}>{value}</p>
       </div>
     </div>
   );
@@ -159,9 +159,9 @@ export default function AdminTransactionsPage() {
     <div className="space-y-8 pb-20">
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <StatCard label="Tổng thu (Nạp)" value={formatVND(totalIn)} icon={<ArrowUpRightIcon />} />
-        <StatCard label="Tổng chi (Rút)" value={formatVND(totalOut)} icon={<ArrowDownRightIcon />} />
-        <StatCard label="Số dư hiện tại" value={formatVND(totalIn - totalOut)} icon={<BanknotesIcon />} />
+        <StatCard label="Tổng thu (Nạp)" value={totalIn.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })} icon={<ArrowUpRightIcon />} />
+        <StatCard label="Tổng chi (Rút)" value={totalOut.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })} icon={<ArrowDownRightIcon />} />
+        <StatCard label="Số dư hiện tại" value={(totalIn - totalOut).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })} icon={<BanknotesIcon />} />
       </div>
 
       {/* ── TABLE ── */}
@@ -204,11 +204,11 @@ export default function AdminTransactionsPage() {
             <thead>
               <tr className="bg-white border-b border-gray-300">
                 <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center w-16">STT</th>
-                <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Thành phần</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center">Thành phần</th>
                 <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center">Loại</th>
-                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-right">Giá trị</th>
+                <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center">Giá trị</th>
                 <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center">Trạng thái</th>
-                <th className="px-5 py-3 font-bold text-black">Thời gian</th>
+                <th className="px-5 py-3 font-bold text-black text-center">Thời gian</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-300">
@@ -250,11 +250,18 @@ export default function AdminTransactionsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-5 py-3 border-r border-gray-300 text-right">
-                      <p className={`text-base font-black ${tx.type === 'IN' ? 'text-green-600' : 'text-red-500'}`}>
-                        {tx.type === 'IN' ? '+' : '-'}{formatVND(tx.amount)}
-                      </p>
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-mono mt-0.5">VNĐ</p>
+                    <td className="px-5 py-3 border-r border-gray-300 text-center">
+                      <div className="flex items-baseline justify-center gap-1">
+                        {/* Số tiền */}
+                        <span className={`text-base font-black ${tx.type === 'IN' ? 'text-green-600' : 'text-red-500'}`}>
+                          {tx.type === 'IN' ? '+' : '-'}{formatVND(tx.amount)}
+                        </span>
+
+                        {/* Đơn vị VNĐ */}
+                        <span className="text-[13px] font-bold text-gray-500 uppercase tracking-widest font-mono">
+                          VNĐ
+                        </span>
+                      </div>
                     </td>
                     <td className="px-5 py-3 border-r border-gray-300 text-center">
                       <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight ${tx.status === 'SUCCESS' || tx.status === 'DISBURSED' ? 'bg-[#7BC712] text-black border-none' : 'bg-gray-100 text-gray-500 border border-gray-200'

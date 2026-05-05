@@ -199,7 +199,7 @@ export default function Home() {
             {/* Button - Enhanced size and effects */}
             <div className="relative mt-8 lg:mt-0 lg:absolute lg:top-1/2 lg:-translate-y-1/2 right-0 lg:right-16 group flex justify-center lg:block">
               <button
-                onClick={() => document.getElementById('signup-form')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => document.getElementById('campaigns')?.scrollIntoView({ behavior: 'smooth' })}
                 className="px-8 lg:px-14 py-3 lg:py-6 bg-white border-2 border-cyan-400 text-gray-900 font-black italic text-base lg:text-3xl rounded-full flex items-center gap-2 lg:gap-4 shadow-2xl hover:scale-110 active:scale-95 transition-all animate-glow group-hover:bg-cyan-50"
               >
                 go to donate

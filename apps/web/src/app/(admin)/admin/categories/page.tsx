@@ -175,7 +175,7 @@ export default function AdminCategoriesPage() {
 
             {/* Header & Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-[#7598C1] rounded-3xl px-6 py-6 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+                <div className="bg-[#7598C1] rounded-2xl px-6 py-5 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
                     <div className="bg-white/15 p-3 rounded-2xl group-hover:bg-white/20 transition-colors text-black flex items-center justify-center">
                         <TagIcon className="w-9 h-9" />
                     </div>

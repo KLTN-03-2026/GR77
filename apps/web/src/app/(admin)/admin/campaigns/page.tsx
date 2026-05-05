@@ -182,23 +182,25 @@ export default function AdminCampaignsPage() {
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-[#7598C1] rounded-3xl px-6 py-4.5 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+        <div className="bg-[#7598C1] rounded-2xl px-6 py-4.5 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
           <div className="bg-white/15 p-3 rounded-2xl group-hover:bg-white/20 transition-colors">
             <MegaphoneIcon className="h-9 w-9 text-black" />
           </div>
           <div className="text-black">
             <p className="text-lg font-bold tracking-wide uppercase opacity-100">Tổng số chiến dịch</p>
-            <h2 className="text-4xl font-black mt-1 tabular-nums">{stats.total}</h2>
+            <h2 className="text-3xl font-black mt-1 tabular-nums">{stats.total}</h2>
           </div>
         </div>
 
-        <div className="bg-[#7598C1] rounded-3xl px-6 py-4.5 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+        <div className="bg-[#7598C1] rounded-2xl px-6 py-4.5 flex items-center space-x-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
           <div className="bg-white/15 p-3 rounded-2xl group-hover:bg-white/20 transition-colors">
             <WalletIcon className="h-9 w-9 text-black" />
           </div>
           <div className="text-black">
             <p className="text-lg font-bold tracking-wide uppercase opacity-100">Tổng tiền quyên góp</p>
-            <h2 className="text-4xl font-black mt-1 tabular-nums">${stats.totalRaised.toLocaleString()}</h2>
+            <h2 className="text-3xl font-black mt-1 tabular-nums">
+              {stats.totalRaised.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+            </h2>
           </div>
         </div>
       </div>
@@ -255,12 +257,12 @@ export default function AdminCampaignsPage() {
             <thead>
               <tr className="bg-white border-b border-gray-300">
                 <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Chiến dịch</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Lĩnh vực</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Người tạo</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Trạng thái</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Mục tiêu</th>
-                <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Tiến độ</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Chiến dịch</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Lĩnh vực</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Người tạo</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Trạng thái</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Mục tiêu</th>
+                <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Tiến độ</th>
                 <th className="px-4 py-3 font-bold text-black text-center">Thao tác</th>
               </tr>
             </thead>
@@ -272,20 +274,25 @@ export default function AdminCampaignsPage() {
                   <td className="px-5 py-3 border-r border-gray-300 text-center font-bold text-gray-500">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </td>
-                  <td className="px-5 py-3 border-r border-gray-300"><span className="font-black text-gray-800 leading-snug">{campaign.title}</span></td>
+                  <td className="px-5 py-3 border-r border-gray-300"><span className="font-bold text-gray-800 leading-snug">{campaign.title}</span></td>
                   <td className="px-4 py-3 border-r border-gray-300">
                     <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-black uppercase">
                       {(campaign as any).categoryRel?.name || campaign.category || 'N/A'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500 border-r border-gray-300 font-bold text-[11px] uppercase truncate max-w-[150px]">{campaign.creatorUser?.username || 'Unknown'}</td>
-                  <td className="px-4 py-3 border-r border-gray-300">
+                  <td className="px-4 py-3 border-r text-center border-gray-300">
                     <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight ${campaign.status === 'ACTIVE' ? 'bg-[#7BC712] text-black' :
                       campaign.status === 'PENDING' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
                         'bg-red-50 text-red-600 border border-red-100'
                       }`}>{campaign.status}</span>
                   </td>
-                  <td className="px-4 py-3 text-gray-800 border-r border-gray-300 font-bold tabular-nums">${campaign.fundingGoalAmount.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-gray-800 border-r border-gray-300 font-bold tabular-nums whitespace-nowrap">
+                    {stats.totalRaised.toLocaleString('vi-VN', {
+                      style: 'currency',
+                      currency: 'VND'
+                    })}
+                  </td>
                   <td className="px-4 py-3 border-r border-gray-300">
                     <div className="flex flex-col gap-1.5 min-w-[100px]">
                       <span className="text-[10px] font-black text-[#E56C6C]">{Math.round(campaign.progress)}%</span>

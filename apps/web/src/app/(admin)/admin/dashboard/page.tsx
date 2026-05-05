@@ -34,7 +34,7 @@ export interface ActivityLogItem {
   email: string;
   avatarUrl?: string;
   activity: string;
-  date: string; 
+  date: string;
   type: string;
 }
 
@@ -67,11 +67,11 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-6 bg-[#7598C1] rounded-3xl px-6 py-4.5 min-w-0 shadow-xl border border-[#7598C1] w-full hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+    <div className="flex items-center gap-6 bg-[#7598C1] rounded-2xl px-6 py-4.5 min-w-0 shadow-xl border border-[#7598C1] w-full hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
       <div className="text-gray-900 bg-white/15 p-2.5 rounded-2xl flex-shrink-0 text-3xl sm:text-4xl">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-lg font-bold text-gray-800 uppercase tracking-wide opacity-100 truncate">{label}</p>
-        <p className="text-4xl font-black text-gray-900 leading-tight truncate mt-1">{value}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-md sm:text-base font-bold text-gray-800 uppercase tracking-wide opacity-100 truncate" title={label}>{label}</p>
+        <p className="text-2xl lg:text-2xl font-black text-gray-900 leading-tight truncate mt-1" title={value}>{value}</p>
       </div>
     </div>
   );
@@ -126,7 +126,7 @@ export default function AdminDashboardPage() {
           fetch(`${apiUrl}/admin-dashboard/donation-growth`, { headers }),
           fetch(`${apiUrl}/admin-dashboard/fund-allocation`, { headers })
         ]);
-        
+
         if (statsRes.ok) setStats(await statsRes.json());
         if (growthRes.ok) setDonationData(await growthRes.json());
         if (fundRes.ok) setFundDistribution(await fundRes.json());
@@ -220,7 +220,7 @@ export default function AdminDashboardPage() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toLocaleString()}k`} />
+              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toLocaleString()}k`} />
               <Tooltip
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
                 formatter={(v) => [`${Number(v).toLocaleString()} đ`, 'Quyên góp']}
@@ -291,8 +291,8 @@ export default function AdminDashboardPage() {
           <h2 className="text-lg font-bold text-gray-800">
             Nhật ký hoạt động gần đây
           </h2>
-          <select 
-            value={filter} 
+          <select
+            value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7598C1] text-gray-700 bg-white"
           >
@@ -327,28 +327,29 @@ export default function AdminDashboardPage() {
                     default: return 'hover:bg-gray-50';
                   }
                 };
-                
-                const dateStr = new Date(row.date).toLocaleString('vi-VN', { 
-                  hour: '2-digit', minute: '2-digit', 
-                  day: '2-digit', month: '2-digit', year: 'numeric' 
+
+                const dateStr = new Date(row.date).toLocaleString('vi-VN', {
+                  hour: '2-digit', minute: '2-digit',
+                  day: '2-digit', month: '2-digit', year: 'numeric'
                 });
 
                 return (
-                <tr key={row.id} className={`border-b border-gray-100 transition-colors ${getRowColor(row.type)}`}>
-                  <td className="px-5 py-3 font-medium text-gray-700">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <Avatar name={row.username} avatarUrl={row.avatarUrl} />
-                      <div>
-                        <p className="font-semibold text-gray-800 leading-tight truncate max-w-[150px]">{row.username}</p>
-                        <p className="text-xs text-gray-500 truncate max-w-[150px]">Email : {row.email}</p>
+                  <tr key={row.id} className={`border-b border-gray-100 transition-colors ${getRowColor(row.type)}`}>
+                    <td className="px-5 py-3 font-medium text-gray-700">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar name={row.username} avatarUrl={row.avatarUrl} />
+                        <div>
+                          <p className="font-semibold text-gray-800 leading-tight truncate max-w-[150px]">{row.username}</p>
+                          <p className="text-xs text-gray-500 truncate max-w-[150px]">Email : {row.email}</p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-800 font-medium">{row.activity}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{dateStr}</td>
-                </tr>
-              )}) : (
+                    </td>
+                    <td className="px-4 py-3 text-gray-800 font-medium">{row.activity}</td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{dateStr}</td>
+                  </tr>
+                )
+              }) : (
                 <tr>
                   <td colSpan={4} className="px-5 py-8 text-center text-gray-500">Không có dữ liệu phù hợp</td>
                 </tr>
