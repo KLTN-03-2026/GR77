@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ReportCommentDto } from './dto/report-comment.dto';
-import { NotificationsService } from '../notifications/notifications.service';
+
 
 @Injectable()
 export class CommentsService {
@@ -204,5 +205,106 @@ export class CommentsService {
                 details: dto.details
             }
         });
+    }
+
+    /**
+     * [ADMIN] Lấy tất cả comment trong hệ thống để kiểm duyệt.
+     * Hỗ trợ filter theo campaignId, search nội dung, và pagination.
+     */
+    async findAllAdmin(filters?: { q?: string; campaignId?: string; page?: number; limit?: number }) {
+        const page = filters?.page ?? 1;
+        const limit = filters?.limit ?? 20;
+        const skip = (page - 1) * limit;
+
+        const where: any = { deletedAt: null };
+        if (filters?.campaignId) where.campaignId = filters.campaignId;
+        if (filters?.q) where.content = { contains: filters.q, mode: 'insensitive' };
+
+        const [total, comments] = await this.prisma.$transaction([
+            this.prisma.comment.count({ where }),
+            this.prisma.comment.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            email: true,
+                            profile: { select: { avatarUrl: true, firstName: true, lastName: true } },
+                        },
+                    },
+                    campaign: { select: { id: true, title: true } },
+                    _count: { select: { reports: true } },
+                },
+            }),
+        ]);
+
+        return {
+            meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+            items: comments.map((c: any) => ({
+                id: c.id,
+                content: c.content,
+                createdAt: c.createdAt,
+                parentId: c.parentId,
+                campaignId: c.campaignId,
+                campaignTitle: c.campaign?.title || 'N/A',
+                reportCount: c._count.reports,
+                author: {
+                    id: c.user.id,
+                    username: c.user.username,
+                    email: c.user.email,
+                    name: c.user.profile?.firstName
+                        ? `${c.user.profile.firstName} ${c.user.profile.lastName || ''}`.trim()
+                        : c.user.username,
+                    avatarUrl: c.user.profile?.avatarUrl || null,
+                },
+            })),
+        };
+    }
+
+    /**
+     * [ADMIN] Xóa (force soft-delete) bất kỳ comment nào, bypass ownership check.
+     * Gửi notification cảnh báo tới chủ comment.
+     */
+    async adminRemove(commentId: string, adminId: string) {
+        const comment = await this.prisma.comment.findUnique({
+            where: { id: commentId },
+            include: {
+                user: { select: { id: true } },
+                campaign: { select: { id: true, title: true } },
+            },
+        });
+
+        if (!comment) throw new NotFoundException('Comment not found');
+        if (comment.deletedAt) throw new NotFoundException('Comment đã bị xóa trước đó');
+
+        // Soft delete
+        const deleted = await this.prisma.comment.update({
+            where: { id: commentId },
+            data: { deletedAt: new Date(), content: '[Nội dung đã bị xóa bởi quản trị viên]' },
+        });
+
+        // Log action
+        await this.prisma.userActionLog.create({
+            data: {
+                userId: adminId,
+                action: 'ADMIN_DELETE_COMMENT',
+                details: `Admin deleted comment ${commentId} in campaign "${comment.campaign?.title || comment.campaignId}"`,
+            },
+        });
+
+        // Notify the comment owner
+        await this.notificationsService.create({
+            userId: comment.user.id,
+            title: 'Bình luận của bạn đã bị gỡ',
+            message: `Một bình luận của bạn trong chiến dịch "${comment.campaign?.title || ''}" đã bị xóa do vi phạm tiêu chuẩn cộng đồng.`,
+            type: 'CONTENT_REMOVED',
+            link: `/home/${comment.campaignId}`,
+        });
+
+        return deleted;
     }
 }
