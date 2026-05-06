@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Post, Body, UseGuards, Request, Patch } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Body, UseGuards, Request, Patch, Delete } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CampaignsService } from './campaigns.service';
 import { GetCampaignsQueryDto } from './dto/get-campaigns-query.dto';
@@ -174,5 +174,40 @@ export class CampaignsController {
   ) {
     const userId = req.user.userId || req.user.sub;
     return this.campaignsService.postNews(userId, id, dto);
+  }
+
+  /**
+   * GET /campaigns/admin/news
+   * [ADMIN] Lấy toàn bộ campaign news để kiểm duyệt nội dung
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.COMMENTS_MANAGE)
+  @Get('admin/news')
+  findAllNewsAdmin(
+    @Query('q') q?: string,
+    @Query('campaignId') campaignId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.campaignsService.findAllNewsAdmin({
+      q,
+      campaignId,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+  }
+
+  /**
+   * DELETE /campaigns/admin/news/:id
+   * [ADMIN] Xóa bài cập nhật vi phạm
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @MinRole(Role.ADMIN)
+  @RequirePermissions(AdminPermission.COMMENTS_MANAGE)
+  @Delete('admin/news/:id')
+  adminDeleteNews(@Request() req: any, @Param('id') id: string) {
+    const adminId = req.user.userId || req.user.sub;
+    return this.campaignsService.adminDeleteNews(id, adminId);
   }
 }

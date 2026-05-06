@@ -12,7 +12,7 @@ import {
   ArrowPathIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { CurrencyDollarIcon, DocumentDuplicateIcon, DocumentTextIcon } from '@heroicons/react/24/solid';
+import { CircleStackIcon, DocumentDuplicateIcon, DocumentTextIcon } from '@heroicons/react/24/solid';
 import { API_BASE_URL } from '@/lib/constants/endpoints';
 import { POL_PER_VND } from '@/lib/constants/blockchain';
 
@@ -313,7 +313,7 @@ export default function AdminWithdrawalsPage() {
                     </td>
                     <td className="px-4 py-3 border-r border-gray-300">
                       <div className="flex items-center gap-1.5 font-black text-gray-900">
-                        <CurrencyDollarIcon className="w-4 h-4 text-green-600" />
+                        <CircleStackIcon className="w-4 h-4 text-amber-500" />
                         {formatVND(req.amount)}
                       </div>
                     </td>

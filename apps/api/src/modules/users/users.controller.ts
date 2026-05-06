@@ -86,7 +86,7 @@ export class UsersController {
     }
 
     /**
-     * PATCH /users/:id/permissions
+     * POST /users/:id/permissions
      * Chỉ SUPER_ADMIN được phép phân quyền.
      */
     @Post(':id/permissions')
@@ -98,5 +98,21 @@ export class UsersController {
     ) {
         const { sub, role } = req.user;
         return this.usersService.updatePermissions(id, permissions, sub, role);
+    }
+
+    /**
+     * POST /users/:id/reset-avatar
+     * ADMIN reset ảnh đại diện/ảnh bìa vi phạm của user.
+     * Body: { avatar?: boolean; cover?: boolean }
+     */
+    @Post(':id/reset-avatar')
+    async resetAvatar(
+        @Param('id') id: string,
+        @Body('avatar') avatar?: boolean,
+        @Body('cover') cover?: boolean,
+        @Request() req?: any,
+    ) {
+        const adminId = req.user.userId || req.user.sub;
+        return this.usersService.adminResetAvatar(id, adminId, { avatar, cover });
     }
 }

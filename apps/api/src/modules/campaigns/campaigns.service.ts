@@ -449,7 +449,7 @@ export class CampaignsService implements OnModuleInit {
         categoryRel: true,
         images: { orderBy: { order: 'asc' } },
         comments: {
-          where: { parentId: null },
+          where: { parentId: null, deletedAt: null },
           take: 10,
           orderBy: { createdAt: 'desc' },
           include: {
@@ -463,6 +463,7 @@ export class CampaignsService implements OnModuleInit {
               }
             },
             replies: {
+              where: { deletedAt: null },
               take: 5,
               orderBy: { createdAt: 'asc' },
               include: {
@@ -511,6 +512,7 @@ export class CampaignsService implements OnModuleInit {
           take: 20
         },
         news: {
+          where: { deletedAt: null },
           orderBy: { createdAt: 'desc' }
         },
         _count: { select: { favorites: true, donations: true, participants: true } }
@@ -763,6 +765,114 @@ export class CampaignsService implements OnModuleInit {
     };
   }
 
+  /**
+   * [ADMIN] Lấy toàn bộ campaign news để kiểm duyệt nội dung.
+   */
+  async findAllNewsAdmin(filters?: { q?: string; campaignId?: string; page?: number; limit?: number }) {
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = { deletedAt: null };
+    if (filters?.campaignId) where.campaignId = filters.campaignId;
+    if (filters?.q) {
+      where.OR = [
+        { title: { contains: filters.q, mode: 'insensitive' } },
+        { content: { contains: filters.q, mode: 'insensitive' } },
+      ];
+    }
+
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.campaignNews.count({ where }),
+      this.prisma.campaignNews.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          campaign: {
+            select: {
+              id: true,
+              title: true,
+              creatorUser: {
+                select: {
+                  id: true,
+                  username: true,
+                  email: true,
+                  profile: { select: { avatarUrl: true, firstName: true, lastName: true } },
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      items: items.map((n: any) => ({
+        id: n.id,
+        title: n.title,
+        content: n.content,
+        createdAt: n.createdAt,
+        campaignId: n.campaignId,
+        campaignTitle: n.campaign?.title || 'N/A',
+        author: {
+          id: n.campaign?.creatorUser?.id,
+          email: n.campaign?.creatorUser?.email,
+          username: n.campaign?.creatorUser?.username,
+          name: n.campaign?.creatorUser?.profile?.firstName
+            ? `${n.campaign.creatorUser.profile.firstName} ${n.campaign.creatorUser.profile.lastName || ''}`.trim()
+            : n.campaign?.creatorUser?.username || 'N/A',
+          avatarUrl: n.campaign?.creatorUser?.profile?.avatarUrl || null,
+        },
+      })),
+    };
+  }
+
+  /**
+   * [ADMIN] Xóa bài cập nhật (campaign news) vi phạm.
+   * Gửi notification cảnh báo tới creator.
+   */
+  async adminDeleteNews(newsId: string, adminId: string) {
+    const news = await this.prisma.campaignNews.findUnique({
+      where: { id: newsId },
+      include: {
+        campaign: { select: { id: true, title: true, creatorUserId: true } },
+      },
+    });
+
+    if (!news) throw new NotFoundException('Bài cập nhật không tồn tại');
+    if (news.deletedAt) throw new NotFoundException('Bài cập nhật đã bị xóa trước đó');
+
+    await this.prisma.campaignNews.update({
+      where: { id: newsId },
+      data: { deletedAt: new Date() }
+    });
+
+    // Log action
+    await this.prisma.userActionLog.create({
+      data: {
+        userId: adminId,
+        action: 'ADMIN_DELETE_CAMPAIGN_NEWS',
+        details: `Admin deleted news "${news.title}" from campaign "${news.campaign?.title || news.campaignId}"`,
+      },
+    });
+
+    // Notify the campaign creator
+    if (news.campaign?.creatorUserId) {
+      await this.notificationsService.create({
+        userId: news.campaign.creatorUserId,
+        title: 'Bài cập nhật của bạn đã bị gỡ',
+        message: `Bài cập nhật "${news.title}" trong chiến dịch "${news.campaign.title}" đã bị xóa do vi phạm tiêu chuẩn cộng đồng.`,
+        type: 'CONTENT_REMOVED',
+        link: `/creator/campaigns/${news.campaignId}`,
+      });
+    }
+
+    return { message: 'Đã xóa bài cập nhật thành công' };
+  }
+
   async getParticipants(campaignId: string) {
     const participants = await this.prisma.campaignParticipant.findMany({
       where: { campaignId },
@@ -784,10 +894,10 @@ export class CampaignsService implements OnModuleInit {
     });
 
     return participants.map((p: any) => {
-      const name = p.user?.profile?.firstName || p.user?.profile?.lastName 
-        ? `${p.user.profile.firstName || ''} ${p.user.profile.lastName || ''}`.trim() 
+      const name = p.user?.profile?.firstName || p.user?.profile?.lastName
+        ? `${p.user.profile.firstName || ''} ${p.user.profile.lastName || ''}`.trim()
         : p.user?.username || 'Anonymous';
-        
+
       return {
         id: p.id,
         userId: p.userId,

@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const ROLE_LEVEL: Record<Role, number> = {
     [Role.USER]: 1,
@@ -20,7 +21,8 @@ const ROLE_LEVEL: Record<Role, number> = {
 export class UsersService {
     constructor(
         private prisma: PrismaService,
-        private mailService: MailService
+        private mailService: MailService,
+        private notificationsService: NotificationsService,
     ) { }
 
     async findAll(callerId: string, callerRole: Role, roleGroup?: 'ADMINS' | 'MEMBERS') {
@@ -289,5 +291,50 @@ export class UsersService {
                 }
             }
         });
+    }
+
+    /**
+     * [ADMIN] Reset ảnh đại diện và/hoặc ảnh bìa profile của user về null (xóa ảnh phản cảm).
+     */
+    async adminResetAvatar(userId: string, adminId: string, fields: { avatar?: boolean; cover?: boolean }) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            include: { profile: true },
+        });
+        if (!user) throw new NotFoundException('User not found');
+
+        const updateData: any = {};
+        if (fields.avatar) updateData.avatarUrl = null;
+        if (fields.cover) updateData.coverImageUrl = null;
+
+        if (Object.keys(updateData).length === 0) return { message: 'Không có gì để xóa' };
+
+        await this.prisma.userProfile.update({
+            where: { userId },
+            data: updateData,
+        });
+
+        // Log action
+        await this.prisma.userActionLog.create({
+            data: {
+                userId: adminId,
+                action: 'ADMIN_RESET_AVATAR',
+                details: `Admin reset profile image for user ${userId}: ${Object.keys(updateData).join(', ')}`,
+            },
+        });
+
+        // Notify user
+        const fieldLabel = fields.avatar && fields.cover ? 'ảnh đại diện và ảnh bìa'
+            : fields.avatar ? 'ảnh đại diện'
+                : 'ảnh bìa';
+        await this.notificationsService.create({
+            userId,
+            title: 'Ảnh hồ sơ của bạn đã bị gỡ',
+            message: `Quản trị viên đã xóa ${fieldLabel} của bạn do vi phạm tiêu chuẩn cộng đồng. Vui lòng cập nhật ảnh phù hợp.`,
+            type: 'CONTENT_REMOVED',
+            link: '/profile',
+        });
+
+        return { message: 'Đã xóa ảnh vi phạm thành công' };
     }
 }
