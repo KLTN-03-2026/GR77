@@ -280,6 +280,13 @@ export default function MyProfilePage() {
   // ─── Email change step 1: request ───────────────────────────
   const handleRequestEmailChange = async () => {
     if (!token || !newEmail || !emailPassword) return;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      setEmailError('Định dạng email không hợp lệ.');
+      return;
+    }
+
     setEmailLoading(true);
     setEmailError('');
     try {

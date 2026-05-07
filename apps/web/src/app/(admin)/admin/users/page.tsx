@@ -412,10 +412,10 @@ export default function AdminUsersPage() {
               <thead>
                 <tr className="bg-white border-b border-gray-300">
                   <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center w-16">ID</th>
-                  <th className="px-5 py-3 font-bold text-black border-r border-gray-300">Danh tính</th>
-                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Vai trò</th>
-                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300">KYC</th>
-                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300">Bảo mật</th>
+                  <th className="px-5 py-3 font-bold text-black border-r border-gray-300 text-center">Danh tính</th>
+                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Vai trò</th>
+                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">KYC</th>
+                  <th className="px-4 py-3 font-bold text-black border-r border-gray-300 text-center">Bảo mật</th>
                   <th className="px-4 py-3 font-bold text-black text-center">Thao tác</th>
                 </tr>
               </thead>
@@ -446,7 +446,7 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-3 border-r border-gray-300 text-[11px] font-bold text-gray-600">
                         {user.kycStatus === 'Verified' ? 'Đã xác minh' : user.kycStatus === 'Pending' ? 'Đang chờ' : user.kycStatus === 'Rejected' ? 'Bị từ chối' : 'Chưa xác minh'}
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-300">
+                      <td className="px-4 py-3 border-r text-center border-gray-300">
                         <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-tight ${user.isLocked
                           ? 'bg-red-50 text-red-600 border border-red-100'
                           : 'bg-[#7BC712] text-black'

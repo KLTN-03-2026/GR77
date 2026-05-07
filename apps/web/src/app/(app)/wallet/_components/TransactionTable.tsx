@@ -10,6 +10,8 @@ interface TransactionTableProps {
 
 export function TransactionTable({ transactions, account }: TransactionTableProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -18,6 +20,9 @@ export function TransactionTable({ transactions, account }: TransactionTableProp
   };
 
   const isHash = (text: string) => /^0x[a-fA-F0-9]{64}$/.test(text);
+
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const paginatedTransactions = transactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -53,7 +58,7 @@ export function TransactionTable({ transactions, account }: TransactionTableProp
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {transactions.length > 0 ? transactions.map((tx) => {
+              {paginatedTransactions.length > 0 ? paginatedTransactions.map((tx) => {
                 const isExternal = tx.orderId && isHash(tx.orderId);
                 const isOutflow = tx.type === 'DONATION' || tx.type === 'WITHDRAW';
 
@@ -134,6 +139,27 @@ export function TransactionTable({ transactions, account }: TransactionTableProp
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 p-4 border-t border-gray-50">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-bold text-gray-600 disabled:opacity-50 hover:bg-gray-50 transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-sm font-medium text-gray-600 mx-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-bold text-gray-600 disabled:opacity-50 hover:bg-gray-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

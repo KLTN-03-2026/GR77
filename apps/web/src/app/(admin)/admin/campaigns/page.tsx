@@ -288,7 +288,7 @@ export default function AdminCampaignsPage() {
                       }`}>{campaign.status}</span>
                   </td>
                   <td className="px-4 py-3 text-gray-800 border-r border-gray-300 font-bold tabular-nums whitespace-nowrap">
-                    {stats.totalRaised.toLocaleString('vi-VN', {
+                    {campaign.fundingGoalAmount.toLocaleString('vi-VN', {
                       style: 'currency',
                       currency: 'VND'
                     })}

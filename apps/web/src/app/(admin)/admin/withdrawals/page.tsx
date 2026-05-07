@@ -171,7 +171,10 @@ export default function AdminWithdrawalsPage() {
 
   const handleAction = async (action: 'approve' | 'disburse' | 'reject') => {
     if (!selectedRequest) return;
-    if (action === 'reject' && !rejectReason.trim()) return;
+    if (action === 'reject' && !rejectReason.trim()) {
+      alert('Vui lòng nhập lý do từ chối');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -193,7 +196,7 @@ export default function AdminWithdrawalsPage() {
 
       if (!res.ok) throw new Error((await res.json()).message || 'Lỗi xử lý');
 
-      showToast(`✅ Thành công: ${action.toUpperCase()}`);
+      showToast(`Thành công: ${action.toUpperCase()}`);
       closeModal();
       fetchAll();
     } catch (e: any) {
@@ -436,7 +439,7 @@ export default function AdminWithdrawalsPage() {
                   <textarea
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
-                    className="w-full h-28 px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-red-100 focus:border-red-400 outline-none transition-all"
+                    className="w-full h-28 px-5 py-4 bg-gray-50 text-gray-700 border border-gray-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-red-100 focus:border-red-400 outline-none transition-all"
                     placeholder="Nhập lý do..."
                   />
                 </div>
